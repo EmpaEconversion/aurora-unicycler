@@ -20,6 +20,7 @@ dev = [
     "bumpver>=2025.1131",
     "pytest>=8.4.1",
     "ruff>=0.12.3",
+    "pre-commit>=4.2.0",
 ]
 
 [tool.ruff]

@@ -67,7 +67,10 @@ class TestUnicycler(TestCase):
 
     def test_check_sample_details(self) -> None:
         """Test handling of missing sample details."""
-        missing_name_msg = "If using blank sample name or $NAME placeholder, a sample name must be provided in this function."
+        missing_name_msg = (
+            "If using blank sample name or $NAME placeholder, "
+            "a sample name must be provided in this function."
+        )
         protocol = from_dict(self.example_protocol_data[1])
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
@@ -92,7 +95,9 @@ class TestUnicycler(TestCase):
             self.example_protocol_data[1], sample_name="test_sample", sample_capacity_mAh=123
         )
         protocol2 = from_dict(
-            self.example_protocol_data[2], sample_name="test_sample", sample_capacity_mAh=123
+            self.example_protocol_data[2],
+            sample_name="test_sample",
+            sample_capacity_mAh=123,
         )
         protocol1.to_neware_xml()
         protocol2.to_neware_xml()
@@ -495,7 +500,8 @@ class TestUnicycler(TestCase):
         # Find where the line begins with "ctrl_seq"
         lines = biologic_mps.splitlines()
         ctrl_seq_start = next(
-            (i for i, line in enumerate(lines) if line.startswith("ctrl_seq")), None
+            (i for i, line in enumerate(lines) if line.startswith("ctrl_seq")),
+            None,
         )
         assert ctrl_seq_start is not None, "ctrl_seq not found in Biologic MPS"
         test_str = (

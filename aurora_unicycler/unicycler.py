@@ -292,7 +292,10 @@ class Protocol(BaseModel):
 
         # Make sure sample name is set
         if not self.sample.name or self.sample.name == "$NAME":
-            msg = "If using blank sample name or $NAME placeholder, a sample name must be provided in this function."
+            msg = (
+                "If using blank sample name or $NAME placeholder, "
+                "a sample name must be provided in this function."
+            )
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
@@ -461,7 +464,10 @@ class Protocol(BaseModel):
 
         # Make sure sample name is set
         if not self.sample.name or self.sample.name == "$NAME":
-            msg = "If using blank sample name or $NAME placeholder, a sample name must be provided in this function."
+            msg = (
+                "If using blank sample name or $NAME placeholder, "
+                "a sample name must be provided in this function."
+            )
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
