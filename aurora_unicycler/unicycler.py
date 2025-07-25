@@ -695,6 +695,29 @@ class Protocol(BaseModel):
             "Technique : 1",
             "Modulo Bat",
         ]
+
+        # Find the maximum current to determine the I range - it is not straightforward to switch this during a run
+        # so we use the range that covers all currents
+        currents_mA = [
+            float(s.rate_C) * float(self.sample.capacity_mAh)
+            if s.rate_C and self.sample.capacity_mAh
+            else float(s.current_mA)
+            if s.current_mA
+            else 0
+            for s in self.method
+            if isinstance(s, (ConstantCurrent))
+        ]
+        max_current_mA = max(currents_mA) if currents_mA else 0
+        if max_current_mA < 1:
+            I_range = "1 mA"
+        elif max_current_mA < 10:
+            I_range = "10 mA"
+        elif max_current_mA < 100:
+            I_range = "100 mA"
+        else:
+            msg = "Not allowed to apply more than 100 mA"
+            raise ValueError(msg)
+
         default_step = {
             "Ns": "",
             "ctrl_type": "",
@@ -751,7 +774,7 @@ class Protocol(BaseModel):
             "rec2_value_unit": "",
             "E range min (V)": "0.000",
             "E range max (V)": "5.000",
-            "I Range": "10 mA",
+            "I Range": I_range,
             "I Range min": "Unset",
             "I Range max": "Unset",
             "I Range init": "Unset",
@@ -795,14 +818,24 @@ class Protocol(BaseModel):
                     msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
                     raise ValueError(msg)
 
-                step_dict.update(
-                    {
-                        "ctrl_type": "CC",
-                        "ctrl1_val": f"{current_mA:.3f}",
-                        "ctrl1_val_unit": "mA",
-                        "ctrl1_val_vs": "<None>",
-                    },
-                )
+                if abs(current_mA) < 1:
+                    step_dict.update(
+                        {
+                            "ctrl_type": "CC",
+                            "ctrl1_val": f"{current_mA:.3f}",
+                            "ctrl1_val_unit": "µA",
+                            "ctrl1_val_vs": "<None>",
+                        },
+                    )
+                else:
+                    step_dict.update(
+                        {
+                            "ctrl_type": "CC",
+                            "ctrl1_val": f"{current_mA:.3f}",
+                            "ctrl1_val_unit": "mA",
+                            "ctrl1_val_vs": "<None>",
+                        },
+                    )
 
                 # Add limit details
                 lim_num = 0
