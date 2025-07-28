@@ -1,9 +1,12 @@
 {
+    "unicycler": {
+        "version": "0.1.0"
+    },
     "sample": {
         "name": "$NAME",
         "capacity_mAh": null
     },
-    "measurement": {
+    "record": {
         "current_mA": "0.1",
         "voltage_V": "0.1",
         "time_s": "10"

@@ -15,14 +15,12 @@ from aurora_unicycler.unicycler import (
     ConstantCurrent,
     ConstantVoltage,
     Loop,
-    MeasurementParams,
     OpenCircuitVoltage,
     Protocol,
+    RecordParams,
     SafetyParams,
     SampleParams,
     Tag,
-    from_dict,
-    from_json,
 )
 
 
@@ -46,7 +44,7 @@ class TestUnicycler(TestCase):
 
     def test_from_json(self) -> None:
         """Test creating a Protocol instance from a JSON file."""
-        protocol = from_json(self.example_protocol_paths[0])
+        protocol = Protocol.from_json(self.example_protocol_paths[0])
         assert isinstance(protocol, Protocol)
         assert protocol.sample.name == "test_sample"
         assert protocol.sample.capacity_mAh == Decimal(123)
@@ -61,8 +59,8 @@ class TestUnicycler(TestCase):
 
     def test_from_dict(self) -> None:
         """Test creating a Protocol instance from a dictionary."""
-        protocol_from_dict = from_dict(self.example_protocol_data[0])
-        protocol_from_file = from_json(self.example_protocol_paths[0])
+        protocol_from_dict = Protocol.from_dict(self.example_protocol_data[0])
+        protocol_from_file = Protocol.from_json(self.example_protocol_paths[0])
         assert protocol_from_dict == protocol_from_file
 
     def test_check_sample_details(self) -> None:
@@ -71,30 +69,30 @@ class TestUnicycler(TestCase):
             "If using blank sample name or $NAME placeholder, "
             "a sample name must be provided in this function."
         )
-        protocol = from_dict(self.example_protocol_data[1])
+        protocol = Protocol.from_dict(self.example_protocol_data[1])
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_name_msg
-        protocol = from_dict(self.example_protocol_data[2])
+        protocol = Protocol.from_dict(self.example_protocol_data[2])
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_name_msg
 
         missing_cap_msg = "Sample capacity must be set if using C-rate steps."
-        protocol = from_dict(self.example_protocol_data[1], sample_name="test_sample")
+        protocol = Protocol.from_dict(self.example_protocol_data[1], sample_name="test_sample")
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_cap_msg
-        protocol = from_dict(self.example_protocol_data[2], sample_name="test_sample")
+        protocol = Protocol.from_dict(self.example_protocol_data[2], sample_name="test_sample")
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_cap_msg
 
         # should not raise error if both are provided
-        protocol1 = from_dict(
+        protocol1 = Protocol.from_dict(
             self.example_protocol_data[1], sample_name="test_sample", sample_capacity_mAh=123
         )
-        protocol2 = from_dict(
+        protocol2 = Protocol.from_dict(
             self.example_protocol_data[2],
             sample_name="test_sample",
             sample_capacity_mAh=123,
@@ -107,7 +105,7 @@ class TestUnicycler(TestCase):
 
     def test_overwriting_sample_details(self) -> None:
         """Test overwriting sample details when creating from a dictionary."""
-        protocol = from_dict(
+        protocol = Protocol.from_dict(
             self.example_protocol_data[0], sample_name="NewName", sample_capacity_mAh=456
         )
         assert protocol.sample.name == "NewName"
@@ -115,7 +113,7 @@ class TestUnicycler(TestCase):
 
     def test_to_neware_xml(self) -> None:
         """Test converting a Protocol instance to Neware XML format."""
-        protocol = from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(self.example_protocol_data[0])
         xml_string = protocol.to_neware_xml()
         assert isinstance(xml_string, str)
         assert xml_string.startswith("<?xml")
@@ -140,7 +138,7 @@ class TestUnicycler(TestCase):
 
     def test_to_tomato_mpg2(self) -> None:
         """Test converting a Protocol instance to Tomato MPG2 format."""
-        protocol = from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(self.example_protocol_data[0])
         json_string = protocol.to_tomato_mpg2()
         assert isinstance(json_string, str)
         tomato_dict = json.loads(json_string)
@@ -158,7 +156,7 @@ class TestUnicycler(TestCase):
 
     def test_to_pybamm_experiment(self) -> None:
         """Test converting a Protocol instance to PyBaMM experiment format."""
-        protocol = from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(self.example_protocol_data[0])
         experiment_list = protocol.to_pybamm_experiment()
         assert isinstance(experiment_list, list)
         assert len(experiment_list) > 0
@@ -208,7 +206,7 @@ class TestUnicycler(TestCase):
     def test_protocol_c_rate_validation(self) -> None:
         """Test validation of Protocol with C-rate steps."""
         # Valid protocol
-        protocol = from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(self.example_protocol_data[0])
         assert isinstance(protocol, Protocol)
 
         # Invalid protocol (missing capacity)
@@ -228,13 +226,13 @@ class TestUnicycler(TestCase):
 
     def test_create_protocol(self) -> None:
         """Test creating a Protocol instance from a dictionary."""
-        protocol = from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(self.example_protocol_data[0])
         protocol = Protocol(
             sample=SampleParams(
                 name="test_sample",
                 capacity_mAh=123,
             ),
-            measurement=MeasurementParams(
+            record=RecordParams(
                 time_s=Decimal(10),
                 voltage_V=0.1,
                 current_mA="0.1",
@@ -290,7 +288,7 @@ class TestUnicycler(TestCase):
     def test_tags(self) -> None:
         """Test tags in Protocol."""
         protocol = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -306,7 +304,7 @@ class TestUnicycler(TestCase):
         assert protocol.method[4].start_step == 2
 
         protocol = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),  # 0
@@ -327,7 +325,7 @@ class TestUnicycler(TestCase):
         assert protocol.method[6].start_step == 3
 
         protocol = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),  # 0
@@ -364,7 +362,7 @@ class TestUnicycler(TestCase):
         # You should not be able to create a loop with a tag that does not exist
         with pytest.raises(ValidationError):
             protocol = Protocol(
-                measurement=MeasurementParams(time_s=1),
+                record=RecordParams(time_s=1),
                 safety=SafetyParams(),
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
@@ -378,7 +376,7 @@ class TestUnicycler(TestCase):
         # Loops cannot go forwards
         with pytest.raises(ValidationError):
             protocol = Protocol(
-                measurement=MeasurementParams(time_s=1),
+                record=RecordParams(time_s=1),
                 safety=SafetyParams(),
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
@@ -392,7 +390,7 @@ class TestUnicycler(TestCase):
         for i in [4, 5]:
             with pytest.raises(ValidationError):
                 protocol = Protocol(
-                    measurement=MeasurementParams(time_s=1),
+                    record=RecordParams(time_s=1),
                     safety=SafetyParams(),
                     method=[
                         OpenCircuitVoltage(until_time_s=1),
@@ -408,7 +406,7 @@ class TestUnicycler(TestCase):
         # Loops cannot go back to one index to a tag
         with pytest.raises(ValidationError):
             protocol = Protocol(
-                measurement=MeasurementParams(time_s=1),
+                record=RecordParams(time_s=1),
                 safety=SafetyParams(),
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
@@ -421,7 +419,7 @@ class TestUnicycler(TestCase):
     def test_tag_neware(self) -> None:
         """Test tags in Neware XML."""
         protocol = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -440,7 +438,7 @@ class TestUnicycler(TestCase):
         assert start_step.attrib["Value"] == "3"
 
         protocol1 = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -458,7 +456,7 @@ class TestUnicycler(TestCase):
         )
 
         protocol2 = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -484,7 +482,7 @@ class TestUnicycler(TestCase):
     def test_to_biologic_mps(self) -> None:
         """Test conversion to Biologic MPS."""
         protocol = Protocol(
-            measurement=MeasurementParams(time_s=1),
+            record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),

@@ -1,8 +1,43 @@
 """A universal cycling Protocol model to convert to different formats.
 
-Protocol is a Pydantic model that defines a cycling protocol which can be stored/read in JSON format.
-The model only contains a subset of all possible techniques and parameters.
-This can be converted into:
+A Protocol is a Pydantic model that defines a cycling protocol which can be
+stored/read in JSON format.
+
+Build a Protocol using the model objects defined in this module, e.g.:
+
+my_protocol = Protocol(
+    sample=SampleParams(name="My Sample", capacity_mAh=1.0),
+    record=RecordParams(time_s=10),
+    safety=SafetyParams(max_voltage_V=4.5, delay_s=1),
+    method=[
+        Tag(tag="longterm"),
+        OpenCircuitVoltage(until_time_s=600),
+        ConstantCurrent(rate_C=0.5, until_voltage_V=4.2, until_time_s=3*60*60),
+        ConstantVoltage(voltage_V=4.2, until_rate_C=0.05, until_time_s=60*60),
+        ConstantCurrent(rate_C=-0.5, until_voltage_V=3.0, until_time_s=3*60*60),
+        Loop(start_step="longterm", cycle_count=100),
+    ],
+)
+
+Or build from a dictionary:
+
+my_protocol = Protocol.from_dict({
+    "sample": {"name": "My Sample", "capacity_mAh": 1.0},
+    "record": {"time_s": 10},
+    "safety": {"max_voltage_V": 4.5, "delay_s": 1},
+    "method": [
+        {"name": "tag", "tag": "longterm"},
+        {"name": "open_circuit_voltage", "until_time_s": 600},
+        ...
+    ],
+})
+
+Or read from an existing JSON file:
+
+my_protocol = Protocol.from_json("path/to/protocol.json")
+
+A unicycler Protocol object can be converted into:
+- Unicycler JSON file / dict - to_json() / to_dict()
 - Neware XML file  - to_neware_xml()
 - Biologic MPS settings - to_biologic_mps()
 - Tomato 0.2.3 JSON file - to_tomato_json()
@@ -55,8 +90,8 @@ class SampleParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class MeasurementParams(BaseModel):
-    """Measurement parameters, i.e. when to record."""
+class RecordParams(BaseModel):
+    """Recording parameters."""
 
     current_mA: PreciseDecimal | None = None
     voltage_V: PreciseDecimal | None = None
@@ -184,8 +219,8 @@ class Protocol(BaseModel):
 
     unicycler: UnicyclerParams = Field(default_factory=UnicyclerParams)
     sample: SampleParams = Field(default_factory=SampleParams)
-    measurement: MeasurementParams
-    safety: SafetyParams
+    record: RecordParams
+    safety: SafetyParams = Field(default_factory=SafetyParams)
     method: Sequence[AnyTechnique] = Field(min_length=1)  # Ensure at least one step
 
     model_config = ConfigDict(extra="forbid")
@@ -347,12 +382,12 @@ class Protocol(BaseModel):
 
         record = ET.SubElement(whole_prt, "Record")
         main_record = ET.SubElement(record, "Main")
-        if self.measurement.time_s:
-            ET.SubElement(main_record, "Time", Value=f"{self.measurement.time_s * 1000:f}")
-        if self.measurement.voltage_V:
-            ET.SubElement(main_record, "Volt", Value=f"{self.measurement.voltage_V * 10000:f}")
-        if self.measurement.current_mA:
-            ET.SubElement(main_record, "Curr", Value=f"{self.measurement.current_mA:f}")
+        if self.record.time_s:
+            ET.SubElement(main_record, "Time", Value=f"{self.record.time_s * 1000:f}")
+        if self.record.voltage_V:
+            ET.SubElement(main_record, "Volt", Value=f"{self.record.voltage_V * 10000:f}")
+        if self.record.current_mA:
+            ET.SubElement(main_record, "Curr", Value=f"{self.record.current_mA:f}")
 
         step_info = ET.SubElement(
             config, "Step_Info", Num=str(len(self.method) + 1)
@@ -498,12 +533,12 @@ class Protocol(BaseModel):
             tomato_step["device"] = "MPG2"
             tomato_step["technique"] = step.name
             if step.name in ["constant_current", "constant_voltage", "open_circuit_voltage"]:
-                if self.measurement.time_s:
-                    tomato_step["measure_every_dt"] = self.measurement.time_s
-                if self.measurement.current_mA:
-                    tomato_step["measure_every_dI"] = self.measurement.current_mA
-                if self.measurement.voltage_V:
-                    tomato_step["measure_every_dE"] = self.measurement.voltage_V
+                if self.record.time_s:
+                    tomato_step["measure_every_dt"] = self.record.time_s
+                if self.record.current_mA:
+                    tomato_step["measure_every_dI"] = self.record.current_mA
+                if self.record.voltage_V:
+                    tomato_step["measure_every_dE"] = self.record.voltage_V
                 tomato_step["I_range"] = "10 mA"
                 tomato_step["E_range"] = "+-5.0 V"
 
@@ -804,7 +839,7 @@ class Protocol(BaseModel):
                         "lim1_value_unit": "s",
                         "rec_nb": "1",
                         "rec1_type": "Time",
-                        "rec1_value": f"{self.measurement.time_s or 0:.3f}",
+                        "rec1_value": f"{self.record.time_s or 0:.3f}",
                         "rec1_value_unit": "s",
                     },
                 )
@@ -868,21 +903,21 @@ class Protocol(BaseModel):
 
                 # Add record details
                 rec_num = 0
-                if self.measurement.time_s:
+                if self.record.time_s:
                     rec_num += 1
                     step_dict.update(
                         {
                             f"rec{rec_num}_type": "Time",
-                            f"rec{rec_num}_value": f"{self.measurement.time_s:.3f}",
+                            f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
                             f"rec{rec_num}_value_unit": "s",
                         },
                     )
-                if self.measurement.voltage_V:
+                if self.record.voltage_V:
                     rec_num += 1
                     step_dict.update(
                         {
                             f"rec{rec_num}_type": "Ewe",
-                            f"rec{rec_num}_value": f"{self.measurement.voltage_V:.3f}",
+                            f"rec{rec_num}_value": f"{self.record.voltage_V:.3f}",
                             f"rec{rec_num}_value_unit": "V",
                         },
                     )
@@ -938,21 +973,21 @@ class Protocol(BaseModel):
 
                 # Add record details
                 rec_num = 0
-                if self.measurement.time_s:
+                if self.record.time_s:
                     rec_num += 1
                     step_dict.update(
                         {
                             f"rec{rec_num}_type": "Time",
-                            f"rec{rec_num}_value": f"{self.measurement.time_s:.3f}",
+                            f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
                             f"rec{rec_num}_value_unit": "s",
                         },
                     )
-                if self.measurement.current_mA:
+                if self.record.current_mA:
                     rec_num += 1
                     step_dict.update(
                         {
                             f"rec{rec_num}_type": "I",
-                            f"rec{rec_num}_value": f"{self.measurement.current_mA:.3f}",
+                            f"rec{rec_num}_value": f"{self.record.current_mA:.3f}",
                             f"rec{rec_num}_value_unit": "mA",
                         },
                     )
@@ -993,28 +1028,42 @@ class Protocol(BaseModel):
 
         return settings_string
 
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+        sample_name: str | None = None,
+        sample_capacity_mAh: float | None = None,
+    ) -> "Protocol":
+        """Create a Protocol instance from a dictionary."""
+        # If values given then overwrite
+        data.setdefault("sample", {})
+        if sample_name:
+            data["sample"]["name"] = sample_name
+        if sample_capacity_mAh:
+            data["sample"]["capacity_mAh"] = sample_capacity_mAh
+        return Protocol(**data)
 
-def from_dict(
-    data: dict,
-    sample_name: str | None = None,
-    sample_capacity_mAh: float | None = None,
-) -> Protocol:
-    """Create a Protocol instance from a dictionary."""
-    # If values given then overwrite
-    data.setdefault("sample", {})
-    if sample_name:
-        data["sample"]["name"] = sample_name
-    if sample_capacity_mAh:
-        data["sample"]["capacity_mAh"] = sample_capacity_mAh
-    return Protocol(**data)
+    @classmethod
+    def from_json(
+        cls,
+        json_file: str | Path,
+        sample_name: str | None = None,
+        sample_capacity_mAh: float | None = None,
+    ) -> "Protocol":
+        """Create a Protocol instance from a JSON file."""
+        json_file = Path(json_file)
+        with json_file.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        return cls.from_dict(data, sample_name, sample_capacity_mAh)
 
+    def to_dict(self) -> dict:
+        """Convert a Protocol instance to a dictionary."""
+        return self.model_dump()
 
-def from_json(
-    json_file: Path,
-    sample_name: str | None = None,
-    sample_capacity_mAh: float | None = None,
-) -> Protocol:
-    """Create a Protocol instance from a JSON file."""
-    with json_file.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    return from_dict(data, sample_name, sample_capacity_mAh)
+    def to_json(self, json_file: str | Path) -> None:
+        """Save a Protocol as a JSON file."""
+        json_file = Path(json_file)
+        json_file.parent.mkdir(parents=True, exist_ok=True)
+        with json_file.open("w", encoding="utf-8") as f:
+            f.write(self.model_dump_json())
