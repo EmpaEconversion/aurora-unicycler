@@ -51,7 +51,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from decimal import Decimal, getcontext
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated
 from xml.dom import minidom
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
@@ -116,7 +116,6 @@ class SafetyParams(BaseModel):
 class BaseTechnique(BaseModel):
     """Base class for all techniques."""
 
-    name: str
     # optional id field
     id: str | None = Field(default=None, description="Optional ID for the technique step")
     model_config = ConfigDict(extra="forbid")
@@ -125,14 +124,14 @@ class BaseTechnique(BaseModel):
 class OpenCircuitVoltage(BaseTechnique):
     """Open circuit voltage technique."""
 
-    name: Literal["open_circuit_voltage"] = "open_circuit_voltage"
+    name: str = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: PreciseDecimal = Field(gt=0)
 
 
 class ConstantCurrent(BaseTechnique):
     """Constant current technique."""
 
-    name: Literal["constant_current"] = "constant_current"
+    name: str = Field(default="constant_current", frozen=True)
     rate_C: PreciseDecimal | None = None
     current_mA: PreciseDecimal | None = None
     until_time_s: PreciseDecimal | None = None
@@ -162,7 +161,7 @@ class ConstantCurrent(BaseTechnique):
 class ConstantVoltage(BaseTechnique):
     """Constant voltage technique."""
 
-    name: Literal["constant_voltage"] = "constant_voltage"
+    name: str = Field(default="constant_voltage", frozen=True)
     voltage_V: PreciseDecimal
     until_time_s: PreciseDecimal | None = None
     until_rate_C: PreciseDecimal | None = None
@@ -183,7 +182,7 @@ class ConstantVoltage(BaseTechnique):
 class Loop(BaseTechnique):
     """Loop technique."""
 
-    name: Literal["loop"] = "loop"
+    name: str = Field(default="loop", frozen=True)
     start_step: Annotated[int | str, Field()] = Field(default=1)
     cycle_count: int = Field(gt=0)
     model_config = ConfigDict(extra="forbid")
@@ -393,7 +392,7 @@ class Protocol(BaseModel):
             config, "Step_Info", Num=str(len(self.method) + 1)
         )  # +1 for end step
 
-        def _step_to_element(step: AnyTechnique, step_num: int, parent: ET.Element) -> None:
+        def _step_to_element(step: BaseTechnique, step_num: int, parent: ET.Element) -> None:
             """Create XML subelement from protocol technique."""
             if isinstance(step, ConstantCurrent):
                 if step.rate_C is not None and step.rate_C != 0:
