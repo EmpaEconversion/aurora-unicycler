@@ -1030,6 +1030,47 @@ class Protocol(BaseModel):
                         },
                     )
 
+                case ImpedanceSpectroscopy():
+                    if step.amplitude_V:
+                        step_dict.update({"ctrl_type": "PEIS"})
+                        if step.amplitude_V >= 0.1:
+                            step_dict.update({"ctrl1_val": f"{step.amplitude_V:.3f}"})
+                            step_dict.update({"ctrl1_val_unit": "V"})
+                        elif step.amplitude_V >= 0.001:
+                            step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e3:.3f}"})
+                            step_dict.update({"ctrl1_val_unit": "mV"})
+                        else:
+                            step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e6:.3f}"})
+                            step_dict.update({"ctrl1_val_unit": "µV"})
+                    else:
+                        step_dict.update({"ctrl_type": "GEIS"})
+                        if step.amplitude_mA >= 1000:
+                            step_dict.update({"ctrl1_val": f"{step.amplitude_mA / 1000:.3f}"})
+                            step_dict.update({"ctrl1_val_unit": "A"})
+                        elif step.amplitude_mA >= 1:
+                            step_dict.update({"ctrl1_val": f"{step.amplitude_mA:.3f}"})
+                            step_dict.update({"ctrl1_val_unit": "mA"})
+                        else:
+                            step_dict.update({"ctrl1_val": f"{step.amplitude_mA * 1000:.3f}"})
+                            step_dict.update({"ctrl1_val_unit": "µA"})
+                    for freq, ctrl in ((step.start_frequency_Hz, 2), (step.end_frequency_Hz, 3)):
+                        if freq >= 1e3:
+                            step_dict.update({f"ctrl{ctrl}_val": f"{freq / 1e3:.3f}"})
+                            step_dict.update({f"ctrl{ctrl}_val_unit": "kHz"})
+                        elif freq >= 1:
+                            step_dict.update({f"ctrl{ctrl}_val": f"{freq:.3f}"})
+                            step_dict.update({f"ctrl{ctrl}_val_unit": "Hz"})
+                        elif freq >= 1e-3:
+                            step_dict.update({f"ctrl{ctrl}_val": f"{freq * 1e3:.3f}"})
+                            step_dict.update({f"ctrl{ctrl}_val_unit": "mHz"})
+                    step_dict.update(
+                        {
+                            "ctrl_Nd": f"{step.points_per_decade}",
+                            "ctrl_Na": f"{step.measures_per_frequency}",
+                            "ctrl_corr": f"{int(step.drift_correction)}",
+                        }
+                    )
+
                 case Loop():
                     step_dict.update(
                         {
