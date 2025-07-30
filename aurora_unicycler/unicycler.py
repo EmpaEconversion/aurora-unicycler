@@ -179,6 +179,28 @@ class ConstantVoltage(BaseTechnique):
         return self
 
 
+class ImpedanceSpectroscopy(BaseTechnique):
+    """Electrochemical Impedance Spectroscopy (EIS) technique."""
+
+    name: str = Field(default="impedance_spectroscopy", frozen=True)
+    amplitude_V: PreciseDecimal | None = None
+    amplitude_mA: PreciseDecimal | None = None
+    start_frequency_Hz: PreciseDecimal
+    end_frequency_Hz: PreciseDecimal
+    points_per_decade: int = Field(gt=0, default=10)
+    measures_per_frequency: int = Field(gt=0, default=1)
+    drift_correction: bool = Field(default=False, description="Apply drift correction")
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_amplitude(self) -> Self:
+        """Cannot set both amplitude_V and amplitude_mA."""
+        if self.amplitude_V is not None and self.amplitude_mA is not None:
+            msg = "Cannot set both amplitude_V and amplitude_mA."
+            raise ValueError(msg)
+        return self
+
+
 class Loop(BaseTechnique):
     """Loop technique."""
 
@@ -209,7 +231,15 @@ class Tag(BaseTechnique):
     model_config = ConfigDict(extra="forbid")
 
 
-AnyTechnique = BaseTechnique | ConstantCurrent | ConstantVoltage | OpenCircuitVoltage | Loop | Tag
+AnyTechnique = (
+    BaseTechnique
+    | ConstantCurrent
+    | ConstantVoltage
+    | OpenCircuitVoltage
+    | ImpedanceSpectroscopy
+    | Loop
+    | Tag
+)
 
 
 # --- Main Protocol Model ---
