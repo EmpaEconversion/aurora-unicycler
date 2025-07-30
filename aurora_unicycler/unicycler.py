@@ -394,74 +394,75 @@ class Protocol(BaseModel):
 
         def _step_to_element(step: BaseTechnique, step_num: int, parent: ET.Element) -> None:
             """Create XML subelement from protocol technique."""
-            if isinstance(step, ConstantCurrent):
-                if step.rate_C is not None and step.rate_C != 0:
-                    step_type = "1" if step.rate_C > 0 else "2"
-                elif step.current_mA is not None and step.current_mA != 0:
-                    step_type = "1" if step.current_mA > 0 else "2"
+            match step:
+                case ConstantCurrent():
+                    if step.rate_C is not None and step.rate_C != 0:
+                        step_type = "1" if step.rate_C > 0 else "2"
+                    elif step.current_mA is not None and step.current_mA != 0:
+                        step_type = "1" if step.current_mA > 0 else "2"
 
-                step_element = ET.SubElement(
-                    parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type
-                )
-                limit = ET.SubElement(step_element, "Limit")
-                main = ET.SubElement(limit, "Main")
-                if step.rate_C is not None:
-                    ET.SubElement(main, "Rate", Value=f"{abs(step.rate_C):f}")
-                    ET.SubElement(
-                        main, "Curr", Value=f"{abs(step.rate_C) * self.sample.capacity_mAh:f}"
+                    step_element = ET.SubElement(
+                        parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type
                     )
-                elif step.current_mA is not None:
-                    ET.SubElement(main, "Curr", Value=f"{abs(step.current_mA):f}")
-                if step.until_time_s is not None:
-                    ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
-                if step.until_voltage_V is not None:
-                    ET.SubElement(main, "Stop_Volt", Value=f"{step.until_voltage_V * 10000:f}")
+                    limit = ET.SubElement(step_element, "Limit")
+                    main = ET.SubElement(limit, "Main")
+                    if step.rate_C is not None:
+                        ET.SubElement(main, "Rate", Value=f"{abs(step.rate_C):f}")
+                        ET.SubElement(
+                            main, "Curr", Value=f"{abs(step.rate_C) * self.sample.capacity_mAh:f}"
+                        )
+                    elif step.current_mA is not None:
+                        ET.SubElement(main, "Curr", Value=f"{abs(step.current_mA):f}")
+                    if step.until_time_s is not None:
+                        ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
+                    if step.until_voltage_V is not None:
+                        ET.SubElement(main, "Stop_Volt", Value=f"{step.until_voltage_V * 10000:f}")
 
-            elif isinstance(step, ConstantVoltage):
-                if step.until_rate_C is not None and step.until_rate_C != 0:
-                    step_type = "3" if step.until_rate_C > 0 else "19"
-                elif step.until_current_mA is not None and step.until_current_mA != 0:
-                    step_type = "3" if step.until_current_mA > 0 else "19"
-                else:
-                    step_type = "3"  # If it can't be figured out, default to charge
-                step_element = ET.SubElement(
-                    parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type
-                )
-                limit = ET.SubElement(step_element, "Limit")
-                main = ET.SubElement(limit, "Main")
-                ET.SubElement(main, "Volt", Value=f"{step.voltage_V * 10000:f}")
-                if step.until_time_s is not None:
-                    ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
-                if step.until_rate_C is not None:
-                    ET.SubElement(main, "Stop_Rate", Value=f"{abs(step.until_rate_C):f}")
-                    ET.SubElement(
-                        main,
-                        "Stop_Curr",
-                        Value=f"{abs(step.until_rate_C) * self.sample.capacity_mAh:f}",
+                case ConstantVoltage():
+                    if step.until_rate_C is not None and step.until_rate_C != 0:
+                        step_type = "3" if step.until_rate_C > 0 else "19"
+                    elif step.until_current_mA is not None and step.until_current_mA != 0:
+                        step_type = "3" if step.until_current_mA > 0 else "19"
+                    else:
+                        step_type = "3"  # If it can't be figured out, default to charge
+                    step_element = ET.SubElement(
+                        parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type
                     )
-                elif step.until_current_mA is not None:
-                    ET.SubElement(main, "Stop_Curr", Value=f"{abs(step.until_current_mA):f}")
+                    limit = ET.SubElement(step_element, "Limit")
+                    main = ET.SubElement(limit, "Main")
+                    ET.SubElement(main, "Volt", Value=f"{step.voltage_V * 10000:f}")
+                    if step.until_time_s is not None:
+                        ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
+                    if step.until_rate_C is not None:
+                        ET.SubElement(main, "Stop_Rate", Value=f"{abs(step.until_rate_C):f}")
+                        ET.SubElement(
+                            main,
+                            "Stop_Curr",
+                            Value=f"{abs(step.until_rate_C) * self.sample.capacity_mAh:f}",
+                        )
+                    elif step.until_current_mA is not None:
+                        ET.SubElement(main, "Stop_Curr", Value=f"{abs(step.until_current_mA):f}")
 
-            elif isinstance(step, OpenCircuitVoltage):
-                step_element = ET.SubElement(
-                    parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type="4"
-                )
-                limit = ET.SubElement(step_element, "Limit")
-                main = ET.SubElement(limit, "Main")
-                ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
+                case OpenCircuitVoltage():
+                    step_element = ET.SubElement(
+                        parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type="4"
+                    )
+                    limit = ET.SubElement(step_element, "Limit")
+                    main = ET.SubElement(limit, "Main")
+                    ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
 
-            elif isinstance(step, Loop):
-                step_element = ET.SubElement(
-                    parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type="5"
-                )
-                limit = ET.SubElement(step_element, "Limit")
-                other = ET.SubElement(limit, "Other")
-                ET.SubElement(other, "Start_Step", Value=str(step.start_step))
-                ET.SubElement(other, "Cycle_Count", Value=str(step.cycle_count))
+                case Loop():
+                    step_element = ET.SubElement(
+                        parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type="5"
+                    )
+                    limit = ET.SubElement(step_element, "Limit")
+                    other = ET.SubElement(limit, "Other")
+                    ET.SubElement(other, "Start_Step", Value=str(step.start_step))
+                    ET.SubElement(other, "Cycle_Count", Value=str(step.cycle_count))
 
-            else:
-                msg = f"to_neware_xml does not support step type: {step.name}"
-                raise TypeError(msg)
+                case _:
+                    msg = f"to_neware_xml does not support step type: {step.name}"
+                    raise TypeError(msg)
 
         for i, technique in enumerate(self.method):
             step_num = i + 1
@@ -531,7 +532,7 @@ class Protocol(BaseModel):
             tomato_step: dict = {}
             tomato_step["device"] = "MPG2"
             tomato_step["technique"] = step.name
-            if step.name in ["constant_current", "constant_voltage", "open_circuit_voltage"]:
+            if isinstance(step, (ConstantCurrent, ConstantVoltage, OpenCircuitVoltage)):
                 if self.record.time_s:
                     tomato_step["measure_every_dt"] = self.record.time_s
                 if self.record.current_mA:
@@ -541,49 +542,50 @@ class Protocol(BaseModel):
                 tomato_step["I_range"] = "10 mA"
                 tomato_step["E_range"] = "+-5.0 V"
 
-            if isinstance(step, OpenCircuitVoltage):
-                tomato_step["time"] = step.until_time_s
-
-            elif isinstance(step, ConstantCurrent):
-                if step.rate_C:
-                    if step.rate_C > 0:
-                        charging = True
-                        tomato_step["current"] = str(step.rate_C) + "C"
-                    else:
-                        charging = False
-                        tomato_step["current"] = str(abs(step.rate_C)) + "D"
-                elif step.current_mA:
-                    if step.current_mA > 0:
-                        charging = True
-                        tomato_step["current"] = step.current_mA / 1000
-                    else:
-                        charging = False
-                        tomato_step["current"] = step.current_mA / 1000
-                if step.until_time_s:
+            match step:
+                case OpenCircuitVoltage():
                     tomato_step["time"] = step.until_time_s
-                if step.until_voltage_V:
-                    if charging:
-                        tomato_step["limit_voltage_max"] = step.until_voltage_V
-                    else:
-                        tomato_step["limit_voltage_min"] = step.until_voltage_V
 
-            elif isinstance(step, ConstantVoltage):
-                tomato_step["voltage"] = step.voltage_V
-                if step.until_time_s:
-                    tomato_step["time"] = step.until_time_s
-                if step.until_rate_C:
-                    if step.until_rate_C > 0:
-                        tomato_step["limit_current_min"] = str(step.until_rate_C) + "C"
-                    else:
-                        tomato_step["limit_current_max"] = str(abs(step.until_rate_C)) + "D"
+                case ConstantCurrent():
+                    if step.rate_C:
+                        if step.rate_C > 0:
+                            charging = True
+                            tomato_step["current"] = str(step.rate_C) + "C"
+                        else:
+                            charging = False
+                            tomato_step["current"] = str(abs(step.rate_C)) + "D"
+                    elif step.current_mA:
+                        if step.current_mA > 0:
+                            charging = True
+                            tomato_step["current"] = step.current_mA / 1000
+                        else:
+                            charging = False
+                            tomato_step["current"] = step.current_mA / 1000
+                    if step.until_time_s:
+                        tomato_step["time"] = step.until_time_s
+                    if step.until_voltage_V:
+                        if charging:
+                            tomato_step["limit_voltage_max"] = step.until_voltage_V
+                        else:
+                            tomato_step["limit_voltage_min"] = step.until_voltage_V
 
-            elif isinstance(step, Loop):
-                tomato_step["goto"] = step.start_step - 1  # 0-indexed in mpr
-                tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
+                case ConstantVoltage():
+                    tomato_step["voltage"] = step.voltage_V
+                    if step.until_time_s:
+                        tomato_step["time"] = step.until_time_s
+                    if step.until_rate_C:
+                        if step.until_rate_C > 0:
+                            tomato_step["limit_current_min"] = str(step.until_rate_C) + "C"
+                        else:
+                            tomato_step["limit_current_max"] = str(abs(step.until_rate_C)) + "D"
 
-            else:
-                msg = f"to_tomato_mpg2 does not support step type: {step.name}"
-                raise TypeError(msg)
+                case Loop():
+                    tomato_step["goto"] = step.start_step - 1  # 0-indexed in mpr
+                    tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
+
+                case _:
+                    msg = f"to_tomato_mpg2 does not support step type: {step.name}"
+                    raise TypeError(msg)
 
             tomato_dict["method"].append(tomato_step)
 
@@ -612,54 +614,55 @@ class Protocol(BaseModel):
         loops: dict[int, dict] = {}
         for i, step in enumerate(self.method):
             step_str = ""
-            if isinstance(step, ConstantCurrent):
-                if step.rate_C:
-                    if step.rate_C > 0:
-                        step_str += f"Charge at {step.rate_C}C"
-                    else:
-                        step_str += f"Discharge at {abs(step.rate_C)}C"
-                elif step.current_mA:
-                    if step.current_mA > 0:
-                        step_str += f"Charge at {step.current_mA} mA"
-                    else:
-                        step_str += f"Discharge at {abs(step.current_mA)} mA"
-                if step.until_time_s:
-                    if step.until_time_s % 3600 == 0:
-                        step_str += f" for {int(step.until_time_s / 3600)} hours"
-                    elif step.until_time_s % 60 == 0:
-                        step_str += f" for {int(step.until_time_s / 60)} minutes"
-                    else:
-                        step_str += f" for {step.until_time_s} seconds"
-                if step.until_voltage_V:
-                    step_str += f" until {step.until_voltage_V} V"
+            match step:
+                case ConstantCurrent():
+                    if step.rate_C:
+                        if step.rate_C > 0:
+                            step_str += f"Charge at {step.rate_C}C"
+                        else:
+                            step_str += f"Discharge at {abs(step.rate_C)}C"
+                    elif step.current_mA:
+                        if step.current_mA > 0:
+                            step_str += f"Charge at {step.current_mA} mA"
+                        else:
+                            step_str += f"Discharge at {abs(step.current_mA)} mA"
+                    if step.until_time_s:
+                        if step.until_time_s % 3600 == 0:
+                            step_str += f" for {int(step.until_time_s / 3600)} hours"
+                        elif step.until_time_s % 60 == 0:
+                            step_str += f" for {int(step.until_time_s / 60)} minutes"
+                        else:
+                            step_str += f" for {step.until_time_s} seconds"
+                    if step.until_voltage_V:
+                        step_str += f" until {step.until_voltage_V} V"
 
-            elif isinstance(step, ConstantVoltage):
-                step_str += f"Hold at {step.voltage_V} V"
-                conditions = []
-                if step.until_time_s:
-                    if step.until_time_s % 3600 == 0:
-                        step_str += f" for {int(step.until_time_s / 3600)} hours"
-                    elif step.until_time_s % 60 == 0:
-                        step_str += f" for {int(step.until_time_s / 60)} minutes"
-                    else:
-                        conditions.append(f"for {step.until_time_s} seconds")
-                if step.until_rate_C:
-                    conditions.append(f"until {step.until_rate_C}C")
-                if step.until_current_mA:
-                    conditions.append(f" until {step.until_current_mA} mA")
-                if conditions:
-                    step_str += " " + " or ".join(conditions)
+                case ConstantVoltage():
+                    step_str += f"Hold at {step.voltage_V} V"
+                    conditions = []
+                    if step.until_time_s:
+                        if step.until_time_s % 3600 == 0:
+                            step_str += f" for {int(step.until_time_s / 3600)} hours"
+                        elif step.until_time_s % 60 == 0:
+                            step_str += f" for {int(step.until_time_s / 60)} minutes"
+                        else:
+                            conditions.append(f"for {step.until_time_s} seconds")
+                    if step.until_rate_C:
+                        conditions.append(f"until {step.until_rate_C}C")
+                    if step.until_current_mA:
+                        conditions.append(f" until {step.until_current_mA} mA")
+                    if conditions:
+                        step_str += " " + " or ".join(conditions)
 
-            elif isinstance(step, OpenCircuitVoltage):
-                step_str += f"Rest for {step.until_time_s} seconds"
+                case OpenCircuitVoltage():
+                    step_str += f"Rest for {step.until_time_s} seconds"
 
-            elif isinstance(step, Loop):
-                # The string from this will get dropped later
-                loops[i] = {"goto": step.start_step - 1, "n": step.cycle_count, "n_done": 0}
+                case Loop():
+                    # The string from this will get dropped later
+                    loops[i] = {"goto": step.start_step - 1, "n": step.cycle_count, "n_done": 0}
 
-            else:
-                msg = f"to_pybamm_experiment does not support step type: {step.name}"
-                raise TypeError(msg)
+                case _:
+                    msg = f"to_pybamm_experiment does not support step type: {step.name}"
+                    raise TypeError(msg)
 
             pybamm_experiment.append(step_str)
 
@@ -827,187 +830,190 @@ class Protocol(BaseModel):
                     "lim2_seq": str(i + 1),
                 },
             )
-            if isinstance(step, OpenCircuitVoltage):
-                step_dict.update(
-                    {
-                        "ctrl_type": "Rest",
-                        "lim_nb": "1",
-                        "lim1_type": "Time",
-                        "lim1_comp": ">",
-                        "lim1_value": f"{step.until_time_s:.3f}",
-                        "lim1_value_unit": "s",
-                        "rec_nb": "1",
-                        "rec1_type": "Time",
-                        "rec1_value": f"{self.record.time_s or 0:.3f}",
-                        "rec1_value_unit": "s",
-                    },
-                )
-
-            elif isinstance(step, ConstantCurrent):
-                if step.rate_C and self.sample.capacity_mAh:
-                    current_mA = step.rate_C * self.sample.capacity_mAh
-                elif step.current_mA:
-                    current_mA = step.current_mA
-                else:
-                    msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
-                    raise ValueError(msg)
-
-                if abs(current_mA) < 1:
+            match step:
+                case OpenCircuitVoltage():
                     step_dict.update(
                         {
-                            "ctrl_type": "CC",
-                            "ctrl1_val": f"{current_mA:.3f}",
-                            "ctrl1_val_unit": "µA",
-                            "ctrl1_val_vs": "<None>",
-                        },
-                    )
-                else:
-                    step_dict.update(
-                        {
-                            "ctrl_type": "CC",
-                            "ctrl1_val": f"{current_mA:.3f}",
-                            "ctrl1_val_unit": "mA",
-                            "ctrl1_val_vs": "<None>",
+                            "ctrl_type": "Rest",
+                            "lim_nb": "1",
+                            "lim1_type": "Time",
+                            "lim1_comp": ">",
+                            "lim1_value": f"{step.until_time_s:.3f}",
+                            "lim1_value_unit": "s",
+                            "rec_nb": "1",
+                            "rec1_type": "Time",
+                            "rec1_value": f"{self.record.time_s or 0:.3f}",
+                            "rec1_value_unit": "s",
                         },
                     )
 
-                # Add limit details
-                lim_num = 0
-                if step.until_time_s:
-                    lim_num += 1
-                    step_dict.update(
-                        {
-                            f"lim{lim_num}_type": "Time",
-                            f"lim{lim_num}_comp": ">",
-                            f"lim{lim_num}_value": f"{step.until_time_s:.3f}",
-                            f"lim{lim_num}_value_unit": "s",
-                        },
-                    )
-                if step.until_voltage_V:
-                    lim_num += 1
-                    comp = ">" if current_mA > 0 else "<"
-                    step_dict.update(
-                        {
-                            f"lim{lim_num}_type": "Ewe",
-                            f"lim{lim_num}_comp": comp,
-                            f"lim{lim_num}_value": f"{step.until_voltage_V:.3f}",
-                            f"lim{lim_num}_value_unit": "V",
-                        },
-                    )
-                step_dict.update(
-                    {
-                        "lim_nb": str(lim_num),
-                    },
-                )
+                case ConstantCurrent():
+                    if step.rate_C and self.sample.capacity_mAh:
+                        current_mA = step.rate_C * self.sample.capacity_mAh
+                    elif step.current_mA:
+                        current_mA = step.current_mA
+                    else:
+                        msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
+                        raise ValueError(msg)
 
-                # Add record details
-                rec_num = 0
-                if self.record.time_s:
-                    rec_num += 1
-                    step_dict.update(
-                        {
-                            f"rec{rec_num}_type": "Time",
-                            f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
-                            f"rec{rec_num}_value_unit": "s",
-                        },
-                    )
-                if self.record.voltage_V:
-                    rec_num += 1
-                    step_dict.update(
-                        {
-                            f"rec{rec_num}_type": "Ewe",
-                            f"rec{rec_num}_value": f"{self.record.voltage_V:.3f}",
-                            f"rec{rec_num}_value_unit": "V",
-                        },
-                    )
-                step_dict.update(
-                    {
-                        "rec_nb": str(rec_num),
-                    },
-                )
+                    if abs(current_mA) < 1:
+                        step_dict.update(
+                            {
+                                "ctrl_type": "CC",
+                                "ctrl1_val": f"{current_mA:.3f}",
+                                "ctrl1_val_unit": "µA",
+                                "ctrl1_val_vs": "<None>",
+                            },
+                        )
+                    else:
+                        step_dict.update(
+                            {
+                                "ctrl_type": "CC",
+                                "ctrl1_val": f"{current_mA:.3f}",
+                                "ctrl1_val_unit": "mA",
+                                "ctrl1_val_vs": "<None>",
+                            },
+                        )
 
-            elif isinstance(step, ConstantVoltage):
-                step_dict.update(
-                    {
-                        "ctrl_type": "CV",
-                        "ctrl1_val": f"{step.voltage_V:.3f}",
-                        "ctrl1_val_unit": "V",
-                        "ctrl1_val_vs": "Ref",
-                    },
-                )
-
-                # Add limit details
-                lim_num = 0
-                if step.until_time_s:
-                    lim_num += 1
+                    # Add limit details
+                    lim_num = 0
+                    if step.until_time_s:
+                        lim_num += 1
+                        step_dict.update(
+                            {
+                                f"lim{lim_num}_type": "Time",
+                                f"lim{lim_num}_comp": ">",
+                                f"lim{lim_num}_value": f"{step.until_time_s:.3f}",
+                                f"lim{lim_num}_value_unit": "s",
+                            },
+                        )
+                    if step.until_voltage_V:
+                        lim_num += 1
+                        comp = ">" if current_mA > 0 else "<"
+                        step_dict.update(
+                            {
+                                f"lim{lim_num}_type": "Ewe",
+                                f"lim{lim_num}_comp": comp,
+                                f"lim{lim_num}_value": f"{step.until_voltage_V:.3f}",
+                                f"lim{lim_num}_value_unit": "V",
+                            },
+                        )
                     step_dict.update(
                         {
-                            f"lim{lim_num}_type": "Time",
-                            f"lim{lim_num}_comp": ">",
-                            f"lim{lim_num}_value": f"{step.until_time_s:.3f}",
-                            f"lim{lim_num}_value_unit": "s",
+                            "lim_nb": str(lim_num),
                         },
                     )
-                if step.until_rate_C and self.sample.capacity_mAh:
-                    until_mA = step.until_rate_C * self.sample.capacity_mAh
-                elif step.until_current_mA:
-                    until_mA = step.until_current_mA
-                else:
-                    until_mA = None
-                if until_mA:
-                    lim_num += 1
+
+                    # Add record details
+                    rec_num = 0
+                    if self.record.time_s:
+                        rec_num += 1
+                        step_dict.update(
+                            {
+                                f"rec{rec_num}_type": "Time",
+                                f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
+                                f"rec{rec_num}_value_unit": "s",
+                            },
+                        )
+                    if self.record.voltage_V:
+                        rec_num += 1
+                        step_dict.update(
+                            {
+                                f"rec{rec_num}_type": "Ewe",
+                                f"rec{rec_num}_value": f"{self.record.voltage_V:.3f}",
+                                f"rec{rec_num}_value_unit": "V",
+                            },
+                        )
                     step_dict.update(
                         {
-                            f"lim{lim_num}_type": "|I|",
-                            f"lim{lim_num}_comp": "<",
-                            f"lim{lim_num}_value": f"{abs(until_mA):.3f}",
-                            f"lim{lim_num}_value_unit": "mA",
+                            "rec_nb": str(rec_num),
                         },
                     )
-                step_dict.update(
-                    {
-                        "lim_nb": str(lim_num),
-                    },
-                )
 
-                # Add record details
-                rec_num = 0
-                if self.record.time_s:
-                    rec_num += 1
+                case ConstantVoltage():
                     step_dict.update(
                         {
-                            f"rec{rec_num}_type": "Time",
-                            f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
-                            f"rec{rec_num}_value_unit": "s",
+                            "ctrl_type": "CV",
+                            "ctrl1_val": f"{step.voltage_V:.3f}",
+                            "ctrl1_val_unit": "V",
+                            "ctrl1_val_vs": "Ref",
                         },
                     )
-                if self.record.current_mA:
-                    rec_num += 1
+
+                    # Add limit details
+                    lim_num = 0
+                    if step.until_time_s:
+                        lim_num += 1
+                        step_dict.update(
+                            {
+                                f"lim{lim_num}_type": "Time",
+                                f"lim{lim_num}_comp": ">",
+                                f"lim{lim_num}_value": f"{step.until_time_s:.3f}",
+                                f"lim{lim_num}_value_unit": "s",
+                            },
+                        )
+                    if step.until_rate_C and self.sample.capacity_mAh:
+                        until_mA = step.until_rate_C * self.sample.capacity_mAh
+                    elif step.until_current_mA:
+                        until_mA = step.until_current_mA
+                    else:
+                        until_mA = None
+                    if until_mA:
+                        lim_num += 1
+                        step_dict.update(
+                            {
+                                f"lim{lim_num}_type": "|I|",
+                                f"lim{lim_num}_comp": "<",
+                                f"lim{lim_num}_value": f"{abs(until_mA):.3f}",
+                                f"lim{lim_num}_value_unit": "mA",
+                            },
+                        )
                     step_dict.update(
                         {
-                            f"rec{rec_num}_type": "I",
-                            f"rec{rec_num}_value": f"{self.record.current_mA:.3f}",
-                            f"rec{rec_num}_value_unit": "mA",
+                            "lim_nb": str(lim_num),
                         },
                     )
-                step_dict.update(
-                    {
-                        "rec_nb": str(rec_num),
-                    },
-                )
 
-            elif isinstance(step, Loop):
-                step_dict.update(
-                    {
-                        "ctrl_type": "Loop",
-                        "ctrl_seq": str(step.start_step - 1),  # 0-indexed here
-                        "ctrl_repeat": str(step.cycle_count - 1),  # cycles is one less than n_gotos
-                    },
-                )
+                    # Add record details
+                    rec_num = 0
+                    if self.record.time_s:
+                        rec_num += 1
+                        step_dict.update(
+                            {
+                                f"rec{rec_num}_type": "Time",
+                                f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
+                                f"rec{rec_num}_value_unit": "s",
+                            },
+                        )
+                    if self.record.current_mA:
+                        rec_num += 1
+                        step_dict.update(
+                            {
+                                f"rec{rec_num}_type": "I",
+                                f"rec{rec_num}_value": f"{self.record.current_mA:.3f}",
+                                f"rec{rec_num}_value_unit": "mA",
+                            },
+                        )
+                    step_dict.update(
+                        {
+                            "rec_nb": str(rec_num),
+                        },
+                    )
 
-            else:
-                msg = f"to_biologic_mps() does not support step type: {step.name}"
-                raise NotImplementedError(msg)
+                case Loop():
+                    step_dict.update(
+                        {
+                            "ctrl_type": "Loop",
+                            "ctrl_seq": str(step.start_step - 1),  # 0-indexed here
+                            "ctrl_repeat": str(
+                                step.cycle_count - 1
+                            ),  # cycles is one less than n_gotos
+                        },
+                    )
+
+                case _:
+                    msg = f"to_biologic_mps() does not support step type: {step.name}"
+                    raise NotImplementedError(msg)
 
             step_dicts.append(step_dict)
 
