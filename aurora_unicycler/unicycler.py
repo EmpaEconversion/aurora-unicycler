@@ -49,29 +49,40 @@ import uuid
 import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 from datetime import datetime
-from decimal import Decimal, getcontext
 from pathlib import Path
 from typing import Annotated
 from xml.dom import minidom
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import Self
 
 from aurora_unicycler.version import __version__
 
-getcontext().prec = 10
 
+def coerce_c_rate(v: float | str) -> float:
+    """Allow C rates to be defined as fraction strings.
 
-def coerce_to_decimal(v: Decimal | float | str) -> Decimal | None:
-    """Coerces input (int, float, str) to Decimal."""
-    if v is None or v == "":
-        return None
-    if isinstance(v, float):
-        return Decimal(str(v))  # Avoids float precision issues
-    return Decimal(v)
-
-
-PreciseDecimal = Annotated[Decimal | float | str, BeforeValidator(coerce_to_decimal)]
+    e.g. "1/5" -> 0.2, "C/3" -> 0.333333, "D/2" -> -0.5.
+    """
+    try:
+        return float(v)
+    except ValueError:
+        # If it's a string, check if it looks like a fraction
+        if isinstance(v, str):
+            parts = v.split("/")
+            if len(parts) == 2:
+                if "C" in parts[0]:
+                    nom = float(parts[0].replace("C", ""))
+                    if nom == "":
+                        nom = 1.0
+                elif "D" in parts[0]:
+                    nom = -float(parts[0].replace("D", ""))
+                else:
+                    nom = float(parts[0])
+                denom = float(parts[1])
+                return nom / denom
+    msg = f"Invalid rate_C value: {v}"
+    raise ValueError(msg)
 
 
 class UnicyclerParams(BaseModel):
@@ -85,7 +96,7 @@ class SampleParams(BaseModel):
     """Sample parameters."""
 
     name: str = Field(default="$NAME")
-    capacity_mAh: PreciseDecimal | None = Field(gt=0, default=None)
+    capacity_mAh: float | None = Field(gt=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -93,9 +104,9 @@ class SampleParams(BaseModel):
 class RecordParams(BaseModel):
     """Recording parameters."""
 
-    current_mA: PreciseDecimal | None = None
-    voltage_V: PreciseDecimal | None = None
-    time_s: PreciseDecimal = Field(gt=0)
+    current_mA: float | None = None
+    voltage_V: float | None = None
+    time_s: float = Field(gt=0)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -103,12 +114,12 @@ class RecordParams(BaseModel):
 class SafetyParams(BaseModel):
     """Safety parameters, i.e. limits before cancelling measurement."""
 
-    max_voltage_V: PreciseDecimal | None = None
-    min_voltage_V: PreciseDecimal | None = None
-    max_current_mA: PreciseDecimal | None = None
-    min_current_mA: PreciseDecimal | None = None
-    max_capacity_mAh: PreciseDecimal | None = None
-    delay_s: PreciseDecimal = Field(ge=0, default=Decimal(0))
+    max_voltage_V: float | None = None
+    min_voltage_V: float | None = None
+    max_current_mA: float | None = None
+    min_current_mA: float | None = None
+    max_capacity_mAh: float | None = None
+    delay_s: float = Field(ge=0, default=0)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -125,17 +136,22 @@ class OpenCircuitVoltage(BaseTechnique):
     """Open circuit voltage technique."""
 
     name: str = Field(default="open_circuit_voltage", frozen=True)
-    until_time_s: PreciseDecimal = Field(gt=0)
+    until_time_s: float = Field(gt=0)
 
 
 class ConstantCurrent(BaseTechnique):
     """Constant current technique."""
 
     name: str = Field(default="constant_current", frozen=True)
-    rate_C: PreciseDecimal | None = None
-    current_mA: PreciseDecimal | None = None
-    until_time_s: PreciseDecimal | None = None
-    until_voltage_V: PreciseDecimal | None = None
+    rate_C: float | None = None
+    current_mA: float | None = None
+    until_time_s: float | None = None
+    until_voltage_V: float | None = None
+
+    @field_validator("rate_C", mode="before")
+    @classmethod
+    def parse_c_rate(cls, v: float | str) -> float:  # noqa: D102
+        return coerce_c_rate(v)
 
     @model_validator(mode="after")
     def ensure_rate_or_current(self) -> Self:
@@ -162,10 +178,15 @@ class ConstantVoltage(BaseTechnique):
     """Constant voltage technique."""
 
     name: str = Field(default="constant_voltage", frozen=True)
-    voltage_V: PreciseDecimal
-    until_time_s: PreciseDecimal | None = None
-    until_rate_C: PreciseDecimal | None = None
-    until_current_mA: PreciseDecimal | None = None
+    voltage_V: float
+    until_time_s: float | None = None
+    until_rate_C: float | None = None
+    until_current_mA: float | None = None
+
+    @field_validator("until_rate_C", mode="before")
+    @classmethod
+    def parse_c_rate(cls, v: float | str) -> float:  # noqa: D102
+        return coerce_c_rate(v)
 
     @model_validator(mode="after")
     def check_stop_condition(self) -> Self:
@@ -183,10 +204,10 @@ class ImpedanceSpectroscopy(BaseTechnique):
     """Electrochemical Impedance Spectroscopy (EIS) technique."""
 
     name: str = Field(default="impedance_spectroscopy", frozen=True)
-    amplitude_V: PreciseDecimal | None = None
-    amplitude_mA: PreciseDecimal | None = None
-    start_frequency_Hz: PreciseDecimal
-    end_frequency_Hz: PreciseDecimal
+    amplitude_V: float | None = None
+    amplitude_mA: float | None = None
+    start_frequency_Hz: float
+    end_frequency_Hz: float
     points_per_decade: int = Field(gt=0, default=10)
     measures_per_frequency: int = Field(gt=0, default=1)
     drift_correction: bool = Field(default=False, description="Apply drift correction")
@@ -345,14 +366,14 @@ class Protocol(BaseModel):
         self,
         save_path: Path | None = None,
         sample_name: str | None = None,
-        capacity_mAh: Decimal | float | None = None,
+        capacity_mAh: float | None = None,
     ) -> str:
         """Convert the protocol to Neware XML format."""
         # Allow overwriting name and capacity
         if sample_name:
             self.sample.name = sample_name
         if capacity_mAh:
-            self.sample.capacity_mAh = Decimal(capacity_mAh)
+            self.sample.capacity_mAh = capacity_mAh
 
         # Make sure sample name is set
         if not self.sample.name or self.sample.name == "$NAME":
@@ -518,14 +539,14 @@ class Protocol(BaseModel):
         save_path: Path | None = None,
         tomato_output: Path = Path("C:/tomato_data/"),
         sample_name: str | None = None,
-        capacity_mAh: Decimal | float | None = None,
+        capacity_mAh: float | None = None,
     ) -> str:
         """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format."""
         # Allow overwriting name and capacity
         if sample_name:
             self.sample.name = sample_name
         if capacity_mAh:
-            self.sample.capacity_mAh = Decimal(capacity_mAh)
+            self.sample.capacity_mAh = capacity_mAh
 
         # Make sure sample name is set
         if not self.sample.name or self.sample.name == "$NAME":
@@ -619,18 +640,11 @@ class Protocol(BaseModel):
 
             tomato_dict["method"].append(tomato_step)
 
-        def _json_serialize(obj: object) -> float:
-            """Serialize Decimal objects."""
-            if isinstance(obj, Decimal):
-                return float(obj)
-            msg = f"Type {type(obj)} not serializable"
-            raise TypeError(msg)
-
         if save_path:
             save_path.parent.mkdir(parents=True, exist_ok=True)
             with save_path.open("w", encoding="utf-8") as f:
-                json.dump(tomato_dict, f, indent=4, default=_json_serialize)
-        return json.dumps(tomato_dict, indent=4, default=_json_serialize)
+                json.dump(tomato_dict, f, indent=4)
+        return json.dumps(tomato_dict, indent=4)
 
     def to_pybamm_experiment(self) -> list[str]:
         """Convert protocol to PyBaMM experiment format."""
@@ -724,14 +738,14 @@ class Protocol(BaseModel):
         self,
         save_path: Path | None = None,
         sample_name: str | None = None,
-        capacity_mAh: Decimal | float | None = None,
+        capacity_mAh: float | None = None,
     ) -> str:
         """Make one giant technique for the entire protocol."""
         # Allow overwriting name and capacity
         if sample_name:
             self.sample.name = sample_name
         if capacity_mAh:
-            self.sample.capacity_mAh = Decimal(capacity_mAh)
+            self.sample.capacity_mAh = capacity_mAh
 
         # Make sure sample name is set
         if not self.sample.name or self.sample.name == "$NAME":
@@ -763,7 +777,8 @@ class Protocol(BaseModel):
             "Modulo Bat",
         ]
 
-        # Find the maximum current to determine the I range - it is not straightforward to switch this during a run
+        # Find the maximum current to determine the I range
+        # It is not straightforward to switch this during a run
         # so we use the range that covers all currents
         currents_mA = [
             float(s.rate_C) * float(self.sample.capacity_mAh)
@@ -1042,7 +1057,7 @@ class Protocol(BaseModel):
                         else:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e6:.3f}"})
                             step_dict.update({"ctrl1_val_unit": "µV"})
-                    else:
+                    elif step.amplitude_mA:
                         step_dict.update({"ctrl_type": "GEIS"})
                         if step.amplitude_mA >= 1000:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_mA / 1000:.3f}"})
@@ -1053,6 +1068,9 @@ class Protocol(BaseModel):
                         else:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_mA * 1000:.3f}"})
                             step_dict.update({"ctrl1_val_unit": "µA"})
+                    else:
+                        msg = "Either amplitude_V or amplitude_mA must be set."
+                        raise ValueError(msg)
                     for freq, ctrl in ((step.start_frequency_Hz, 2), (step.end_frequency_Hz, 3)):
                         if freq >= 1e3:
                             step_dict.update({f"ctrl{ctrl}_val": f"{freq / 1e3:.3f}"})
@@ -1088,7 +1106,8 @@ class Protocol(BaseModel):
 
             step_dicts.append(step_dict)
 
-        # Transform list of dicts into list of strings, each row is one key and all values of each step
+        # Transform list of dicts into list of strings
+        # Each row is one key and all values of each step
         # All elements must be 20 characters wide
         rows = []
         for row_header in default_step:
@@ -1137,9 +1156,12 @@ class Protocol(BaseModel):
         """Convert a Protocol instance to a dictionary."""
         return self.model_dump()
 
-    def to_json(self, json_file: str | Path) -> None:
-        """Save a Protocol as a JSON file."""
-        json_file = Path(json_file)
-        json_file.parent.mkdir(parents=True, exist_ok=True)
-        with json_file.open("w", encoding="utf-8") as f:
-            f.write(self.model_dump_json())
+    def to_json(self, json_file: str | Path | None = None, indent: int = 4) -> str:
+        """Dump model as JSON string, optionally save as a JSON file."""
+        json_string = self.model_dump_json(indent=indent)
+        if json_file:
+            json_file = Path(json_file)
+            json_file.parent.mkdir(parents=True, exist_ok=True)
+            with json_file.open("w", encoding="utf-8") as f:
+                f.write(json_string)
+        return json_string
