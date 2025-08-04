@@ -21,6 +21,7 @@ from aurora_unicycler.unicycler import (
     SafetyParams,
     SampleParams,
     Tag,
+    coerce_c_rate,
 )
 
 
@@ -507,3 +508,33 @@ class TestUnicycler(TestCase):
             "0                   2                   2                   "
         )
         assert lines[ctrl_seq_start] == test_str, "ctrl_seq line does not match expected"
+
+    def test_coerce_c_rate(self) -> None:
+        """Test the coerce_c_rate function."""
+        assert coerce_c_rate("0.05") == 0.05
+        assert coerce_c_rate("  0.05  ") == 0.05
+        assert coerce_c_rate("1/20") == 0.05
+        assert coerce_c_rate("C/5") == 0.2
+        assert coerce_c_rate("D/5") == -0.2
+        assert coerce_c_rate("3D/3") == -1.0
+        assert coerce_c_rate("C5/25") == 0.2
+        assert coerce_c_rate("2e-1") == 0.2
+        assert coerce_c_rate("1.23e3 C / 1.23e4") == 0.1
+        assert coerce_c_rate(" C 3   /    1 0 ") == 0.3
+        assert coerce_c_rate(0.1) == 0.1
+        assert coerce_c_rate(1) == 1.0
+        assert coerce_c_rate(Decimal("0.1")) == 0.1
+        with pytest.raises(ValueError):
+            coerce_c_rate("invalid")
+        with pytest.raises(ValueError):
+            coerce_c_rate("1/2/3")
+        with pytest.raises(ValueError):
+            coerce_c_rate("1\5")
+        with pytest.raises(ValueError):
+            coerce_c_rate(" 1 . 0 ")
+        with pytest.raises(ValueError):
+            coerce_c_rate("5C/2D")
+        with pytest.raises(ValueError):
+            coerce_c_rate("3C/2C")
+        with pytest.raises(ZeroDivisionError):
+            coerce_c_rate("C/0")

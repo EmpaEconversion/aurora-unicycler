@@ -69,14 +69,19 @@ def coerce_c_rate(v: float | str) -> float:
     except ValueError:
         # If it's a string, check if it looks like a fraction
         if isinstance(v, str):
+            v = v.replace(" ", "")
             parts = v.split("/")
             if len(parts) == 2:
+                # count Cs and Ds in string
+                if parts[0].count("C") + parts[0].count("D") > 1:
+                    msg = f"Invalid C-rate format: {v}"
+                    raise ValueError(msg)  # noqa: B904
                 if "C" in parts[0]:
-                    nom = float(parts[0].replace("C", ""))
-                    if nom == "":
-                        nom = 1.0
+                    parts[0] = parts[0].replace("C", "").strip()
+                    nom = 1.0 if parts[0] == "" else float(parts[0])
                 elif "D" in parts[0]:
-                    nom = -float(parts[0].replace("D", ""))
+                    parts[0] = parts[0].replace("D", "").strip()
+                    nom = -float(parts[0]) if parts[0] else -1.0
                 else:
                     nom = float(parts[0])
                 denom = float(parts[1])
