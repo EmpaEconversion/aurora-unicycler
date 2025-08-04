@@ -538,3 +538,34 @@ class TestUnicycler(TestCase):
             coerce_c_rate("3C/2C")
         with pytest.raises(ZeroDivisionError):
             coerce_c_rate("C/0")
+
+    def test_coerce_c_rate_in_protocol(self) -> None:
+        """Test the coerce_c_rate function in a protocol context."""
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                ConstantCurrent(until_time_s=1, rate_C="1/5"),
+                ConstantCurrent(until_time_s=1, rate_C=0.2),
+                ConstantCurrent(until_time_s=1, rate_C="C / 5"),
+                ConstantCurrent(until_time_s=1, rate_C="0.2"),
+                ConstantCurrent(until_time_s=1, rate_C=1 / 5),
+                ConstantCurrent(until_time_s=1, rate_C="-0.2"),
+                ConstantCurrent(until_time_s=1, rate_C="D/5"),
+                ConstantVoltage(voltage_V=4.2, until_rate_C="C/5"),
+                ConstantVoltage(voltage_V=4.2, until_rate_C="0.2"),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=1 / 5),
+                ConstantVoltage(voltage_V=4.2, until_rate_C="C/5"),
+            ],
+        )
+        assert protocol.method[0].rate_C == 0.2
+        assert protocol.method[1].rate_C == 0.2
+        assert protocol.method[2].rate_C == 0.2
+        assert protocol.method[3].rate_C == 0.2
+        assert protocol.method[4].rate_C == 0.2
+        assert protocol.method[5].rate_C == -0.2
+        assert protocol.method[6].rate_C == -0.2
+        assert protocol.method[7].until_rate_C == 0.2
+        assert protocol.method[8].until_rate_C == 0.2
+        assert protocol.method[9].until_rate_C == 0.2
+        assert protocol.method[10].until_rate_C == 0.2
