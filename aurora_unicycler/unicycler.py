@@ -911,7 +911,7 @@ class Protocol(BaseModel):
                             {
                                 "ctrl_type": "CC",
                                 "ctrl1_val": f"{current_mA:.3f}",
-                                "ctrl1_val_unit": "µA",
+                                "ctrl1_val_unit": "uA",
                                 "ctrl1_val_vs": "<None>",
                             },
                         )
@@ -1061,7 +1061,7 @@ class Protocol(BaseModel):
                             step_dict.update({"ctrl1_val_unit": "mV"})
                         else:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e6:.3f}"})
-                            step_dict.update({"ctrl1_val_unit": "µV"})
+                            step_dict.update({"ctrl1_val_unit": "uV"})
                     elif step.amplitude_mA:
                         step_dict.update({"ctrl_type": "GEIS"})
                         if step.amplitude_mA >= 1000:
@@ -1072,7 +1072,7 @@ class Protocol(BaseModel):
                             step_dict.update({"ctrl1_val_unit": "mA"})
                         else:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_mA * 1000:.3f}"})
-                            step_dict.update({"ctrl1_val_unit": "µA"})
+                            step_dict.update({"ctrl1_val_unit": "uA"})
                     else:
                         msg = "Either amplitude_V or amplitude_mA must be set."
                         raise ValueError(msg)
