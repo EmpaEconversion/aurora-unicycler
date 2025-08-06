@@ -782,29 +782,6 @@ class Protocol(BaseModel):
             "Modulo Bat",
         ]
 
-        # Find the maximum current to determine the I range
-        # It is not straightforward to switch this during a run
-        # so we use the range that covers all currents
-        currents_mA = []
-        for s in self.method:
-            if isinstance(s, ConstantCurrent):
-                if s.rate_C and self.sample.capacity_mAh:
-                    currents_mA.append(float(s.rate_C) * float(self.sample.capacity_mAh))
-                elif s.current_mA:
-                    currents_mA.append(float(s.current_mA))
-            elif isinstance(s, ImpedanceSpectroscopy) and s.amplitude_mA:
-                currents_mA.append(s.amplitude_mA)
-        max_current_mA = max(currents_mA) if currents_mA else 10  # Default to 10 mA
-        if max_current_mA <= 1:
-            I_range = "1 mA"
-        elif max_current_mA <= 10:
-            I_range = "10 mA"
-        elif max_current_mA <= 100:
-            I_range = "100 mA"
-        else:
-            msg = "Not allowed to apply more than 100 mA"
-            raise ValueError(msg)
-
         default_step = {
             "Ns": "",
             "ctrl_type": "",
@@ -861,12 +838,22 @@ class Protocol(BaseModel):
             "rec2_value_unit": "",
             "E range min (V)": "0.000",
             "E range max (V)": "5.000",
-            "I Range": I_range,
+            "I Range": "Auto",
             "I Range min": "Unset",
             "I Range max": "Unset",
             "I Range init": "Unset",
-            "auto rest": "0",
+            "auto rest": "1",
             "Bandwidth": "5",
+        }
+
+        # Use fixed I range for CC and GEIS steps, Auto otherwise
+        # There is no Auto option for CC or GEIS
+        I_ranges_mA = {
+            0.01: "10 µA",
+            0.1: "100 µA",
+            1: "1 mA",
+            10: "10 mA",
+            100: "100 mA",
         }
 
         # Make a list of dicts, one for each step
@@ -906,11 +893,11 @@ class Protocol(BaseModel):
                         msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
                         raise ValueError(msg)
 
-                    if abs(current_mA) < 1:
+                    if abs(current_mA) <= 1:
                         step_dict.update(
                             {
                                 "ctrl_type": "CC",
-                                "ctrl1_val": f"{current_mA:.3f}",
+                                "ctrl1_val": f"{current_mA * 1e3:.3f}",
                                 "ctrl1_val_unit": "uA",
                                 "ctrl1_val_vs": "<None>",
                             },
@@ -924,6 +911,13 @@ class Protocol(BaseModel):
                                 "ctrl1_val_vs": "<None>",
                             },
                         )
+                    for val, range_str in I_ranges_mA.items():
+                        if abs(current_mA) <= val:
+                            step_dict.update({"I Range": range_str})
+                            break
+                    else:
+                        msg = f"I range not supported for {current_mA} mA"
+                        raise ValueError(msg)
 
                     # Add limit details
                     lim_num = 0
@@ -1062,6 +1056,7 @@ class Protocol(BaseModel):
                         else:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e6:.3f}"})
                             step_dict.update({"ctrl1_val_unit": "uV"})
+
                     elif step.amplitude_mA:
                         step_dict.update({"ctrl_type": "GEIS"})
                         if step.amplitude_mA >= 1000:
@@ -1073,9 +1068,20 @@ class Protocol(BaseModel):
                         else:
                             step_dict.update({"ctrl1_val": f"{step.amplitude_mA * 1000:.3f}"})
                             step_dict.update({"ctrl1_val_unit": "uA"})
+
+                        for val, range_str in I_ranges_mA.items():
+                            # GEIS I range behaves differently to CC, 1 mA range means 0.5 mA max amplitude
+                            if abs(step.amplitude_mA) * 2 <= val:
+                                step_dict.update({"I Range": range_str})
+                                break
+                        else:
+                            msg = f"I range not supported for {step.amplitude_mA} mA"
+                            raise ValueError(msg)
+
                     else:
                         msg = "Either amplitude_V or amplitude_mA must be set."
                         raise ValueError(msg)
+
                     for freq, ctrl in ((step.start_frequency_Hz, 2), (step.end_frequency_Hz, 3)):
                         if freq >= 1e3:
                             step_dict.update({f"ctrl{ctrl}_val": f"{freq / 1e3:.3f}"})
