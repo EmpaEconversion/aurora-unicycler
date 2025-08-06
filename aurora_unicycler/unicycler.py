@@ -785,21 +785,21 @@ class Protocol(BaseModel):
         # Find the maximum current to determine the I range
         # It is not straightforward to switch this during a run
         # so we use the range that covers all currents
-        currents_mA = [
-            float(s.rate_C) * float(self.sample.capacity_mAh)
-            if s.rate_C and self.sample.capacity_mAh
-            else float(s.current_mA)
-            if s.current_mA
-            else 0
-            for s in self.method
-            if isinstance(s, (ConstantCurrent))
-        ]
-        max_current_mA = max(currents_mA) if currents_mA else 0
-        if max_current_mA < 1:
+        currents_mA = []
+        for s in self.method:
+            if isinstance(s, ConstantCurrent):
+                if s.rate_C and self.sample.capacity_mAh:
+                    currents_mA.append(float(s.rate_C) * float(self.sample.capacity_mAh))
+                elif s.current_mA:
+                    currents_mA.append(float(s.current_mA))
+            elif isinstance(s, ImpedanceSpectroscopy) and s.amplitude_mA:
+                currents_mA.append(s.amplitude_mA)
+        max_current_mA = max(currents_mA) if currents_mA else 10  # Default to 10 mA
+        if max_current_mA <= 1:
             I_range = "1 mA"
-        elif max_current_mA < 10:
+        elif max_current_mA <= 10:
             I_range = "10 mA"
-        elif max_current_mA < 100:
+        elif max_current_mA <= 100:
             I_range = "100 mA"
         else:
             msg = "Not allowed to apply more than 100 mA"
