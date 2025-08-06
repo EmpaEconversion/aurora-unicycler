@@ -3,6 +3,7 @@
 from .unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
     Protocol,
@@ -16,6 +17,7 @@ from .version import __version__
 __all__ = [
     "ConstantCurrent",
     "ConstantVoltage",
+    "ImpedanceSpectroscopy",
     "Loop",
     "OpenCircuitVoltage",
     "Protocol",
