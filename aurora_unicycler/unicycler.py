@@ -893,7 +893,7 @@ class Protocol(BaseModel):
                         msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
                         raise ValueError(msg)
 
-                    if abs(current_mA) <= 1:
+                    if abs(current_mA) < 1:
                         step_dict.update(
                             {
                                 "ctrl_type": "CC",

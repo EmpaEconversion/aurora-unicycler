@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from decimal import Decimal
 from pathlib import Path
 from unittest import TestCase
@@ -14,6 +15,7 @@ from pydantic import ValidationError
 from aurora_unicycler.unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
     Protocol,
@@ -569,3 +571,53 @@ class TestUnicycler(TestCase):
         assert protocol.method[8].until_rate_C == 0.2
         assert protocol.method[9].until_rate_C == 0.2
         assert protocol.method[10].until_rate_C == 0.2
+
+    def test_biologic_mps(self) -> None:
+        """Test filling in mps details."""
+        kw1 = {"until_time_s": 10.0}
+        kw2 = {"start_frequency_Hz": 1e3, "end_frequency_Hz": 1}
+        my_protocol = Protocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(**kw1, current_mA=0.001),
+                ConstantCurrent(**kw1, current_mA=0.01),
+                ConstantCurrent(**kw1, current_mA=0.011),
+                ConstantCurrent(**kw1, current_mA=0.1),
+                ConstantCurrent(**kw1, current_mA=0.11),
+                ConstantCurrent(**kw1, current_mA=1.0),
+                ConstantCurrent(**kw1, current_mA=1.1),
+                ConstantCurrent(**kw1, current_mA=10.0),
+                ConstantCurrent(**kw1, current_mA=10.1),
+                ConstantCurrent(**kw1, current_mA=100),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.001),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.005),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.006),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.05),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.06),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.5),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=0.6),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=5),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=6),
+                ImpedanceSpectroscopy(**kw2, amplitude_mA=50),
+            ],
+        )
+        biologic_mps = my_protocol.to_biologic_mps(sample_name="test", capacity_mAh=1)
+
+        # Check I range
+        line = next(a for a in biologic_mps.splitlines() if a.startswith("I Range"))
+        ranges = re.split(r"\s{2,}", line.strip())
+        expected = ["10 µA", "100 µA", "1 mA", "10 mA", "100 mA"]
+        expected = [x for x in expected for _ in (0, 1)] * 2  # a b c -> a a b b c c a a b b c c
+        assert ranges[1:] == expected
+
+        # Check applied current uses sensible units
+        line = next(a for a in biologic_mps.splitlines() if a.startswith("ctrl1_val"))
+        vals = [float(x) for x in line.strip().split()[1:]]
+        assert vals[:10] == [1, 10, 11, 100, 110, 1.0, 1.1, 10.0, 10.1, 100]
+        line = next(a for a in biologic_mps.splitlines() if a.startswith("ctrl1_val_unit"))
+        units = line.strip().split()[1:]
+        assert units[:10] == ["uA", "uA", "uA", "uA", "uA", "mA", "mA", "mA", "mA", "mA"]
+        units_to_mA = {"uA": 1e-3, "mA": 1}
+        vals = [v * units_to_mA[u] for v, u in zip(vals, units, strict=True)]
+        print(vals)
+        assert vals[:10] == [0.001, 0.01, 0.011, 0.1, 0.11, 1.0, 1.1, 10.0, 10.1, 100]
