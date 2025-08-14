@@ -26,8 +26,8 @@ my_protocol = Protocol.from_dict({
     "record": {"time_s": 10},
     "safety": {"max_voltage_V": 4.5, "delay_s": 1},
     "method": [
-        {"name": "tag", "tag": "longterm"},
-        {"name": "open_circuit_voltage", "until_time_s": 600},
+        {"step": "tag", "tag": "longterm"},
+        {"step": "open_circuit_voltage", "until_time_s": 600},
         ...
     ],
 })
@@ -129,25 +129,43 @@ class SafetyParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class BaseTechnique(BaseModel):
-    """Base class for all techniques."""
+class Step(BaseModel):
+    """Base class for all technique steps."""
 
     # optional id field
     id: str | None = Field(default=None, description="Optional ID for the technique step")
     model_config = ConfigDict(extra="forbid")
+    step: str
+
+    @classmethod
+    def parse_obj(cls, obj: dict) -> Self:
+        """Allow users to create step instances from a dictionary."""
+        step_map = {
+            "open_circuit_voltage": OpenCircuitVoltage,
+            "constant_current": ConstantCurrent,
+            "constant_voltage": ConstantVoltage,
+            "impedance_spectroscopy": ImpedanceSpectroscopy,
+            "loop": Loop,
+            "tag": Tag,
+        }
+        step_type = obj.get("step")
+        if step_type not in step_map:
+            msg = f"Unknown step type: {step_type}"
+            raise ValueError(msg)
+        return step_map[step_type](**obj)
 
 
-class OpenCircuitVoltage(BaseTechnique):
+class OpenCircuitVoltage(Step):
     """Open circuit voltage technique."""
 
-    name: str = Field(default="open_circuit_voltage", frozen=True)
+    step: str = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: float = Field(gt=0)
 
 
-class ConstantCurrent(BaseTechnique):
+class ConstantCurrent(Step):
     """Constant current technique."""
 
-    name: str = Field(default="constant_current", frozen=True)
+    step: str = Field(default="constant_current", frozen=True)
     rate_C: float | None = None
     current_mA: float | None = None
     until_time_s: float | None = None
@@ -179,10 +197,10 @@ class ConstantCurrent(BaseTechnique):
         return self
 
 
-class ConstantVoltage(BaseTechnique):
+class ConstantVoltage(Step):
     """Constant voltage technique."""
 
-    name: str = Field(default="constant_voltage", frozen=True)
+    step: str = Field(default="constant_voltage", frozen=True)
     voltage_V: float
     until_time_s: float | None = None
     until_rate_C: float | None = None
@@ -205,10 +223,10 @@ class ConstantVoltage(BaseTechnique):
         return self
 
 
-class ImpedanceSpectroscopy(BaseTechnique):
+class ImpedanceSpectroscopy(Step):
     """Electrochemical Impedance Spectroscopy (EIS) technique."""
 
-    name: str = Field(default="impedance_spectroscopy", frozen=True)
+    step: str = Field(default="impedance_spectroscopy", frozen=True)
     amplitude_V: float | None = None
     amplitude_mA: float | None = None
     start_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="Start frequency in Hz")
@@ -227,10 +245,10 @@ class ImpedanceSpectroscopy(BaseTechnique):
         return self
 
 
-class Loop(BaseTechnique):
+class Loop(Step):
     """Loop technique."""
 
-    name: str = Field(default="loop", frozen=True)
+    step: str = Field(default="loop", frozen=True)
     start_step: Annotated[int | str, Field()] = Field(default=1)
     cycle_count: int = Field(gt=0)
     model_config = ConfigDict(extra="forbid")
@@ -248,17 +266,17 @@ class Loop(BaseTechnique):
         return v
 
 
-class Tag(BaseTechnique):
+class Tag(Step):
     """Tag technique."""
 
-    name: str = Field(default="tag", frozen=True)
+    step: str = Field(default="tag", frozen=True)
     tag: str = Field(default="")
 
     model_config = ConfigDict(extra="forbid")
 
 
 AnyTechnique = (
-    BaseTechnique
+    Step
     | ConstantCurrent
     | ConstantVoltage
     | OpenCircuitVoltage
@@ -348,7 +366,7 @@ class Protocol(BaseModel):
                 tags[step.tag] = j + 1
                 # drop this step from the list
                 methods_to_remove.append(i)
-            elif isinstance(step, BaseTechnique):
+            elif isinstance(step, Step):
                 j += 1
                 indices[i] = j
                 if isinstance(step, Loop):
@@ -448,7 +466,7 @@ class Protocol(BaseModel):
             config, "Step_Info", Num=str(len(self.method) + 1)
         )  # +1 for end step
 
-        def _step_to_element(step: BaseTechnique, step_num: int, parent: ET.Element) -> None:
+        def _step_to_element(step: Step, step_num: int, parent: ET.Element) -> None:
             """Create XML subelement from protocol technique."""
             match step:
                 case ConstantCurrent():
@@ -517,7 +535,7 @@ class Protocol(BaseModel):
                     ET.SubElement(other, "Cycle_Count", Value=str(step.cycle_count))
 
                 case _:
-                    msg = f"to_neware_xml does not support step type: {step.name}"
+                    msg = f"to_neware_xml does not support step type: {step.step}"
                     raise TypeError(msg)
 
         for i, technique in enumerate(self.method):
@@ -587,7 +605,7 @@ class Protocol(BaseModel):
         for step in self.method:
             tomato_step: dict = {}
             tomato_step["device"] = "MPG2"
-            tomato_step["technique"] = step.name
+            tomato_step["technique"] = step.step
             if isinstance(step, (ConstantCurrent, ConstantVoltage, OpenCircuitVoltage)):
                 if self.record.time_s:
                     tomato_step["measure_every_dt"] = self.record.time_s
@@ -640,7 +658,7 @@ class Protocol(BaseModel):
                     tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
 
                 case _:
-                    msg = f"to_tomato_mpg2 does not support step type: {step.name}"
+                    msg = f"to_tomato_mpg2 does not support step type: {step.step}"
                     raise TypeError(msg)
 
             tomato_dict["method"].append(tomato_step)
@@ -710,7 +728,7 @@ class Protocol(BaseModel):
                     loops[i] = {"goto": step.start_step - 1, "n": step.cycle_count, "n_done": 0}
 
                 case _:
-                    msg = f"to_pybamm_experiment does not support step type: {step.name}"
+                    msg = f"to_pybamm_experiment does not support step type: {step.step}"
                     raise TypeError(msg)
 
             pybamm_experiment.append(step_str)
@@ -1112,7 +1130,7 @@ class Protocol(BaseModel):
                     )
 
                 case _:
-                    msg = f"to_biologic_mps() does not support step type: {step.name}"
+                    msg = f"to_biologic_mps() does not support step type: {step.step}"
                     raise NotImplementedError(msg)
 
             step_dicts.append(step_dict)

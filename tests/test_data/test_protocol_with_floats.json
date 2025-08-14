@@ -21,95 +21,95 @@
     },
     "method": [
         {
-            "name": "open_circuit_voltage",
+            "step": "open_circuit_voltage",
             "until_time_s": 3600
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": 0.1,
             "current_mA": null,
             "until_time_s": 600,
             "until_voltage_V": 2
         },
         {
-            "name": "open_circuit_voltage",
+            "step": "open_circuit_voltage",
             "until_time_s": 43200
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": 0.1,
             "current_mA": null,
             "until_time_s": 54000.0,
             "until_voltage_V": 4.9000000
         },
         {
-            "name": "constant_voltage",
+            "step": "constant_voltage",
             "voltage_V": 4.9,
             "until_time_s": 21600,
             "until_rate_C": 0.05,
             "until_current_mA": null
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": -0.1,
             "current_mA": null,
             "until_time_s": 54000.0,
             "until_voltage_V": 3.5
         },
         {
-            "name": "loop",
+            "step": "loop",
             "start_step": 4,
             "cycle_count": 3
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": 0.5,
             "current_mA": null,
             "until_time_s": 10800.0,
             "until_voltage_V": 4.9
         },
         {
-            "name": "constant_voltage",
+            "step": "constant_voltage",
             "voltage_V": 4.9,
             "until_time_s": 3600,
             "until_rate_C": 5E-2,
             "until_current_mA": null
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": "-0.5",
             "current_mA": null,
             "until_time_s": "10800.0",
             "until_voltage_V": "3.5"
         },
         {
-            "name": "loop",
+            "step": "loop",
             "start_step": 8,
             "cycle_count": 24
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": "0.1",
             "current_mA": null,
             "until_time_s": 5.4E4,
             "until_voltage_V": 4.9
         },
         {
-            "name": "constant_voltage",
+            "step": "constant_voltage",
             "voltage_V": 4.9,
             "until_time_s": 3600,
             "until_rate_C": 0.01,
             "until_current_mA": null
         },
         {
-            "name": "constant_current",
+            "step": "constant_current",
             "rate_C": -0.1,
             "current_mA": null,
             "until_time_s": 54000.0,
             "until_voltage_V": 3.5
         },
         {
-            "name": "loop",
+            "step": "loop",
             "start_step": 8,
             "cycle_count": 20
         }

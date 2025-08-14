@@ -176,34 +176,33 @@ class TestUnicycler(TestCase):
         """Test validation of ConstantCurrent technique."""
         with pytest.raises(ValueError):
             # Missing rate_C and current_mA
-            ConstantCurrent(name="constant_current")
+            ConstantCurrent()
         with pytest.raises(ValueError):
             # rate_C and current_mA are zero
-            ConstantCurrent(name="constant_current", rate_C=0, current_mA=0)
+            ConstantCurrent(rate_C=0, current_mA=0)
         with pytest.raises(ValueError):
             # Missing stop condition
-            ConstantCurrent(name="constant_current", rate_C=0.1)
+            ConstantCurrent(rate_C=0.1)
         with pytest.raises(ValueError):
             # stop conditions are zero
-            ConstantCurrent(name="constant_current", rate_C=0.1, until_time_s=0, until_voltage_V=0)
-        cc = ConstantCurrent(name="constant_current", rate_C=0.1, until_voltage_V=4.2)
+            ConstantCurrent(rate_C=0.1, until_time_s=0, until_voltage_V=0)
+        cc = ConstantCurrent(rate_C=0.1, until_voltage_V=4.2)
         assert isinstance(cc, ConstantCurrent)
 
     def test_constant_voltage_validation(self) -> None:
         """Test validation of ConstantVoltage technique."""
         with pytest.raises(ValueError):
             # Missing stop condition
-            ConstantVoltage(name="constant_voltage", voltage_V=4.2)
+            ConstantVoltage(voltage_V=4.2)
         with pytest.raises(ValueError):
             # stop conditions are zero
             ConstantVoltage(
-                name="constant_voltage",
                 voltage_V=4.2,
                 until_time_s=0,
                 until_rate_C=0,
                 until_current_mA=0,
             )
-        cv = ConstantVoltage(name="constant_voltage", voltage_V=4.2, until_rate_C=0.05)
+        cv = ConstantVoltage(voltage_V=4.2, until_rate_C=0.05)
         assert isinstance(cv, ConstantVoltage)
 
     def test_protocol_c_rate_validation(self) -> None:
@@ -221,10 +220,10 @@ class TestUnicycler(TestCase):
     def test_loop_validation(self) -> None:
         """Test validation of Loop technique."""
         with pytest.raises(ValueError):
-            Loop(name="loop", start_step=0, cycle_count=1)  # start_step is zero
+            Loop(start_step=0, cycle_count=1)  # start_step is zero
         with pytest.raises(ValueError):
-            Loop(name="loop", start_step=1, cycle_count=0)  # cycle_count is zero
-        loop = Loop(name="loop", start_step=1, cycle_count=1)
+            Loop(start_step=1, cycle_count=0)  # cycle_count is zero
+        loop = Loop(start_step=1, cycle_count=1)
         assert isinstance(loop, Loop)
 
     def test_create_protocol(self) -> None:
@@ -436,8 +435,10 @@ class TestUnicycler(TestCase):
         xml_string = protocol.to_neware_xml(sample_name="test")
         neware_ET = ElementTree.fromstring(xml_string)
         loopstep = neware_ET.find("config/Step_Info/Step5")
+        assert loopstep is not None
         assert loopstep.attrib["Step_Type"] == "5"
         start_step = loopstep.find("Limit/Other/Start_Step")
+        assert start_step is not None
         assert start_step.attrib["Value"] == "3"
 
         protocol1 = Protocol(
