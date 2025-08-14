@@ -10,6 +10,7 @@ from .unicycler import (
     RecordParams,
     SafetyParams,
     SampleParams,
+    Step,
     Tag,
 )
 from .version import __version__
@@ -24,6 +25,7 @@ __all__ = [
     "RecordParams",
     "SafetyParams",
     "SampleParams",
+    "Step",
     "Tag",
     "__version__",
 ]
