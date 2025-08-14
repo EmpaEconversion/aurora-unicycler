@@ -15,7 +15,7 @@ my_protocol = Protocol(
         ConstantCurrent(rate_C=0.5, until_voltage_V=4.2, until_time_s=3*60*60),
         ConstantVoltage(voltage_V=4.2, until_rate_C=0.05, until_time_s=60*60),
         ConstantCurrent(rate_C=-0.5, until_voltage_V=3.0, until_time_s=3*60*60),
-        Loop(start_step="longterm", cycle_count=100),
+        Loop(loop_to="longterm", cycle_count=100),
     ],
 )
 
@@ -249,14 +249,14 @@ class Loop(Step):
     """Loop technique."""
 
     step: str = Field(default="loop", frozen=True)
-    start_step: Annotated[int | str, Field()] = Field(default=1)
+    loop_to: Annotated[int | str, Field()] = Field(default=1)
     cycle_count: int = Field(gt=0)
     model_config = ConfigDict(extra="forbid")
 
-    @field_validator("start_step")
+    @field_validator("loop_to")
     @classmethod
-    def validate_start_step(cls, v: int | str) -> int | str:
-        """Ensure start_step is a positive integer or a string."""
+    def validate_loop_to(cls, v: int | str) -> int | str:
+        """Ensure loop_to is a positive integer or a string."""
         if isinstance(v, int) and v <= 0:
             msg = "Start step must be positive integer or a string"
             raise ValueError(msg)
@@ -311,14 +311,14 @@ class Protocol(BaseModel):
     def _validate_loops_and_tags(self) -> Self:
         """Ensure that if a loop uses a string, it is a valid tag."""
         loop_tags = {
-            i: step.start_step
+            i: step.loop_to
             for i, step in enumerate(self.method)
-            if isinstance(step, Loop) and isinstance(step.start_step, str)
+            if isinstance(step, Loop) and isinstance(step.loop_to, str)
         }
         loop_idx = {
-            i: step.start_step
+            i: step.loop_to
             for i, step in enumerate(self.method)
-            if isinstance(step, Loop) and isinstance(step.start_step, int)
+            if isinstance(step, Loop) and isinstance(step.loop_to, int)
         }
         tags = {i: step.tag for i, step in enumerate(self.method) if isinstance(step, Tag)}
 
@@ -370,16 +370,16 @@ class Protocol(BaseModel):
                 j += 1
                 indices[i] = j
                 if isinstance(step, Loop):
-                    if isinstance(step.start_step, str):
+                    if isinstance(step.loop_to, str):
                         # If the start step is a string, it should be a tag, go to the tag index
                         try:
-                            step.start_step = tags[step.start_step]
+                            step.loop_to = tags[step.loop_to]
                         except KeyError as e:
-                            msg = f"Loop step with tag {step.start_step} does not have a corresponding tag step."
+                            msg = f"Loop step with tag {step.loop_to} does not have a corresponding tag step."
                             raise ValueError(msg) from e
                     else:
                         # If the start step is an int, it should be the NEW index of the step
-                        step.start_step = indices[step.start_step - 1]
+                        step.loop_to = indices[step.loop_to - 1]
             else:
                 methods_to_remove.append(i)
         # Remove tags and other invalid steps
@@ -426,7 +426,7 @@ class Protocol(BaseModel):
         head_info = ET.SubElement(config, "Head_Info")
         ET.SubElement(head_info, "Operate", Value="66")
         ET.SubElement(head_info, "Scale", Value="1")
-        ET.SubElement(head_info, "Start_Step", Value="1", Hide_Ctrl_Step="0")
+        ET.SubElement(head_info, "loop_to", Value="1", Hide_Ctrl_Step="0")
         ET.SubElement(head_info, "Creator", Value="aurora-unicycler")
         ET.SubElement(head_info, "Remark", Value=self.sample.name)
         # 103, non C-rate mode, seems to give more precise values vs 105
@@ -531,7 +531,7 @@ class Protocol(BaseModel):
                     )
                     limit = ET.SubElement(step_element, "Limit")
                     other = ET.SubElement(limit, "Other")
-                    ET.SubElement(other, "Start_Step", Value=str(step.start_step))
+                    ET.SubElement(other, "loop_to", Value=str(step.loop_to))
                     ET.SubElement(other, "Cycle_Count", Value=str(step.cycle_count))
 
                 case _:
@@ -654,7 +654,7 @@ class Protocol(BaseModel):
                             tomato_step["limit_current_max"] = str(abs(step.until_rate_C)) + "D"
 
                 case Loop():
-                    tomato_step["goto"] = step.start_step - 1  # 0-indexed in mpr
+                    tomato_step["goto"] = step.loop_to - 1  # 0-indexed in mpr
                     tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
 
                 case _:
@@ -725,7 +725,7 @@ class Protocol(BaseModel):
 
                 case Loop():
                     # The string from this will get dropped later
-                    loops[i] = {"goto": step.start_step - 1, "n": step.cycle_count, "n_done": 0}
+                    loops[i] = {"goto": step.loop_to - 1, "n": step.cycle_count, "n_done": 0}
 
                 case _:
                     msg = f"to_pybamm_experiment does not support step type: {step.step}"
@@ -1122,7 +1122,7 @@ class Protocol(BaseModel):
                     step_dict.update(
                         {
                             "ctrl_type": "Loop",
-                            "ctrl_seq": str(step.start_step - 1),  # 0-indexed here
+                            "ctrl_seq": str(step.loop_to - 1),  # 0-indexed here
                             "ctrl_repeat": str(
                                 step.cycle_count - 1
                             ),  # cycles is one less than n_gotos

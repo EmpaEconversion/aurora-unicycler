@@ -220,10 +220,10 @@ class TestUnicycler(TestCase):
     def test_loop_validation(self) -> None:
         """Test validation of Loop technique."""
         with pytest.raises(ValueError):
-            Loop(start_step=0, cycle_count=1)  # start_step is zero
+            Loop(loop_to=0, cycle_count=1)  # loop_to is zero
         with pytest.raises(ValueError):
-            Loop(start_step=1, cycle_count=0)  # cycle_count is zero
-        loop = Loop(start_step=1, cycle_count=1)
+            Loop(loop_to=1, cycle_count=0)  # cycle_count is zero
+        loop = Loop(loop_to=1, cycle_count=1)
         assert isinstance(loop, Loop)
 
     def test_create_protocol(self) -> None:
@@ -274,7 +274,7 @@ class TestUnicycler(TestCase):
                     until_voltage_V=3.5,
                 ),
                 Loop(
-                    start_step=4,
+                    loop_to=4,
                     cycle_count=3,
                 ),
             ],
@@ -297,13 +297,13 @@ class TestUnicycler(TestCase):
                 OpenCircuitVoltage(until_time_s=1),
                 OpenCircuitVoltage(until_time_s=1),
                 OpenCircuitVoltage(until_time_s=1),
-                Loop(start_step=2, cycle_count=3),
+                Loop(loop_to=2, cycle_count=3),
             ],
         )
         protocol.tag_to_indices()
         # this should not change the loop step
         assert isinstance(protocol.method[4], Loop)
-        assert protocol.method[4].start_step == 2
+        assert protocol.method[4].loop_to == 2
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -314,17 +314,17 @@ class TestUnicycler(TestCase):
                 Tag(tag="tag1"),
                 OpenCircuitVoltage(until_time_s=1),  # 2
                 OpenCircuitVoltage(until_time_s=1),  # 3
-                Loop(start_step="tag1", cycle_count=3),  # 4
+                Loop(loop_to="tag1", cycle_count=3),  # 4
                 OpenCircuitVoltage(until_time_s=1),  # 5
-                Loop(start_step=3, cycle_count=3),  # 6
+                Loop(loop_to=3, cycle_count=3),  # 6
             ],
         )
         # tag should be removed and replaced with the index
         protocol.tag_to_indices()
         assert isinstance(protocol.method[4], Loop)
-        assert protocol.method[4].start_step == 3
+        assert protocol.method[4].loop_to == 3
         assert isinstance(protocol.method[6], Loop)
-        assert protocol.method[6].start_step == 3
+        assert protocol.method[6].loop_to == 3
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -336,30 +336,30 @@ class TestUnicycler(TestCase):
                 OpenCircuitVoltage(until_time_s=1),  # 2
                 Tag(tag="tag2"),
                 OpenCircuitVoltage(until_time_s=1),  # 3
-                Loop(start_step="tag1", cycle_count=3),  # 4
+                Loop(loop_to="tag1", cycle_count=3),  # 4
                 OpenCircuitVoltage(until_time_s=1),  # 5
-                Loop(start_step=6, cycle_count=3),  # 6
+                Loop(loop_to=6, cycle_count=3),  # 6
                 Tag(tag="tag3"),
                 OpenCircuitVoltage(until_time_s=1),  # 7
-                Loop(start_step="tag2", cycle_count=3),  # 8
+                Loop(loop_to="tag2", cycle_count=3),  # 8
                 OpenCircuitVoltage(until_time_s=1),  # 9
                 OpenCircuitVoltage(until_time_s=1),  # 10
-                Loop(start_step="tag1", cycle_count=3),  # 11
+                Loop(loop_to="tag1", cycle_count=3),  # 11
                 Tag(tag="tag that doesnt do anything"),
-                Loop(start_step="tag3", cycle_count=3),  # 12
+                Loop(loop_to="tag3", cycle_count=3),  # 12
             ],
         )
         protocol.tag_to_indices()
         assert isinstance(protocol.method[4], Loop)
-        assert protocol.method[4].start_step == 3
+        assert protocol.method[4].loop_to == 3
         assert isinstance(protocol.method[6], Loop)
-        assert protocol.method[6].start_step == 4
+        assert protocol.method[6].loop_to == 4
         assert isinstance(protocol.method[8], Loop)
-        assert protocol.method[8].start_step == 4
+        assert protocol.method[8].loop_to == 4
         assert isinstance(protocol.method[11], Loop)
-        assert protocol.method[11].start_step == 3
+        assert protocol.method[11].loop_to == 3
         assert isinstance(protocol.method[12], Loop)
-        assert protocol.method[12].start_step == 8
+        assert protocol.method[12].loop_to == 8
 
         # You should not be able to create a loop with a tag that does not exist
         with pytest.raises(ValidationError):
@@ -371,7 +371,7 @@ class TestUnicycler(TestCase):
                     OpenCircuitVoltage(until_time_s=1),
                     OpenCircuitVoltage(until_time_s=1),
                     OpenCircuitVoltage(until_time_s=1),
-                    Loop(start_step="this tag does not exist", cycle_count=3),
+                    Loop(loop_to="this tag does not exist", cycle_count=3),
                 ],
             )
 
@@ -382,7 +382,7 @@ class TestUnicycler(TestCase):
                 safety=SafetyParams(),
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
-                    Loop(start_step="tag1", cycle_count=3),
+                    Loop(loop_to="tag1", cycle_count=3),
                     OpenCircuitVoltage(until_time_s=1),
                     Tag(tag="tag1"),
                 ],
@@ -398,7 +398,7 @@ class TestUnicycler(TestCase):
                         OpenCircuitVoltage(until_time_s=1),
                         OpenCircuitVoltage(until_time_s=1),
                         OpenCircuitVoltage(until_time_s=1),
-                        Loop(start_step=i, cycle_count=3),
+                        Loop(loop_to=i, cycle_count=3),
                         OpenCircuitVoltage(until_time_s=1),
                         OpenCircuitVoltage(until_time_s=1),
                         OpenCircuitVoltage(until_time_s=1),
@@ -413,7 +413,7 @@ class TestUnicycler(TestCase):
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
                     Tag(tag="tag1"),
-                    Loop(start_step="tag1", cycle_count=3),
+                    Loop(loop_to="tag1", cycle_count=3),
                     OpenCircuitVoltage(until_time_s=1),
                 ],
             )
@@ -429,7 +429,7 @@ class TestUnicycler(TestCase):
                 Tag(tag="tag1"),
                 OpenCircuitVoltage(until_time_s=1),
                 OpenCircuitVoltage(until_time_s=1),
-                Loop(start_step="tag1", cycle_count=3),
+                Loop(loop_to="tag1", cycle_count=3),
             ],
         )
         xml_string = protocol.to_neware_xml(sample_name="test")
@@ -437,9 +437,9 @@ class TestUnicycler(TestCase):
         loopstep = neware_ET.find("config/Step_Info/Step5")
         assert loopstep is not None
         assert loopstep.attrib["Step_Type"] == "5"
-        start_step = loopstep.find("Limit/Other/Start_Step")
-        assert start_step is not None
-        assert start_step.attrib["Value"] == "3"
+        loop_to = loopstep.find("Limit/Other/loop_to")
+        assert loop_to is not None
+        assert loop_to.attrib["Value"] == "3"
 
         protocol1 = Protocol(
             record=RecordParams(time_s=1),
@@ -452,9 +452,9 @@ class TestUnicycler(TestCase):
                 OpenCircuitVoltage(until_time_s=3),
                 OpenCircuitVoltage(until_time_s=4),
                 OpenCircuitVoltage(until_time_s=5),
-                Loop(start_step="tag2", cycle_count=3),
+                Loop(loop_to="tag2", cycle_count=3),
                 OpenCircuitVoltage(until_time_s=6),
-                Loop(start_step="tag1", cycle_count=5),
+                Loop(loop_to="tag1", cycle_count=5),
                 OpenCircuitVoltage(until_time_s=7),
             ],
         )
@@ -468,9 +468,9 @@ class TestUnicycler(TestCase):
                 OpenCircuitVoltage(until_time_s=3),
                 OpenCircuitVoltage(until_time_s=4),
                 OpenCircuitVoltage(until_time_s=5),
-                Loop(start_step=3, cycle_count=3),
+                Loop(loop_to=3, cycle_count=3),
                 OpenCircuitVoltage(until_time_s=6),
-                Loop(start_step=2, cycle_count=5),
+                Loop(loop_to=2, cycle_count=5),
                 OpenCircuitVoltage(until_time_s=7),
             ],
         )
@@ -494,8 +494,8 @@ class TestUnicycler(TestCase):
                 Tag(tag="tag1"),
                 OpenCircuitVoltage(until_time_s=1),
                 OpenCircuitVoltage(until_time_s=1),
-                Loop(start_step="tag1", cycle_count=3),
-                Loop(start_step=4, cycle_count=3),
+                Loop(loop_to="tag1", cycle_count=3),
+                Loop(loop_to=4, cycle_count=3),
             ],
         )
         biologic_mps = protocol.to_biologic_mps(sample_name="test", capacity_mAh=1.0)

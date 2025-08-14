@@ -54,7 +54,7 @@
         },
         {
             "step": "loop",
-            "start_step": 4,
+            "loop_to": 4,
             "cycle_count": 3
         },
         {
@@ -80,7 +80,7 @@
         },
         {
             "step": "loop",
-            "start_step": 8,
+            "loop_to": 8,
             "cycle_count": 24
         },
         {
@@ -106,7 +106,7 @@
         },
         {
             "step": "loop",
-            "start_step": 8,
+            "loop_to": 8,
             "cycle_count": 20
         }
     ]
