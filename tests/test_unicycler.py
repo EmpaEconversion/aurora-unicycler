@@ -622,3 +622,45 @@ class TestUnicycler(TestCase):
         vals = [v * units_to_mA[u] for v, u in zip(vals, units, strict=True)]
         print(vals)
         assert vals[:10] == [0.001, 0.01, 0.011, 0.1, 0.11, 1.0, 1.1, 10.0, 10.1, 100]
+
+    def test_build_steps(self) -> None:
+        """User should be able to make steps with Step base class."""
+        Protocol.from_dict(
+            {
+                "record": {"time_s": 1},
+                "safety": {},
+                "method": [
+                    {"step": "open_circuit_voltage", "until_time_s": 1},
+                    {"step": "tag", "tag": "tag1"},
+                    {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
+                    {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
+                    {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
+                    {"step": "loop", "loop_to": "tag1", "cycle_count": 3},
+                    {
+                        "step": "impedance_spectroscopy",
+                        "start_frequency_Hz": 1e3,
+                        "end_frequency_Hz": 1,
+                    },
+                ],
+            }
+        )
+
+    def test_naughty_step_building(self) -> None:
+        """User can also give a dict for methods without from_dict, but type checkers don't like it."""
+        Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                {"step": "open_circuit_voltage", "until_time_s": 1},
+                {"step": "tag", "tag": "tag1"},
+                {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
+                {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
+                {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
+                {"step": "loop", "loop_to": "tag1", "cycle_count": 3},
+                {
+                    "step": "impedance_spectroscopy",
+                    "start_frequency_Hz": 1e3,
+                    "end_frequency_Hz": 1,
+                },
+            ],
+        )
