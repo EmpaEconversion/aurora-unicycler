@@ -35,20 +35,21 @@ pip install aurora-unicycler
 
 ## Usage
 
+### Making a protocol
 Define a protocol using Python
 ```python
 from aurora-unicycler import *
 
 my_protocol = Protocol(
-    measurement= MeasurementParams(
+    measurement = MeasurementParams(
         time_s=10,
-        voltage_V = 4.2,
+        voltage_V=0.1,
     ),
-    safety= SafetyParams(
-        max_voltage_V = 5,
-        min_voltage_V = 0,
-        max_current_mA = 10,
-        min_current_mA = -10,
+    safety = SafetyParams(
+        max_voltage_V=5,
+        min_voltage_V=0,
+        max_current_mA=10,
+        min_current_mA=-10,
     ),
     method = [
         Tag(
@@ -70,20 +71,68 @@ my_protocol = Protocol(
             until_time_s=3*60*60,
         ),
         Loop(
-            start_step="my_tag",
+            loop_to="my_tag",
             cycle_count=100,
         )
     ]
 )
 ```
 
-You can then attach a sample name and capacity and convert to other formats, for example:
+You can also create a protocol from a python dictionary or JSON - you will not get type checking in an IDE, but it will still validate at runtime.
+```python
+my_protocol = Protocol.from_dict(
+    {
+        "measurement": {"time_s": 10, "voltage_V": 0.1}
+        "safety": {"max_voltage_V": 5}
+        "method": [
+            {"step": "open_circuit_voltage", "until_time_s": 1},
+            {"step": "tag", "tag": "tag1"},
+            {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
+            {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
+            {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
+            {"step": "loop", "loop_to": "tag1", "cycle_count": 100},
+        ],
+    ]
+)
+```
+```python
+my_protocol = Protocol.from_json("path/to/file.json")
+```
+
+### Converting a protocol
+
+Once you have a protocol object, you can optionally attach a sample name and capacity and convert to other formats.
+
+- Biologic MPS settings, tested on MPG2 cyclers with EC-lab 11.52 and 11.61:
 ```python
 mps_string = my_protocol.to_biologic_mps(
     sample_name="test-sample",
     capacity_mAh=45,
     save_path="some/location/settings.mps"
 )
+```
+
+- Neware XML, tested on BTS8:
+```python
+xml_string = my_protocol.to_neware_xml(
+    sample_name="test-sample",
+    capacity_mAh=45,
+    save_path="some/location/protocol.xml"
+)
+```
+
+- Tomato, tested on 0.2.3:
+```python
+json_string = my_protocol.to_tomato_json(
+    sample_name="test-sample",
+    capacity_mAh=45,
+    save_path="some/location/protocol.json"
+)
+```
+
+- PyBaMM experiment (list of strings):
+```python
+pybamm_list = my_protocol.to_pybamm_experiment()
 ```
 
 ## Contributors
