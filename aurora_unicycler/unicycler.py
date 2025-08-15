@@ -123,8 +123,8 @@ class SafetyParams(BaseModel):
     min_voltage_V: float | None = None
     max_current_mA: float | None = None
     min_current_mA: float | None = None
-    max_capacity_mAh: float | None = None
-    delay_s: float = Field(ge=0, default=0)
+    max_capacity_mAh: float | None = Field(ge=0, default=None)
+    delay_s: float | None = Field(ge=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
 
