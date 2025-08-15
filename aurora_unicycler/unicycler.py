@@ -232,7 +232,7 @@ class ImpedanceSpectroscopy(Step):
     start_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="Start frequency in Hz")
     end_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="End frequency in Hz")
     points_per_decade: int = Field(gt=0, default=10)
-    measures_per_frequency: int = Field(gt=0, default=1)
+    measures_per_point: int = Field(gt=0, default=1)
     drift_correction: bool = Field(default=False, description="Apply drift correction")
     model_config = ConfigDict(extra="forbid")
 
@@ -1113,7 +1113,7 @@ class Protocol(BaseModel):
                     step_dict.update(
                         {
                             "ctrl_Nd": f"{step.points_per_decade}",
-                            "ctrl_Na": f"{step.measures_per_frequency}",
+                            "ctrl_Na": f"{step.measures_per_point}",
                             "ctrl_corr": f"{int(step.drift_correction)}",
                         }
                     )
