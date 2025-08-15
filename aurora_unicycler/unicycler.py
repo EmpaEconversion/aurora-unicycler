@@ -50,7 +50,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 from xml.dom import minidom
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -144,30 +144,12 @@ class Step(BaseModel):
     # optional id field
     id: str | None = Field(default=None, description="Optional ID for the technique step")
     model_config = ConfigDict(extra="forbid")
-    step: str
-
-    @classmethod
-    def parse_obj(cls, obj: dict) -> Self:
-        """Allow users to create step instances from a dictionary."""
-        step_map = {
-            "open_circuit_voltage": OpenCircuitVoltage,
-            "constant_current": ConstantCurrent,
-            "constant_voltage": ConstantVoltage,
-            "impedance_spectroscopy": ImpedanceSpectroscopy,
-            "loop": Loop,
-            "tag": Tag,
-        }
-        step_type = obj.get("step")
-        if step_type not in step_map:
-            msg = f"Unknown step type: {step_type}"
-            raise ValueError(msg)
-        return step_map[step_type](**obj)
 
 
 class OpenCircuitVoltage(Step):
     """Open circuit voltage technique."""
 
-    step: str = Field(default="open_circuit_voltage", frozen=True)
+    step: Literal["open_circuit_voltage"] = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: float = Field(gt=0)
 
     @field_validator("until_time_s", mode="before")
@@ -180,7 +162,7 @@ class OpenCircuitVoltage(Step):
 class ConstantCurrent(Step):
     """Constant current technique."""
 
-    step: str = Field(default="constant_current", frozen=True)
+    step: Literal["constant_current"] = Field(default="constant_current", frozen=True)
     rate_C: float | None = None
     current_mA: float | None = None
     until_time_s: float | None = None
@@ -222,7 +204,7 @@ class ConstantCurrent(Step):
 class ConstantVoltage(Step):
     """Constant voltage technique."""
 
-    step: str = Field(default="constant_voltage", frozen=True)
+    step: Literal["constant_voltage"] = Field(default="constant_voltage", frozen=True)
     voltage_V: float
     until_time_s: float | None = None
     until_rate_C: float | None = None
@@ -254,7 +236,7 @@ class ConstantVoltage(Step):
 class ImpedanceSpectroscopy(Step):
     """Electrochemical Impedance Spectroscopy (EIS) technique."""
 
-    step: str = Field(default="impedance_spectroscopy", frozen=True)
+    step: Literal["impedance_spectroscopy"] = Field(default="impedance_spectroscopy", frozen=True)
     amplitude_V: float | None = None
     amplitude_mA: float | None = None
     start_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="Start frequency in Hz")
@@ -285,7 +267,7 @@ class ImpedanceSpectroscopy(Step):
 class Loop(Step):
     """Loop technique."""
 
-    step: str = Field(default="loop", frozen=True)
+    step: Literal["loop"] = Field(default="loop", frozen=True)
     loop_to: Annotated[int | str, Field()] = Field(default=1)
     cycle_count: int = Field(gt=0)
     model_config = ConfigDict(extra="forbid")
@@ -306,21 +288,16 @@ class Loop(Step):
 class Tag(Step):
     """Tag technique."""
 
-    step: str = Field(default="tag", frozen=True)
+    step: Literal["tag"] = Field(default="tag", frozen=True)
     tag: str = Field(default="")
 
     model_config = ConfigDict(extra="forbid")
 
 
-AnyTechnique = (
-    Step
-    | ConstantCurrent
-    | ConstantVoltage
-    | OpenCircuitVoltage
-    | ImpedanceSpectroscopy
-    | Loop
-    | Tag
-)
+AnyTechnique = Annotated[
+    OpenCircuitVoltage | ConstantCurrent | ConstantVoltage | ImpedanceSpectroscopy | Loop | Tag,
+    Field(discriminator="step"),
+]
 
 
 # --- Main Protocol Model ---
