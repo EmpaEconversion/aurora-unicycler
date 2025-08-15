@@ -638,6 +638,7 @@ class TestUnicycler(TestCase):
                     {"step": "loop", "loop_to": "tag1", "cycle_count": 3},
                     {
                         "step": "impedance_spectroscopy",
+                        "amplitude_V": 0.1,
                         "start_frequency_Hz": 1e3,
                         "end_frequency_Hz": 1,
                     },
@@ -659,6 +660,7 @@ class TestUnicycler(TestCase):
                 {"step": "loop", "loop_to": "tag1", "cycle_count": 3},
                 {
                     "step": "impedance_spectroscopy",
+                    "amplitude_V": 0.1,
                     "start_frequency_Hz": 1e3,
                     "end_frequency_Hz": 1,
                 },
