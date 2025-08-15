@@ -59,11 +59,13 @@ from typing_extensions import Self
 from aurora_unicycler.version import __version__
 
 
-def coerce_c_rate(v: float | str) -> float:
+def coerce_c_rate(v: float | str | None) -> float | None:
     """Allow C rates to be defined as fraction strings.
 
     e.g. "1/5" -> 0.2, "C/3" -> 0.333333, "D/2" -> -0.5.
     """
+    if v is None or (isinstance(v, str) and v.strip() == ""):
+        return None
     try:
         return float(v)
     except ValueError:
@@ -88,6 +90,13 @@ def coerce_c_rate(v: float | str) -> float:
                 return nom / denom
     msg = f"Invalid rate_C value: {v}"
     raise ValueError(msg)
+
+
+def empty_string_is_none(v: float | str | None) -> float | None:
+    """Empty strings are interpretted as None type."""
+    if v is None or (isinstance(v, str) and v.strip() == ""):
+        return None
+    return float(v)
 
 
 class UnicyclerParams(BaseModel):
@@ -161,6 +170,12 @@ class OpenCircuitVoltage(Step):
     step: str = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: float = Field(gt=0)
 
+    @field_validator("until_time_s", mode="before")
+    @classmethod
+    def allow_empty_string(cls, v: float | str) -> float | None:
+        """Empty string is interpreted as None."""
+        return empty_string_is_none(v)
+
 
 class ConstantCurrent(Step):
     """Constant current technique."""
@@ -173,8 +188,15 @@ class ConstantCurrent(Step):
 
     @field_validator("rate_C", mode="before")
     @classmethod
-    def parse_c_rate(cls, v: float | str) -> float:  # noqa: D102
+    def parse_c_rate(cls, v: float | str) -> float:
+        """C-rate can be a string e.g. "C/2"."""
         return coerce_c_rate(v)
+
+    @field_validator("current_mA", "until_time_s", "until_voltage_V", mode="before")
+    @classmethod
+    def allow_empty_string(cls, v: float | str) -> float | None:
+        """Empty string is interpreted as None."""
+        return empty_string_is_none(v)
 
     @model_validator(mode="after")
     def ensure_rate_or_current(self) -> Self:
@@ -211,6 +233,12 @@ class ConstantVoltage(Step):
     def parse_c_rate(cls, v: float | str) -> float:  # noqa: D102
         return coerce_c_rate(v)
 
+    @field_validator("voltage_V", "until_time_s", "until_current_mA", mode="before")
+    @classmethod
+    def allow_empty_string(cls, v: float | str) -> float | None:
+        """Empty string is interpreted as None."""
+        return empty_string_is_none(v)
+
     @model_validator(mode="after")
     def check_stop_condition(self) -> Self:
         """Ensure at least one of until_rate_C or until_current_mA is set."""
@@ -233,14 +261,23 @@ class ImpedanceSpectroscopy(Step):
     end_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="End frequency in Hz")
     points_per_decade: int = Field(gt=0, default=10)
     measures_per_point: int = Field(gt=0, default=1)
-    drift_correction: bool = Field(default=False, description="Apply drift correction")
+    drift_correction: bool | None = Field(default=False, description="Apply drift correction")
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("amplitude_V", "amplitude_mA", mode="before")
+    @classmethod
+    def allow_empty_string(cls, v: float | str) -> float | None:
+        """Empty string is interpreted as None."""
+        return empty_string_is_none(v)
 
     @model_validator(mode="after")
     def validate_amplitude(self) -> Self:
         """Cannot set both amplitude_V and amplitude_mA."""
         if self.amplitude_V is not None and self.amplitude_mA is not None:
             msg = "Cannot set both amplitude_V and amplitude_mA."
+            raise ValueError(msg)
+        if self.amplitude_V is None and self.amplitude_mA is None:
+            msg = "Either amplitude_V or amplitude_mA must be set."
             raise ValueError(msg)
         return self
 
@@ -1114,7 +1151,7 @@ class Protocol(BaseModel):
                         {
                             "ctrl_Nd": f"{step.points_per_decade}",
                             "ctrl_Na": f"{step.measures_per_point}",
-                            "ctrl_corr": f"{int(step.drift_correction)}",
+                            "ctrl_corr": f"{1 if step.drift_correction is True else 0}",
                         }
                     )
 
