@@ -22,6 +22,7 @@ from aurora_unicycler.unicycler import (
     RecordParams,
     SafetyParams,
     SampleParams,
+    Step,
     Tag,
     coerce_c_rate,
 )
@@ -666,3 +667,28 @@ class TestUnicycler(TestCase):
                 },
             ],
         )
+
+    def test_empty_steps(self) -> None:
+        """Protocols with empty steps should give a nice error."""
+        # As a protocol
+        with pytest.raises(ValidationError) as exc_info:
+            Protocol(
+                record=RecordParams(time_s=1),
+                safety=SafetyParams(),
+                method=[
+                    Step(),
+                ],
+            )
+        assert "is incomplete" in str(exc_info.value)
+        # From a dict
+        with pytest.raises(ValidationError) as exc_info:
+            Protocol.from_dict(
+                {
+                    "record": {"time_s": 1},
+                    "safety": {},
+                    "method": [
+                        {},
+                    ],
+                }
+            )
+        assert "is incomplete" in str(exc_info.value)
