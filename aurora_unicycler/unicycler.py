@@ -170,7 +170,7 @@ class ConstantCurrent(Step):
 
     @field_validator("rate_C", mode="before")
     @classmethod
-    def parse_c_rate(cls, v: float | str) -> float:
+    def parse_c_rate(cls, v: float | str) -> float | None:
         """C-rate can be a string e.g. "C/2"."""
         return coerce_c_rate(v)
 
@@ -212,7 +212,8 @@ class ConstantVoltage(Step):
 
     @field_validator("until_rate_C", mode="before")
     @classmethod
-    def parse_c_rate(cls, v: float | str) -> float:  # noqa: D102
+    def parse_c_rate(cls, v: float | str) -> float | None:
+        """C-rate can be a string e.g. "C/2"."""
         return coerce_c_rate(v)
 
     @field_validator("voltage_V", "until_time_s", "until_current_mA", mode="before")
@@ -493,7 +494,7 @@ class Protocol(BaseModel):
             config, "Step_Info", Num=str(len(self.method) + 1)
         )  # +1 for end step
 
-        def _step_to_element(step: Step, step_num: int, parent: ET.Element) -> None:
+        def _step_to_element(step: AnyTechnique, step_num: int, parent: ET.Element) -> None:
             """Create XML subelement from protocol technique."""
             match step:
                 case ConstantCurrent():
@@ -501,6 +502,9 @@ class Protocol(BaseModel):
                         step_type = "1" if step.rate_C > 0 else "2"
                     elif step.current_mA is not None and step.current_mA != 0:
                         step_type = "1" if step.current_mA > 0 else "2"
+                    else:
+                        msg = "Must have a current or C-rate"
+                        raise ValueError(msg)
 
                     step_element = ET.SubElement(
                         parent, f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type
@@ -508,6 +512,7 @@ class Protocol(BaseModel):
                     limit = ET.SubElement(step_element, "Limit")
                     main = ET.SubElement(limit, "Main")
                     if step.rate_C is not None:
+                        assert self.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
                         ET.SubElement(main, "Rate", Value=f"{abs(step.rate_C):f}")
                         ET.SubElement(
                             main, "Curr", Value=f"{abs(step.rate_C) * self.sample.capacity_mAh:f}"
@@ -535,6 +540,7 @@ class Protocol(BaseModel):
                     if step.until_time_s is not None:
                         ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
                     if step.until_rate_C is not None:
+                        assert self.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
                         ET.SubElement(main, "Stop_Rate", Value=f"{abs(step.until_rate_C):f}")
                         ET.SubElement(
                             main,
@@ -662,6 +668,9 @@ class Protocol(BaseModel):
                         else:
                             charging = False
                             tomato_step["current"] = step.current_mA / 1000
+                    else:
+                        msg = "Must have a current or C-rate"
+                        raise ValueError(msg)
                     if step.until_time_s:
                         tomato_step["time"] = step.until_time_s
                     if step.until_voltage_V:
@@ -681,6 +690,7 @@ class Protocol(BaseModel):
                             tomato_step["limit_current_max"] = str(abs(step.until_rate_C)) + "D"
 
                 case Loop():
+                    assert isinstance(step.loop_to, int)  # noqa: S101, from tag_to_indices()
                     tomato_step["goto"] = step.loop_to - 1  # 0-indexed in mpr
                     tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
 
@@ -752,6 +762,7 @@ class Protocol(BaseModel):
 
                 case Loop():
                     # The string from this will get dropped later
+                    assert isinstance(step.loop_to, int)  # noqa: S101, from tag_to_indices()
                     loops[i] = {"goto": step.loop_to - 1, "n": step.cycle_count, "n_done": 0}
 
                 case _:
@@ -1146,6 +1157,7 @@ class Protocol(BaseModel):
                     )
 
                 case Loop():
+                    assert isinstance(step.loop_to, int)  # noqa: S101, from tag_to_indices()
                     step_dict.update(
                         {
                             "ctrl_type": "Loop",
