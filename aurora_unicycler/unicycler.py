@@ -50,7 +50,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from xml.dom import minidom
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -320,6 +320,19 @@ class Protocol(BaseModel):
         ):
             msg = "Sample capacity must be set if using C-rate steps."
             raise ValueError(msg)
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_no_blank_steps(cls, values: dict[str, Any]) -> dict[str, Any]:
+        """Check if any 'blank' steps are in the method before trying to parse them."""
+        steps = values.get("method", [])
+        for i, step in enumerate(steps):
+            if (isinstance(step, Step) and not hasattr(step, "step")) or (
+                isinstance(step, dict) and ("step" not in step or not step["step"])
+            ):
+                msg = f"Step at index {i} is incomplete, needs a 'step' type."
+                raise ValueError(msg)
+        return values
 
     @model_validator(mode="after")
     def _validate_loops_and_tags(self) -> Self:
