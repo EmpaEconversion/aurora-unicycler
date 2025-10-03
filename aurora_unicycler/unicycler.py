@@ -454,7 +454,7 @@ class Protocol(BaseModel):
         head_info = ET.SubElement(config, "Head_Info")
         ET.SubElement(head_info, "Operate", Value="66")
         ET.SubElement(head_info, "Scale", Value="1")
-        ET.SubElement(head_info, "loop_to", Value="1", Hide_Ctrl_Step="0")
+        ET.SubElement(head_info, "Start_Step", Value="1", Hide_Ctrl_Step="0")
         ET.SubElement(head_info, "Creator", Value="aurora-unicycler")
         ET.SubElement(head_info, "Remark", Value=self.sample.name)
         # 103, non C-rate mode, seems to give more precise values vs 105
@@ -564,7 +564,7 @@ class Protocol(BaseModel):
                     )
                     limit = ET.SubElement(step_element, "Limit")
                     other = ET.SubElement(limit, "Other")
-                    ET.SubElement(other, "loop_to", Value=str(step.loop_to))
+                    ET.SubElement(other, "Start_Step", Value=str(step.loop_to))
                     ET.SubElement(other, "Cycle_Count", Value=str(step.cycle_count))
 
                 case _:
