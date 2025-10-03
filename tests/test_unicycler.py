@@ -438,7 +438,7 @@ class TestUnicycler(TestCase):
         loopstep = neware_ET.find("config/Step_Info/Step5")
         assert loopstep is not None
         assert loopstep.attrib["Step_Type"] == "5"
-        loop_to = loopstep.find("Limit/Other/loop_to")
+        loop_to = loopstep.find("Limit/Other/Start_Step")
         assert loop_to is not None
         assert loop_to.attrib["Value"] == "3"
 
