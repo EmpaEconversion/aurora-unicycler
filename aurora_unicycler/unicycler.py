@@ -413,6 +413,28 @@ class Protocol(BaseModel):
         # Remove tags and other invalid steps
         self.method = [step for i, step in enumerate(self.method) if i not in methods_to_remove]
 
+    def check_for_intersecting_loops(self) -> None:
+        """Check if a method has intersecting loops. Cannot contain Tags."""
+        loops = []
+        for i, step in enumerate(self.method):
+            if isinstance(step, Loop):
+                loops.append((int(step.loop_to), i + 1))
+        loops.sort()
+
+        for i in range(len(loops)):
+            for j in range(i + 1, len(loops)):
+                i_start, i_end = loops[i]
+                j_start, j_end = loops[j]
+
+                # If loop j starts after loop i ends, stop checking i
+                if j_start > i_end:
+                    break
+
+                # Otherwise check if they intersect, completely nested is okay
+                if (i_start < j_start and i_end < j_end) or (i_start > j_start and i_end > j_end):
+                    msg = "Protocol has intersecting loops."
+                    raise ValueError(msg)
+
     def to_neware_xml(
         self,
         save_path: Path | None = None,
@@ -439,6 +461,7 @@ class Protocol(BaseModel):
 
         # Remove tags and convert to indices
         self.tag_to_indices()
+        self.check_for_intersecting_loops()
 
         # Create XML structure
         root = ET.Element("root")
@@ -617,6 +640,7 @@ class Protocol(BaseModel):
 
         # Remove tags and convert to indices
         self.tag_to_indices()
+        self.check_for_intersecting_loops()
 
         # Create JSON structure
         tomato_dict: dict = {
@@ -713,6 +737,7 @@ class Protocol(BaseModel):
 
         # Remove tags and convert to indices
         self.tag_to_indices()
+        self.check_for_intersecting_loops()
 
         pybamm_experiment: list[str] = []
         loops: dict[int, dict] = {}
@@ -818,6 +843,7 @@ class Protocol(BaseModel):
 
         # Remove tags and convert to indices
         self.tag_to_indices()
+        self.check_for_intersecting_loops()
 
         header = [
             "EC-LAB SETTING FILE",
@@ -1198,30 +1224,6 @@ class Protocol(BaseModel):
         creator, lab, instrument etc.
         """
 
-        def check_for_intersecting_loops(method: Sequence[AnyTechnique]) -> None:
-            """Check if a method has intersecting loops. Cannot contain Tags."""
-            loops = []
-            for i, step in enumerate(method):
-                if isinstance(step, Loop):
-                    loops.append((int(step.loop_to), i + 1))
-            loops.sort()
-
-            for i in range(len(loops)):
-                for j in range(i + 1, len(loops)):
-                    i_start, i_end = loops[i]
-                    j_start, j_end = loops[j]
-
-                    # If loop j starts after loop i ends, stop checking i
-                    if j_start > i_end:
-                        break
-
-                    # Otherwise check if they intersect, completely nested is okay
-                    if (i_start < j_start and i_end < j_end) or (
-                        i_start > j_start and i_end > j_end
-                    ):
-                        msg = "Protocol has intersecting loops."
-                        raise ValueError(msg)
-
         def group_iterative_tasks(
             step_numbers: list[int], method: Sequence[AnyTechnique]
         ) -> list[int | tuple[int, list]]:
@@ -1275,8 +1277,6 @@ class Protocol(BaseModel):
                     # Just add the technique
                     tasks.append(step_number)
             return tasks[::-1]
-
-        # now we go forwards recursively for the battinfo order
 
         def battinfoify_technique(step: AnyTechnique) -> dict:
             """Create a single BattINFO dict from a technique."""
@@ -1425,7 +1425,7 @@ class Protocol(BaseModel):
 
         # Make sure there are no tags or interecting loops
         self.tag_to_indices()
-        check_for_intersecting_loops(self.method)
+        self.check_for_intersecting_loops()
 
         # Get the order of techniques with nested loops
         battinfo_order = group_iterative_tasks(list(range(len(self.method))), self.method)
