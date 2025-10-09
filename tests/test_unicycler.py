@@ -692,3 +692,93 @@ class TestUnicycler(TestCase):
                 }
             )
         assert "is incomplete" in str(exc_info.value)
+
+    def test_intersecting_loops(self) -> None:
+        """Protocols with intersecting loops should give a error."""
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag1"),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag2"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag2", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag3"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag3", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()  # Should be fine
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=2, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=7, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()  # Should be fine
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag1"),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag2"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag2", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag3"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag3", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        with pytest.raises(ValueError):  # Should fail
+            protocol.check_for_intersecting_loops()
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=2, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=5, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        with pytest.raises(ValueError):  # Should fail
+            protocol.check_for_intersecting_loops()
