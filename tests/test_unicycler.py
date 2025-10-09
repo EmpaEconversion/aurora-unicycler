@@ -782,3 +782,39 @@ class TestUnicycler(TestCase):
         protocol.tag_to_indices()
         with pytest.raises(ValueError):  # Should fail
             protocol.check_for_intersecting_loops()
+
+    def test_to_battinfo_jsonld(self) -> None:
+        """Test converting to BattINFO JSON-LD."""
+        my_protocol = Protocol(
+            sample=SampleParams(
+                name="test_sample",
+                capacity_mAh=45,
+            ),
+            record=RecordParams(time_s=1),
+            method=[
+                OpenCircuitVoltage(until_time_s=300),
+                ConstantCurrent(rate_C=0.05, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.01),
+                ConstantCurrent(rate_C=-0.05, until_voltage_V=3.2),
+                Loop(loop_to=2, cycle_count=5),
+                Tag(tag="longterm"),
+                Tag(tag="recovery"),
+                ConstantCurrent(rate_C=0.5, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.05),
+                ConstantCurrent(rate_C=-0.5, until_voltage_V=3.2),
+                Loop(loop_to="longterm", cycle_count=24),
+                ConstantCurrent(rate_C=0.1, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.01),
+                ConstantCurrent(rate_C=-0.1, until_voltage_V=3.2),
+                Loop(loop_to="recovery", cycle_count=10),
+            ],
+        )
+        bij = my_protocol.to_battinfo_jsonld()
+        assert isinstance(bij, dict)
+        json.dumps(bij)  # should be valid JSON
+        assert bij["@type"] == "Resting"
+        assert bij["hasInput"][0]["@type"] == "Duration"
+        assert bij["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 300
+        assert bij["hasNext"]["@type"] == "IterativeWorkflow"
+        assert bij["hasNext"]["hasNext"]["@type"] == "IterativeWorkflow"
+        assert bij["hasNext"]["hasNext"]["hasTask"]["@type"] == "IterativeWorkflow"
