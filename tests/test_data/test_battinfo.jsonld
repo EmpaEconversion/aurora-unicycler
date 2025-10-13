@@ -4,10 +4,10 @@
         {
             "@type": "Duration",
             "hasNumericalPart": {
-                "@type": "emmo:RealData",
+                "@type": "RealData",
                 "hasNumberValue": 300.0
             },
-            "hasMeasurementUnit": "emmo:Second"
+            "hasMeasurementUnit": "Second"
         }
     ],
     "hasNext": {
@@ -16,10 +16,10 @@
             {
                 "@type": "NumberOfIterations",
                 "hasNumericalPart": {
-                    "@type": "emmo:RealData",
+                    "@type": "RealData",
                     "hasNumberValue": 5
                 },
-                "hasMeasurementUnit": "emmo:UnitOne"
+                "hasMeasurementUnit": "UnitOne"
             }
         ],
         "hasTask": {
@@ -28,10 +28,18 @@
                 {
                     "@type": "ElectricCurrent",
                     "hasNumericalPart": {
-                        "@type": "emmo:RealData",
+                        "@type": "RealData",
                         "hasNumberValue": 2.25
                     },
-                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                    "hasMeasurementUnit": "MilliAmpere"
+                },
+                {
+                    "@type": "CRate",
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": 0.05
+                    },
+                    "hasMeasurementUnit": "CRateUnit"
                 },
                 {
                     "@type": [
@@ -39,10 +47,10 @@
                         "TerminationQuantity"
                     ],
                     "hasNumericalPart": {
-                        "@type": "emmo:RealData",
+                        "@type": "RealData",
                         "hasNumberValue": 4.2
                     },
-                    "hasMeasurementUnit": "emmo:Volt"
+                    "hasMeasurementUnit": "Volt"
                 }
             ],
             "hasNext": {
@@ -51,10 +59,10 @@
                     {
                         "@type": "Voltage",
                         "hasNumericalPart": {
-                            "@type": "emmo:RealData",
+                            "@type": "RealData",
                             "hasNumberValue": 4.2
                         },
-                        "hasMeasurementUnit": "emmo:Volt"
+                        "hasMeasurementUnit": "Volt"
                     },
                     {
                         "@type": [
@@ -62,10 +70,21 @@
                             "TerminationQuantity"
                         ],
                         "hasNumericalPart": {
-                            "@type": "emmo:RealData",
+                            "@type": "RealData",
                             "hasNumberValue": 0.45
                         },
-                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                        "hasMeasurementUnit": "MilliAmpere"
+                    },
+                    {
+                        "@type": [
+                            "LowerCRateLimit",
+                            "TerminationQuantity"
+                        ],
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 0.01
+                        },
+                        "hasMeasurementUnit": "CRateUnit"
                     }
                 ],
                 "hasNext": {
@@ -74,10 +93,18 @@
                         {
                             "@type": "ElectricCurrent",
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": 2.25
                             },
-                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                            "hasMeasurementUnit": "MilliAmpere"
+                        },
+                        {
+                            "@type": "CRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 0.05
+                            },
+                            "hasMeasurementUnit": "CRateUnit"
                         },
                         {
                             "@type": [
@@ -85,10 +112,10 @@
                                 "TerminationQuantity"
                             ],
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": 3.2
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         }
                     ]
                 }
@@ -100,10 +127,10 @@
                 {
                     "@type": "NumberOfIterations",
                     "hasNumericalPart": {
-                        "@type": "emmo:RealData",
+                        "@type": "RealData",
                         "hasNumberValue": 10
                     },
-                    "hasMeasurementUnit": "emmo:UnitOne"
+                    "hasMeasurementUnit": "UnitOne"
                 }
             ],
             "hasTask": {
@@ -112,10 +139,10 @@
                     {
                         "@type": "NumberOfIterations",
                         "hasNumericalPart": {
-                            "@type": "emmo:RealData",
+                            "@type": "RealData",
                             "hasNumberValue": 24
                         },
-                        "hasMeasurementUnit": "emmo:UnitOne"
+                        "hasMeasurementUnit": "UnitOne"
                     }
                 ],
                 "hasTask": {
@@ -124,10 +151,18 @@
                         {
                             "@type": "ElectricCurrent",
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": 22.5
                             },
-                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                            "hasMeasurementUnit": "MilliAmpere"
+                        },
+                        {
+                            "@type": "CRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 0.5
+                            },
+                            "hasMeasurementUnit": "CRateUnit"
                         },
                         {
                             "@type": [
@@ -135,10 +170,10 @@
                                 "TerminationQuantity"
                             ],
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": 4.2
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         }
                     ],
                     "hasNext": {
@@ -147,10 +182,10 @@
                             {
                                 "@type": "Voltage",
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": 4.2
                                 },
-                                "hasMeasurementUnit": "emmo:Volt"
+                                "hasMeasurementUnit": "Volt"
                             },
                             {
                                 "@type": [
@@ -158,10 +193,21 @@
                                     "TerminationQuantity"
                                 ],
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": 2.25
                                 },
-                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                "hasMeasurementUnit": "MilliAmpere"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCRateLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 0.05
+                                },
+                                "hasMeasurementUnit": "CRateUnit"
                             }
                         ],
                         "hasNext": {
@@ -170,10 +216,18 @@
                                 {
                                     "@type": "ElectricCurrent",
                                     "hasNumericalPart": {
-                                        "@type": "emmo:RealData",
+                                        "@type": "RealData",
                                         "hasNumberValue": 22.5
                                     },
-                                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                                    "hasMeasurementUnit": "MilliAmpere"
+                                },
+                                {
+                                    "@type": "CRate",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 0.5
+                                    },
+                                    "hasMeasurementUnit": "CRateUnit"
                                 },
                                 {
                                     "@type": [
@@ -181,10 +235,10 @@
                                         "TerminationQuantity"
                                     ],
                                     "hasNumericalPart": {
-                                        "@type": "emmo:RealData",
+                                        "@type": "RealData",
                                         "hasNumberValue": 3.2
                                     },
-                                    "hasMeasurementUnit": "emmo:Volt"
+                                    "hasMeasurementUnit": "Volt"
                                 }
                             ]
                         }
@@ -196,10 +250,18 @@
                         {
                             "@type": "ElectricCurrent",
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": 4.5
                             },
-                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                            "hasMeasurementUnit": "MilliAmpere"
+                        },
+                        {
+                            "@type": "CRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 0.1
+                            },
+                            "hasMeasurementUnit": "CRateUnit"
                         },
                         {
                             "@type": [
@@ -207,10 +269,10 @@
                                 "TerminationQuantity"
                             ],
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": 4.2
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         }
                     ],
                     "hasNext": {
@@ -219,10 +281,10 @@
                             {
                                 "@type": "Voltage",
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": 4.2
                                 },
-                                "hasMeasurementUnit": "emmo:Volt"
+                                "hasMeasurementUnit": "Volt"
                             },
                             {
                                 "@type": [
@@ -230,10 +292,21 @@
                                     "TerminationQuantity"
                                 ],
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": 0.45
                                 },
-                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                "hasMeasurementUnit": "MilliAmpere"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCRateLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 0.01
+                                },
+                                "hasMeasurementUnit": "CRateUnit"
                             }
                         ],
                         "hasNext": {
@@ -242,10 +315,18 @@
                                 {
                                     "@type": "ElectricCurrent",
                                     "hasNumericalPart": {
-                                        "@type": "emmo:RealData",
+                                        "@type": "RealData",
                                         "hasNumberValue": 4.5
                                     },
-                                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                                    "hasMeasurementUnit": "MilliAmpere"
+                                },
+                                {
+                                    "@type": "CRate",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 0.1
+                                    },
+                                    "hasMeasurementUnit": "CRateUnit"
                                 },
                                 {
                                     "@type": [
@@ -253,10 +334,10 @@
                                         "TerminationQuantity"
                                     ],
                                     "hasNumericalPart": {
-                                        "@type": "emmo:RealData",
+                                        "@type": "RealData",
                                         "hasNumberValue": 3.2
                                     },
-                                    "hasMeasurementUnit": "emmo:Volt"
+                                    "hasMeasurementUnit": "Volt"
                                 }
                             ]
                         }

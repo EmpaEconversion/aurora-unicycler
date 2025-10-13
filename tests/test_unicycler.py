@@ -46,6 +46,7 @@ class TestUnicycler(TestCase):
                 data.append(json.load(f))
         self.example_protocol_data = data
         self.example_jsonld_path = base_folder / "test_battinfo.jsonld"
+        self.emmo_context_path = base_folder / "emmo_context.json"
 
     def test_from_json(self) -> None:
         """Test creating a Protocol instance from a JSON file."""
@@ -814,7 +815,30 @@ class TestUnicycler(TestCase):
         assert isinstance(bij, dict)
         json.dumps(bij)  # should be valid JSON
 
-        # TODO: This is only a regression test, does not check for correctness
+        # Check that every key is valid term from emmo
+        with self.emmo_context_path.open("r") as f:
+            emmo_context = set(json.load(f))
+        emmo_context.add("@type")
+
+        def recursive_search(obj: dict | list | str | float, context: set) -> None:
+            if isinstance(obj, (int, float)):
+                return
+            if isinstance(obj, str) and obj not in context:
+                msg = f"Unknown key: {obj}"
+                raise ValueError(msg)
+            if isinstance(obj, list):
+                for item in obj:
+                    recursive_search(item, context)
+            elif isinstance(obj, dict):
+                for k, v in obj.items():
+                    if k not in context:
+                        msg = f"Unknown key: {k}"
+                        raise ValueError(msg)
+                    recursive_search(v, context)
+
+        recursive_search(bij, emmo_context)
+
+        # This is only a regression test, does not check for correctness
         with self.example_jsonld_path.open("r") as f:
             expected = json.load(f)
         assert bij == expected

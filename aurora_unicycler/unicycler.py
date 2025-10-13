@@ -1221,6 +1221,8 @@ class Protocol(BaseModel):
         self,
         save_path: Path | None = None,
         capacity_mAh: float | None = None,
+        *,
+        include_context: bool = False,
     ) -> dict:
         """Convert protocol to BattInfo JSON-LD format.
 
@@ -1292,43 +1294,55 @@ class Protocol(BaseModel):
                             {
                                 "@type": "Duration",
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": step.until_time_s,
                                 },
-                                "hasMeasurementUnit": "emmo:Second",
+                                "hasMeasurementUnit": "Second",
                             }
                         ],
                     }
                 case ConstantCurrent():
+                    inputs = []
+                    current_mA: float | None = None
                     if step.rate_C and self.sample.capacity_mAh:
                         current_mA = step.rate_C * self.sample.capacity_mAh
                     elif step.current_mA:
                         current_mA = step.current_mA
-                    else:
-                        msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
-                        raise ValueError(msg)
-                    inputs = [
-                        {
-                            "@type": "ElectricCurrent",
-                            "hasNumericalPart": {
-                                "@type": "emmo:RealData",
-                                "hasNumberValue": abs(current_mA),
+                    charging = (current_mA and current_mA > 0) or (step.rate_C and step.rate_C > 0)
+                    if current_mA:
+                        inputs.append(
+                            {
+                                "@type": "ElectricCurrent",
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": abs(current_mA),
+                                },
+                                "hasMeasurementUnit": "MilliAmpere",
                             },
-                            "hasMeasurementUnit": "emmo:MilliAmpere",
-                        },
-                    ]
+                        )
+                    if step.rate_C:
+                        inputs.append(
+                            {
+                                "@type": "CRate",
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": abs(step.rate_C),
+                                },
+                                "hasMeasurementUnit": "CRateUnit",
+                            },
+                        )
                     if step.until_voltage_V:
                         inputs.append(
                             {
                                 "@type": [
-                                    "UpperVoltageLimit" if current_mA > 0 else "LowerVoltageLimit",
+                                    "UpperVoltageLimit" if charging else "LowerVoltageLimit",
                                     "TerminationQuantity",
                                 ],
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": step.until_voltage_V,
                                 },
-                                "hasMeasurementUnit": "emmo:Volt",
+                                "hasMeasurementUnit": "Volt",
                             }
                         )
                     if step.until_time_s:
@@ -1336,14 +1350,14 @@ class Protocol(BaseModel):
                             {
                                 "@type": "Duration",
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": step.until_time_s,
                                 },
-                                "hasMeasurementUnit": "emmo:Second",
+                                "hasMeasurementUnit": "Second",
                             }
                         )
                     tech_dict = {
-                        "@type": "Charging" if current_mA > 0 else "Discharging",
+                        "@type": "Charging" if charging else "Discharging",
                         "hasInput": inputs,
                     }
                 case ConstantVoltage():
@@ -1351,19 +1365,15 @@ class Protocol(BaseModel):
                         {
                             "@type": "Voltage",
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": step.voltage_V,
                             },
-                            "hasMeasurementUnit": "emmo:Volt",
+                            "hasMeasurementUnit": "Volt",
                         }
                     ]
                     until_current_mA: None | float = None
-                    if step.until_rate_C:
-                        if self.sample.capacity_mAh:
-                            until_current_mA = step.until_rate_C * self.sample.capacity_mAh
-                        else:
-                            msg = "Must give a sample capacity if C rates are used."
-                            raise ValueError(msg)
+                    if step.until_rate_C and self.sample.capacity_mAh:
+                        until_current_mA = step.until_rate_C * self.sample.capacity_mAh
                     elif step.until_current_mA:
                         until_current_mA = step.until_current_mA
                     if until_current_mA is not None:
@@ -1371,21 +1381,32 @@ class Protocol(BaseModel):
                             {
                                 "@type": ["LowerCurrentLimit", "TerminationQuantity"],
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": abs(until_current_mA),
                                 },
-                                "hasMeasurementUnit": "emmo:MilliAmpere",
+                                "hasMeasurementUnit": "MilliAmpere",
                             }
+                        )
+                    if step.until_rate_C:
+                        inputs.append(
+                            {
+                                "@type": ["LowerCRateLimit", "TerminationQuantity"],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": abs(step.until_rate_C),
+                                },
+                                "hasMeasurementUnit": "CRateUnit",
+                            },
                         )
                     if step.until_time_s:
                         inputs.append(
                             {
                                 "@type": "Duration",
                                 "hasNumericalPart": {
-                                    "@type": "emmo:RealData",
+                                    "@type": "RealData",
                                     "hasNumberValue": step.until_time_s,
                                 },
-                                "hasMeasurementUnit": "emmo:Second",
+                                "hasMeasurementUnit": "Second",
                             }
                         )
                     tech_dict = {
@@ -1413,10 +1434,10 @@ class Protocol(BaseModel):
                         {
                             "@type": "NumberOfIterations",
                             "hasNumericalPart": {
-                                "@type": "emmo:RealData",
+                                "@type": "RealData",
                                 "hasNumberValue": order[0][0],
                             },
-                            "hasMeasurementUnit": "emmo:UnitOne",
+                            "hasMeasurementUnit": "UnitOne",
                         }
                     ],
                     "hasTask": recursive_battinfo_build(order[0][1], methods),
@@ -1440,6 +1461,12 @@ class Protocol(BaseModel):
 
         # Build the battinfo JSON-LD
         battinfo_dict = recursive_battinfo_build(battinfo_order, self.method)
+
+        # Include context at this level, if requested
+        if include_context:
+            battinfo_dict["@context"] = [
+                "https://w3id.org/emmo/domain/battery/context",
+            ]
 
         # Optionally save
         if save_path:
