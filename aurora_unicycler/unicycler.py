@@ -1217,7 +1217,11 @@ class Protocol(BaseModel):
 
         return settings_string
 
-    def to_battinfo_jsonld(self) -> dict:
+    def to_battinfo_jsonld(
+        self,
+        save_path: Path | None = None,
+        capacity_mAh: float | None = None,
+    ) -> dict:
         """Convert protocol to BattInfo JSON-LD format.
 
         This generates the 'hasTask' key in BattINFO, and does not include the
@@ -1423,6 +1427,10 @@ class Protocol(BaseModel):
                 this_tech["hasNext"] = recursive_battinfo_build(order[1:], methods)
             return this_tech
 
+        # Allow overwriting capacity
+        if capacity_mAh:
+            self.sample.capacity_mAh = capacity_mAh
+
         # Make sure there are no tags or interecting loops
         self.tag_to_indices()
         self.check_for_intersecting_loops()
@@ -1431,7 +1439,15 @@ class Protocol(BaseModel):
         battinfo_order = group_iterative_tasks(list(range(len(self.method))), self.method)
 
         # Build the battinfo JSON-LD
-        return recursive_battinfo_build(battinfo_order, self.method)
+        battinfo_dict = recursive_battinfo_build(battinfo_order, self.method)
+
+        # Optionally save
+        if save_path:
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            with save_path.open("w", encoding="utf-8") as f:
+                json.dump(battinfo_dict, f, indent=4)
+
+        return battinfo_dict
 
     @classmethod
     def from_dict(

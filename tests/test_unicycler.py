@@ -818,3 +818,8 @@ class TestUnicycler(TestCase):
         with self.example_jsonld_path.open("r") as f:
             expected = json.load(f)
         assert bij == expected
+
+        # Check if capacity overriding works
+        my_protocol.sample.capacity_mAh = 100
+        bij = my_protocol.to_battinfo_jsonld()
+        assert bij["hasNext"]["hasTask"]["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 5
