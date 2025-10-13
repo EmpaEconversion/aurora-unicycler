@@ -45,6 +45,7 @@ class TestUnicycler(TestCase):
             with path.open("r") as f:
                 data.append(json.load(f))
         self.example_protocol_data = data
+        self.example_jsonld_path = base_folder / "test_battinfo.jsonld"
 
     def test_from_json(self) -> None:
         """Test creating a Protocol instance from a JSON file."""
@@ -812,9 +813,8 @@ class TestUnicycler(TestCase):
         bij = my_protocol.to_battinfo_jsonld()
         assert isinstance(bij, dict)
         json.dumps(bij)  # should be valid JSON
-        assert bij["@type"] == "Resting"
-        assert bij["hasInput"][0]["@type"] == "Duration"
-        assert bij["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 300
-        assert bij["hasNext"]["@type"] == "IterativeWorkflow"
-        assert bij["hasNext"]["hasNext"]["@type"] == "IterativeWorkflow"
-        assert bij["hasNext"]["hasNext"]["hasTask"]["@type"] == "IterativeWorkflow"
+
+        # TODO: This is only a regression test, does not check for correctness
+        with self.example_jsonld_path.open("r") as f:
+            expected = json.load(f)
+        assert bij == expected

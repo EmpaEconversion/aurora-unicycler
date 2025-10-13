@@ -1,0 +1,268 @@
+{
+    "@type": "Resting",
+    "hasInput": [
+        {
+            "@type": "Duration",
+            "hasNumericalPart": {
+                "@type": "emmo:RealData",
+                "hasNumberValue": 300.0
+            },
+            "hasMeasurementUnit": "emmo:Second"
+        }
+    ],
+    "hasNext": {
+        "@type": "IterativeWorkflow",
+        "hasInput": [
+            {
+                "@type": "NumberOfIterations",
+                "hasNumericalPart": {
+                    "@type": "emmo:RealData",
+                    "hasNumberValue": 5
+                },
+                "hasMeasurementUnit": "emmo:UnitOne"
+            }
+        ],
+        "hasTask": {
+            "@type": "Charging",
+            "hasInput": [
+                {
+                    "@type": "ElectricCurrent",
+                    "hasNumericalPart": {
+                        "@type": "emmo:RealData",
+                        "hasNumberValue": 2.25
+                    },
+                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                },
+                {
+                    "@type": [
+                        "UpperVoltageLimit",
+                        "TerminationQuantity"
+                    ],
+                    "hasNumericalPart": {
+                        "@type": "emmo:RealData",
+                        "hasNumberValue": 4.2
+                    },
+                    "hasMeasurementUnit": "emmo:Volt"
+                }
+            ],
+            "hasNext": {
+                "@type": "Hold",
+                "hasInput": [
+                    {
+                        "@type": "Voltage",
+                        "hasNumericalPart": {
+                            "@type": "emmo:RealData",
+                            "hasNumberValue": 4.2
+                        },
+                        "hasMeasurementUnit": "emmo:Volt"
+                    },
+                    {
+                        "@type": [
+                            "LowerCurrentLimit",
+                            "TerminationQuantity"
+                        ],
+                        "hasNumericalPart": {
+                            "@type": "emmo:RealData",
+                            "hasNumberValue": 0.45
+                        },
+                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                    }
+                ],
+                "hasNext": {
+                    "@type": "Discharging",
+                    "hasInput": [
+                        {
+                            "@type": "ElectricCurrent",
+                            "hasNumericalPart": {
+                                "@type": "emmo:RealData",
+                                "hasNumberValue": 2.25
+                            },
+                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                        },
+                        {
+                            "@type": [
+                                "LowerVoltageLimit",
+                                "TerminationQuantity"
+                            ],
+                            "hasNumericalPart": {
+                                "@type": "emmo:RealData",
+                                "hasNumberValue": 3.2
+                            },
+                            "hasMeasurementUnit": "emmo:Volt"
+                        }
+                    ]
+                }
+            }
+        },
+        "hasNext": {
+            "@type": "IterativeWorkflow",
+            "hasInput": [
+                {
+                    "@type": "NumberOfIterations",
+                    "hasNumericalPart": {
+                        "@type": "emmo:RealData",
+                        "hasNumberValue": 10
+                    },
+                    "hasMeasurementUnit": "emmo:UnitOne"
+                }
+            ],
+            "hasTask": {
+                "@type": "IterativeWorkflow",
+                "hasInput": [
+                    {
+                        "@type": "NumberOfIterations",
+                        "hasNumericalPart": {
+                            "@type": "emmo:RealData",
+                            "hasNumberValue": 24
+                        },
+                        "hasMeasurementUnit": "emmo:UnitOne"
+                    }
+                ],
+                "hasTask": {
+                    "@type": "Charging",
+                    "hasInput": [
+                        {
+                            "@type": "ElectricCurrent",
+                            "hasNumericalPart": {
+                                "@type": "emmo:RealData",
+                                "hasNumberValue": 22.5
+                            },
+                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                        },
+                        {
+                            "@type": [
+                                "UpperVoltageLimit",
+                                "TerminationQuantity"
+                            ],
+                            "hasNumericalPart": {
+                                "@type": "emmo:RealData",
+                                "hasNumberValue": 4.2
+                            },
+                            "hasMeasurementUnit": "emmo:Volt"
+                        }
+                    ],
+                    "hasNext": {
+                        "@type": "Hold",
+                        "hasInput": [
+                            {
+                                "@type": "Voltage",
+                                "hasNumericalPart": {
+                                    "@type": "emmo:RealData",
+                                    "hasNumberValue": 4.2
+                                },
+                                "hasMeasurementUnit": "emmo:Volt"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCurrentLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "emmo:RealData",
+                                    "hasNumberValue": 2.25
+                                },
+                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                            }
+                        ],
+                        "hasNext": {
+                            "@type": "Discharging",
+                            "hasInput": [
+                                {
+                                    "@type": "ElectricCurrent",
+                                    "hasNumericalPart": {
+                                        "@type": "emmo:RealData",
+                                        "hasNumberValue": 22.5
+                                    },
+                                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                                },
+                                {
+                                    "@type": [
+                                        "LowerVoltageLimit",
+                                        "TerminationQuantity"
+                                    ],
+                                    "hasNumericalPart": {
+                                        "@type": "emmo:RealData",
+                                        "hasNumberValue": 3.2
+                                    },
+                                    "hasMeasurementUnit": "emmo:Volt"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "hasNext": {
+                    "@type": "Charging",
+                    "hasInput": [
+                        {
+                            "@type": "ElectricCurrent",
+                            "hasNumericalPart": {
+                                "@type": "emmo:RealData",
+                                "hasNumberValue": 4.5
+                            },
+                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                        },
+                        {
+                            "@type": [
+                                "UpperVoltageLimit",
+                                "TerminationQuantity"
+                            ],
+                            "hasNumericalPart": {
+                                "@type": "emmo:RealData",
+                                "hasNumberValue": 4.2
+                            },
+                            "hasMeasurementUnit": "emmo:Volt"
+                        }
+                    ],
+                    "hasNext": {
+                        "@type": "Hold",
+                        "hasInput": [
+                            {
+                                "@type": "Voltage",
+                                "hasNumericalPart": {
+                                    "@type": "emmo:RealData",
+                                    "hasNumberValue": 4.2
+                                },
+                                "hasMeasurementUnit": "emmo:Volt"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCurrentLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "emmo:RealData",
+                                    "hasNumberValue": 0.45
+                                },
+                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                            }
+                        ],
+                        "hasNext": {
+                            "@type": "Discharging",
+                            "hasInput": [
+                                {
+                                    "@type": "ElectricCurrent",
+                                    "hasNumericalPart": {
+                                        "@type": "emmo:RealData",
+                                        "hasNumberValue": 4.5
+                                    },
+                                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                                },
+                                {
+                                    "@type": [
+                                        "LowerVoltageLimit",
+                                        "TerminationQuantity"
+                                    ],
+                                    "hasNumericalPart": {
+                                        "@type": "emmo:RealData",
+                                        "hasNumberValue": 3.2
+                                    },
+                                    "hasMeasurementUnit": "emmo:Volt"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
