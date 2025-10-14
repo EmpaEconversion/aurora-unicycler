@@ -16,6 +16,7 @@
   - Neware .xml
   - tomato 0.2.3 .json
   - PyBaMM string list
+  - BattINFO .jsonld
 
 This is particularly useful for high-throughput battery experiments, as protocols can be programmatically defined, and sample IDs and capacities can be attached at the last second.
 
@@ -108,7 +109,7 @@ Once you have a protocol object, you can optionally attach a sample name and cap
 mps_string = my_protocol.to_biologic_mps(
     sample_name="test-sample",
     capacity_mAh=45,
-    save_path="some/location/settings.mps"
+    save_path="some/location/settings.mps",
 )
 ```
 
@@ -117,7 +118,7 @@ mps_string = my_protocol.to_biologic_mps(
 xml_string = my_protocol.to_neware_xml(
     sample_name="test-sample",
     capacity_mAh=45,
-    save_path="some/location/protocol.xml"
+    save_path="some/location/protocol.xml",
 )
 ```
 
@@ -126,13 +127,22 @@ xml_string = my_protocol.to_neware_xml(
 json_string = my_protocol.to_tomato_json(
     sample_name="test-sample",
     capacity_mAh=45,
-    save_path="some/location/protocol.json"
+    save_path="some/location/protocol.json",
 )
 ```
 
 - PyBaMM experiment (list of strings):
 ```python
 pybamm_list = my_protocol.to_pybamm_experiment()
+```
+
+- BattINFO JSON-LD:
+```python
+jsonld_string = my_protocol.to_battinfo_jsonld(
+    capacity_mAh=45,
+    include_context=True,
+    save_path="some/location/protocol.jsonld",
+)
 ```
 
 ## Contributors

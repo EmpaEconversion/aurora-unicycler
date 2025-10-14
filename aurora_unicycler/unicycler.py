@@ -42,6 +42,7 @@ A unicycler Protocol object can be converted into:
 - Biologic MPS settings - to_biologic_mps()
 - Tomato 0.2.3 JSON file - to_tomato_json()
 - PyBaMM-compatible list of strings - to_pybamm_experiment()
+- BattINFO-compatible JSON-LD dict - to_battinfo_jsonld()
 """
 
 import json
