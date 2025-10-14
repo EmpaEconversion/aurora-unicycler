@@ -864,3 +864,37 @@ class TestUnicycler(TestCase):
             }
         )
         assert my_protocol.unicycler.version == __version__
+
+    def test_mutability(self) -> None:
+        """Conversion functions should not mutate the protocol object."""
+        my_protocol = Protocol.from_dict(
+            {
+                "unicycler": {"version": "x.y.z"},
+                "sample": {"name": "test_sample"},
+                "record": {"time_s": 1},
+                "safety": {},
+                "method": [
+                    {"step": "tag", "tag": "tag1"},
+                    {"step": "open_circuit_voltage", "until_time_s": 1},
+                    {"step": "loop", "loop_to": "tag1", "cycle_count": 3},
+                ],
+            }
+        )
+        my_original_protocol = my_protocol.model_copy()
+        assert my_protocol is not my_original_protocol
+        assert my_protocol == my_original_protocol
+
+        my_protocol.to_neware_xml()
+        assert my_protocol == my_original_protocol
+
+        my_protocol.to_tomato_mpg2()
+        assert my_protocol == my_original_protocol
+
+        my_protocol.to_pybamm_experiment()
+        assert my_protocol == my_original_protocol
+
+        my_protocol.to_biologic_mps()
+        assert my_protocol == my_original_protocol
+
+        my_protocol.to_battinfo_jsonld()
+        assert my_protocol == my_original_protocol
