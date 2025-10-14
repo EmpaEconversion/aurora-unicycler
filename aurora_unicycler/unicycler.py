@@ -444,7 +444,7 @@ class Protocol(BaseModel):
 
     def to_neware_xml(
         self,
-        save_path: Path | None = None,
+        save_path: Path | str | None = None,
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
     ) -> str:
@@ -620,6 +620,7 @@ class Protocol(BaseModel):
         # Convert to string and prettify it
         pretty_xml_string = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")  # noqa: S318
         if save_path:
+            save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             with save_path.open("w", encoding="utf-8") as f:
                 f.write(pretty_xml_string)
@@ -627,7 +628,7 @@ class Protocol(BaseModel):
 
     def to_tomato_mpg2(
         self,
-        save_path: Path | None = None,
+        save_path: Path | str | None = None,
         tomato_output: Path = Path("C:/tomato_data/"),
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
@@ -740,6 +741,7 @@ class Protocol(BaseModel):
             tomato_dict["method"].append(tomato_step)
 
         if save_path:
+            save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             with save_path.open("w", encoding="utf-8") as f:
                 json.dump(tomato_dict, f, indent=4)
@@ -839,7 +841,7 @@ class Protocol(BaseModel):
 
     def to_biologic_mps(
         self,
-        save_path: Path | None = None,
+        save_path: Path | str | None = None,
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
     ) -> str:
@@ -1231,6 +1233,7 @@ class Protocol(BaseModel):
         settings_string = "\n".join([*header, *rows, ""])
 
         if save_path:
+            save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             with save_path.open("w", encoding="utf-8") as f:
                 f.write(settings_string)
@@ -1239,7 +1242,7 @@ class Protocol(BaseModel):
 
     def to_battinfo_jsonld(
         self,
-        save_path: Path | None = None,
+        save_path: Path | str | None = None,
         capacity_mAh: float | None = None,
         *,
         include_context: bool = False,
@@ -1497,6 +1500,7 @@ class Protocol(BaseModel):
 
         # Optionally save
         if save_path:
+            save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             with save_path.open("w", encoding="utf-8") as f:
                 json.dump(battinfo_dict, f, indent=4)
