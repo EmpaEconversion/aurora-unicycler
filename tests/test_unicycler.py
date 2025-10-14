@@ -847,3 +847,7 @@ class TestUnicycler(TestCase):
         my_protocol.sample.capacity_mAh = 100
         bij = my_protocol.to_battinfo_jsonld()
         assert bij["hasNext"]["hasTask"]["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 5
+
+        # Check if adding context works
+        bij = my_protocol.to_battinfo_jsonld(include_context=True)
+        assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
