@@ -1,0 +1,349 @@
+{
+    "@type": "Resting",
+    "hasInput": [
+        {
+            "@type": "Duration",
+            "hasNumericalPart": {
+                "@type": "RealData",
+                "hasNumberValue": 300.0
+            },
+            "hasMeasurementUnit": "Second"
+        }
+    ],
+    "hasNext": {
+        "@type": "IterativeWorkflow",
+        "hasInput": [
+            {
+                "@type": "NumberOfIterations",
+                "hasNumericalPart": {
+                    "@type": "RealData",
+                    "hasNumberValue": 5
+                },
+                "hasMeasurementUnit": "UnitOne"
+            }
+        ],
+        "hasTask": {
+            "@type": "Charging",
+            "hasInput": [
+                {
+                    "@type": "ElectricCurrent",
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": 2.25
+                    },
+                    "hasMeasurementUnit": "MilliAmpere"
+                },
+                {
+                    "@type": "CRate",
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": 0.05
+                    },
+                    "hasMeasurementUnit": "CRateUnit"
+                },
+                {
+                    "@type": [
+                        "UpperVoltageLimit",
+                        "TerminationQuantity"
+                    ],
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": 4.2
+                    },
+                    "hasMeasurementUnit": "Volt"
+                }
+            ],
+            "hasNext": {
+                "@type": "Hold",
+                "hasInput": [
+                    {
+                        "@type": "Voltage",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 4.2
+                        },
+                        "hasMeasurementUnit": "Volt"
+                    },
+                    {
+                        "@type": [
+                            "LowerCurrentLimit",
+                            "TerminationQuantity"
+                        ],
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 0.45
+                        },
+                        "hasMeasurementUnit": "MilliAmpere"
+                    },
+                    {
+                        "@type": [
+                            "LowerCRateLimit",
+                            "TerminationQuantity"
+                        ],
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 0.01
+                        },
+                        "hasMeasurementUnit": "CRateUnit"
+                    }
+                ],
+                "hasNext": {
+                    "@type": "Discharging",
+                    "hasInput": [
+                        {
+                            "@type": "ElectricCurrent",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 2.25
+                            },
+                            "hasMeasurementUnit": "MilliAmpere"
+                        },
+                        {
+                            "@type": "CRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 0.05
+                            },
+                            "hasMeasurementUnit": "CRateUnit"
+                        },
+                        {
+                            "@type": [
+                                "LowerVoltageLimit",
+                                "TerminationQuantity"
+                            ],
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 3.2
+                            },
+                            "hasMeasurementUnit": "Volt"
+                        }
+                    ]
+                }
+            }
+        },
+        "hasNext": {
+            "@type": "IterativeWorkflow",
+            "hasInput": [
+                {
+                    "@type": "NumberOfIterations",
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": 10
+                    },
+                    "hasMeasurementUnit": "UnitOne"
+                }
+            ],
+            "hasTask": {
+                "@type": "IterativeWorkflow",
+                "hasInput": [
+                    {
+                        "@type": "NumberOfIterations",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 24
+                        },
+                        "hasMeasurementUnit": "UnitOne"
+                    }
+                ],
+                "hasTask": {
+                    "@type": "Charging",
+                    "hasInput": [
+                        {
+                            "@type": "ElectricCurrent",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 22.5
+                            },
+                            "hasMeasurementUnit": "MilliAmpere"
+                        },
+                        {
+                            "@type": "CRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 0.5
+                            },
+                            "hasMeasurementUnit": "CRateUnit"
+                        },
+                        {
+                            "@type": [
+                                "UpperVoltageLimit",
+                                "TerminationQuantity"
+                            ],
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 4.2
+                            },
+                            "hasMeasurementUnit": "Volt"
+                        }
+                    ],
+                    "hasNext": {
+                        "@type": "Hold",
+                        "hasInput": [
+                            {
+                                "@type": "Voltage",
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 4.2
+                                },
+                                "hasMeasurementUnit": "Volt"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCurrentLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 2.25
+                                },
+                                "hasMeasurementUnit": "MilliAmpere"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCRateLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 0.05
+                                },
+                                "hasMeasurementUnit": "CRateUnit"
+                            }
+                        ],
+                        "hasNext": {
+                            "@type": "Discharging",
+                            "hasInput": [
+                                {
+                                    "@type": "ElectricCurrent",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 22.5
+                                    },
+                                    "hasMeasurementUnit": "MilliAmpere"
+                                },
+                                {
+                                    "@type": "CRate",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 0.5
+                                    },
+                                    "hasMeasurementUnit": "CRateUnit"
+                                },
+                                {
+                                    "@type": [
+                                        "LowerVoltageLimit",
+                                        "TerminationQuantity"
+                                    ],
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 3.2
+                                    },
+                                    "hasMeasurementUnit": "Volt"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "hasNext": {
+                    "@type": "Charging",
+                    "hasInput": [
+                        {
+                            "@type": "ElectricCurrent",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 4.5
+                            },
+                            "hasMeasurementUnit": "MilliAmpere"
+                        },
+                        {
+                            "@type": "CRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 0.1
+                            },
+                            "hasMeasurementUnit": "CRateUnit"
+                        },
+                        {
+                            "@type": [
+                                "UpperVoltageLimit",
+                                "TerminationQuantity"
+                            ],
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 4.2
+                            },
+                            "hasMeasurementUnit": "Volt"
+                        }
+                    ],
+                    "hasNext": {
+                        "@type": "Hold",
+                        "hasInput": [
+                            {
+                                "@type": "Voltage",
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 4.2
+                                },
+                                "hasMeasurementUnit": "Volt"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCurrentLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 0.45
+                                },
+                                "hasMeasurementUnit": "MilliAmpere"
+                            },
+                            {
+                                "@type": [
+                                    "LowerCRateLimit",
+                                    "TerminationQuantity"
+                                ],
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 0.01
+                                },
+                                "hasMeasurementUnit": "CRateUnit"
+                            }
+                        ],
+                        "hasNext": {
+                            "@type": "Discharging",
+                            "hasInput": [
+                                {
+                                    "@type": "ElectricCurrent",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 4.5
+                                    },
+                                    "hasMeasurementUnit": "MilliAmpere"
+                                },
+                                {
+                                    "@type": "CRate",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 0.1
+                                    },
+                                    "hasMeasurementUnit": "CRateUnit"
+                                },
+                                {
+                                    "@type": [
+                                        "LowerVoltageLimit",
+                                        "TerminationQuantity"
+                                    ],
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 3.2
+                                    },
+                                    "hasMeasurementUnit": "Volt"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

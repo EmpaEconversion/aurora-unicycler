@@ -45,6 +45,8 @@ class TestUnicycler(TestCase):
             with path.open("r") as f:
                 data.append(json.load(f))
         self.example_protocol_data = data
+        self.example_jsonld_path = base_folder / "test_battinfo.jsonld"
+        self.emmo_context_path = base_folder / "emmo_context.json"
 
     def test_from_json(self) -> None:
         """Test creating a Protocol instance from a JSON file."""
@@ -692,3 +694,160 @@ class TestUnicycler(TestCase):
                 }
             )
         assert "is incomplete" in str(exc_info.value)
+
+    def test_intersecting_loops(self) -> None:
+        """Protocols with intersecting loops should give a error."""
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag1"),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag2"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag2", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag3"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag3", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()  # Should be fine
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=2, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=7, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()  # Should be fine
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag1"),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag2"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag2", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Tag(tag="tag3"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag3", cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="tag1", cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        with pytest.raises(ValueError):  # Should fail
+            protocol.check_for_intersecting_loops()
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=2, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=5, cycle_count=3),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to=1, cycle_count=3),
+            ],
+        )
+        protocol.tag_to_indices()
+        with pytest.raises(ValueError):  # Should fail
+            protocol.check_for_intersecting_loops()
+
+    def test_to_battinfo_jsonld(self) -> None:
+        """Test converting to BattINFO JSON-LD."""
+        my_protocol = Protocol(
+            sample=SampleParams(
+                name="test_sample",
+                capacity_mAh=45,
+            ),
+            record=RecordParams(time_s=1),
+            method=[
+                OpenCircuitVoltage(until_time_s=300),
+                ConstantCurrent(rate_C=0.05, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.01),
+                ConstantCurrent(rate_C=-0.05, until_voltage_V=3.2),
+                Loop(loop_to=2, cycle_count=5),
+                Tag(tag="longterm"),
+                Tag(tag="recovery"),
+                ConstantCurrent(rate_C=0.5, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.05),
+                ConstantCurrent(rate_C=-0.5, until_voltage_V=3.2),
+                Loop(loop_to="longterm", cycle_count=24),
+                ConstantCurrent(rate_C=0.1, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.01),
+                ConstantCurrent(rate_C=-0.1, until_voltage_V=3.2),
+                Loop(loop_to="recovery", cycle_count=10),
+            ],
+        )
+        bij = my_protocol.to_battinfo_jsonld()
+        assert isinstance(bij, dict)
+        json.dumps(bij)  # should be valid JSON
+
+        # Check that every key is valid term from emmo
+        with self.emmo_context_path.open("r") as f:
+            emmo_context = set(json.load(f))
+        emmo_context.add("@type")
+
+        def recursive_search(obj: dict | list | str | float, context: set) -> None:
+            if isinstance(obj, (int, float)):
+                return
+            if isinstance(obj, str) and obj not in context:
+                msg = f"Unknown key: {obj}"
+                raise ValueError(msg)
+            if isinstance(obj, list):
+                for item in obj:
+                    recursive_search(item, context)
+            elif isinstance(obj, dict):
+                for k, v in obj.items():
+                    if k not in context:
+                        msg = f"Unknown key: {k}"
+                        raise ValueError(msg)
+                    recursive_search(v, context)
+
+        recursive_search(bij, emmo_context)
+
+        # This is only a regression test, does not check for correctness
+        with self.example_jsonld_path.open("r") as f:
+            expected = json.load(f)
+        assert bij == expected
+
+        # Check if capacity overriding works
+        my_protocol.sample.capacity_mAh = 100
+        bij = my_protocol.to_battinfo_jsonld()
+        assert bij["hasNext"]["hasTask"]["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 5
+
+        # Check if adding context works
+        bij = my_protocol.to_battinfo_jsonld(include_context=True)
+        assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
