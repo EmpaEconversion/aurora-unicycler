@@ -321,7 +321,7 @@ class Protocol(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Only checked when outputting
-    def _validate_capacity_c_rates(self) -> None:
+    def validate_capacity_c_rates(self) -> None:
         """Ensure if using C-rate steps, a capacity is set."""
         if not self.sample.capacity_mAh and any(
             getattr(s, "rate_C", None) or getattr(s, "until_rate_C", None) for s in self.method
@@ -449,14 +449,17 @@ class Protocol(BaseModel):
         capacity_mAh: float | None = None,
     ) -> str:
         """Convert the protocol to Neware XML format."""
+        # Create and operate on a copy of the original object
+        protocol = self.model_copy()
+
         # Allow overwriting name and capacity
         if sample_name:
-            self.sample.name = sample_name
+            protocol.sample.name = sample_name
         if capacity_mAh:
-            self.sample.capacity_mAh = capacity_mAh
+            protocol.sample.capacity_mAh = capacity_mAh
 
         # Make sure sample name is set
-        if not self.sample.name or self.sample.name == "$NAME":
+        if not protocol.sample.name or protocol.sample.name == "$NAME":
             msg = (
                 "If using blank sample name or $NAME placeholder, "
                 "a sample name must be provided in this function."
@@ -464,11 +467,11 @@ class Protocol(BaseModel):
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
-        self._validate_capacity_c_rates()
+        protocol.validate_capacity_c_rates()
 
         # Remove tags and convert to indices
-        self.tag_to_indices()
-        self.check_for_intersecting_loops()
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()
 
         # Create XML structure
         root = ET.Element("root")
@@ -486,42 +489,42 @@ class Protocol(BaseModel):
         ET.SubElement(head_info, "Scale", Value="1")
         ET.SubElement(head_info, "Start_Step", Value="1", Hide_Ctrl_Step="0")
         ET.SubElement(head_info, "Creator", Value="aurora-unicycler")
-        ET.SubElement(head_info, "Remark", Value=self.sample.name)
+        ET.SubElement(head_info, "Remark", Value=protocol.sample.name)
         # 103, non C-rate mode, seems to give more precise values vs 105
         ET.SubElement(head_info, "RateType", Value="103")
-        if self.sample.capacity_mAh:
-            ET.SubElement(head_info, "MultCap", Value=f"{self.sample.capacity_mAh * 3600:f}")
+        if protocol.sample.capacity_mAh:
+            ET.SubElement(head_info, "MultCap", Value=f"{protocol.sample.capacity_mAh * 3600:f}")
 
         whole_prt = ET.SubElement(config, "Whole_Prt")
         protect = ET.SubElement(whole_prt, "Protect")
         main_protect = ET.SubElement(protect, "Main")
         volt = ET.SubElement(main_protect, "Volt")
-        if self.safety.max_voltage_V:
-            ET.SubElement(volt, "Upper", Value=f"{self.safety.max_voltage_V * 10000:f}")
-        if self.safety.min_voltage_V:
-            ET.SubElement(volt, "Lower", Value=f"{self.safety.min_voltage_V * 10000:f}")
+        if protocol.safety.max_voltage_V:
+            ET.SubElement(volt, "Upper", Value=f"{protocol.safety.max_voltage_V * 10000:f}")
+        if protocol.safety.min_voltage_V:
+            ET.SubElement(volt, "Lower", Value=f"{protocol.safety.min_voltage_V * 10000:f}")
         curr = ET.SubElement(main_protect, "Curr")
-        if self.safety.max_current_mA:
-            ET.SubElement(curr, "Upper", Value=f"{self.safety.max_current_mA:f}")
-        if self.safety.min_current_mA:
-            ET.SubElement(curr, "Lower", Value=f"{self.safety.min_current_mA:f}")
-        if self.safety.delay_s:
-            ET.SubElement(main_protect, "Delay_Time", Value=f"{self.safety.delay_s * 1000:f}")
+        if protocol.safety.max_current_mA:
+            ET.SubElement(curr, "Upper", Value=f"{protocol.safety.max_current_mA:f}")
+        if protocol.safety.min_current_mA:
+            ET.SubElement(curr, "Lower", Value=f"{protocol.safety.min_current_mA:f}")
+        if protocol.safety.delay_s:
+            ET.SubElement(main_protect, "Delay_Time", Value=f"{protocol.safety.delay_s * 1000:f}")
         cap = ET.SubElement(main_protect, "Cap")
-        if self.safety.max_capacity_mAh:
-            ET.SubElement(cap, "Upper", Value=f"{self.safety.max_capacity_mAh * 3600:f}")
+        if protocol.safety.max_capacity_mAh:
+            ET.SubElement(cap, "Upper", Value=f"{protocol.safety.max_capacity_mAh * 3600:f}")
 
         record = ET.SubElement(whole_prt, "Record")
         main_record = ET.SubElement(record, "Main")
-        if self.record.time_s:
-            ET.SubElement(main_record, "Time", Value=f"{self.record.time_s * 1000:f}")
-        if self.record.voltage_V:
-            ET.SubElement(main_record, "Volt", Value=f"{self.record.voltage_V * 10000:f}")
-        if self.record.current_mA:
-            ET.SubElement(main_record, "Curr", Value=f"{self.record.current_mA:f}")
+        if protocol.record.time_s:
+            ET.SubElement(main_record, "Time", Value=f"{protocol.record.time_s * 1000:f}")
+        if protocol.record.voltage_V:
+            ET.SubElement(main_record, "Volt", Value=f"{protocol.record.voltage_V * 10000:f}")
+        if protocol.record.current_mA:
+            ET.SubElement(main_record, "Curr", Value=f"{protocol.record.current_mA:f}")
 
         step_info = ET.SubElement(
-            config, "Step_Info", Num=str(len(self.method) + 1)
+            config, "Step_Info", Num=str(len(protocol.method) + 1)
         )  # +1 for end step
 
         def _step_to_element(step: AnyTechnique, step_num: int, parent: ET.Element) -> None:
@@ -542,10 +545,12 @@ class Protocol(BaseModel):
                     limit = ET.SubElement(step_element, "Limit")
                     main = ET.SubElement(limit, "Main")
                     if step.rate_C is not None:
-                        assert self.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
+                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
                         ET.SubElement(main, "Rate", Value=f"{abs(step.rate_C):f}")
                         ET.SubElement(
-                            main, "Curr", Value=f"{abs(step.rate_C) * self.sample.capacity_mAh:f}"
+                            main,
+                            "Curr",
+                            Value=f"{abs(step.rate_C) * protocol.sample.capacity_mAh:f}",
                         )
                     elif step.current_mA is not None:
                         ET.SubElement(main, "Curr", Value=f"{abs(step.current_mA):f}")
@@ -570,12 +575,12 @@ class Protocol(BaseModel):
                     if step.until_time_s is not None:
                         ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
                     if step.until_rate_C is not None:
-                        assert self.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
+                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
                         ET.SubElement(main, "Stop_Rate", Value=f"{abs(step.until_rate_C):f}")
                         ET.SubElement(
                             main,
                             "Stop_Curr",
-                            Value=f"{abs(step.until_rate_C) * self.sample.capacity_mAh:f}",
+                            Value=f"{abs(step.until_rate_C) * protocol.sample.capacity_mAh:f}",
                         )
                     elif step.until_current_mA is not None:
                         ET.SubElement(main, "Stop_Curr", Value=f"{abs(step.until_current_mA):f}")
@@ -601,12 +606,12 @@ class Protocol(BaseModel):
                     msg = f"to_neware_xml does not support step type: {step.step}"
                     raise TypeError(msg)
 
-        for i, technique in enumerate(self.method):
+        for i, technique in enumerate(protocol.method):
             step_num = i + 1
             _step_to_element(technique, step_num, step_info)
 
         # Add an end step
-        step_num = len(self.method) + 1
+        step_num = len(protocol.method) + 1
         ET.SubElement(step_info, f"Step{step_num}", Step_ID=str(step_num), Step_Type="6")
 
         smbus = ET.SubElement(config, "SMBUS")
@@ -628,14 +633,17 @@ class Protocol(BaseModel):
         capacity_mAh: float | None = None,
     ) -> str:
         """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format."""
+        # Create and operate on a copy of the original object
+        protocol = self.model_copy()
+
         # Allow overwriting name and capacity
         if sample_name:
-            self.sample.name = sample_name
+            protocol.sample.name = sample_name
         if capacity_mAh:
-            self.sample.capacity_mAh = capacity_mAh
+            protocol.sample.capacity_mAh = capacity_mAh
 
         # Make sure sample name is set
-        if not self.sample.name or self.sample.name == "$NAME":
+        if not protocol.sample.name or protocol.sample.name == "$NAME":
             msg = (
                 "If using blank sample name or $NAME placeholder, "
                 "a sample name must be provided in this function."
@@ -643,11 +651,11 @@ class Protocol(BaseModel):
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
-        self._validate_capacity_c_rates()
+        protocol.validate_capacity_c_rates()
 
         # Remove tags and convert to indices
-        self.tag_to_indices()
-        self.check_for_intersecting_loops()
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()
 
         # Create JSON structure
         tomato_dict: dict = {
@@ -659,24 +667,24 @@ class Protocol(BaseModel):
                 "verbosity": "DEBUG",
                 "output": {
                     "path": str(tomato_output),
-                    "prefix": self.sample.name,
+                    "prefix": protocol.sample.name,
                 },
             },
         }
         # tomato -> MPG2 does not support safety parameters, they are set in the instrument
-        tomato_dict["sample"]["name"] = self.sample.name
-        tomato_dict["sample"]["capacity_mAh"] = self.sample.capacity_mAh
-        for step in self.method:
+        tomato_dict["sample"]["name"] = protocol.sample.name
+        tomato_dict["sample"]["capacity_mAh"] = protocol.sample.capacity_mAh
+        for step in protocol.method:
             tomato_step: dict = {}
             tomato_step["device"] = "MPG2"
             tomato_step["technique"] = step.step
             if isinstance(step, (ConstantCurrent, ConstantVoltage, OpenCircuitVoltage)):
-                if self.record.time_s:
-                    tomato_step["measure_every_dt"] = self.record.time_s
-                if self.record.current_mA:
-                    tomato_step["measure_every_dI"] = self.record.current_mA
-                if self.record.voltage_V:
-                    tomato_step["measure_every_dE"] = self.record.voltage_V
+                if protocol.record.time_s:
+                    tomato_step["measure_every_dt"] = protocol.record.time_s
+                if protocol.record.current_mA:
+                    tomato_step["measure_every_dI"] = protocol.record.current_mA
+                if protocol.record.voltage_V:
+                    tomato_step["measure_every_dE"] = protocol.record.voltage_V
                 tomato_step["I_range"] = "10 mA"
                 tomato_step["E_range"] = "+-5.0 V"
 
@@ -741,14 +749,16 @@ class Protocol(BaseModel):
         """Convert protocol to PyBaMM experiment format."""
         # A PyBaMM experiment doesn't need capacity or sample name
         # Don't need to validate capacity if using C-rate steps
+        # Create and operate on a copy of the original object
+        protocol = self.model_copy()
 
         # Remove tags and convert to indices
-        self.tag_to_indices()
-        self.check_for_intersecting_loops()
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()
 
         pybamm_experiment: list[str] = []
         loops: dict[int, dict] = {}
-        for i, step in enumerate(self.method):
+        for i, step in enumerate(protocol.method):
             step_str = ""
             match step:
                 case ConstantCurrent():
@@ -834,23 +844,26 @@ class Protocol(BaseModel):
         capacity_mAh: float | None = None,
     ) -> str:
         """Make one giant technique for the entire protocol."""
+        # Create and operate on a copy of the original object
+        protocol = self.model_copy()
+
         # Allow overwriting name and capacity
         if sample_name:
-            self.sample.name = sample_name
+            protocol.sample.name = sample_name
         if capacity_mAh:
-            self.sample.capacity_mAh = capacity_mAh
+            protocol.sample.capacity_mAh = capacity_mAh
 
         # Make sure sample name is set
-        if not self.sample.name or self.sample.name == "$NAME":
+        if not protocol.sample.name or protocol.sample.name == "$NAME":
             msg = "If using blank sample name or $NAME placeholder, a sample name must be provided in this function."
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
-        self._validate_capacity_c_rates()
+        protocol.validate_capacity_c_rates()
 
         # Remove tags and convert to indices
-        self.tag_to_indices()
-        self.check_for_intersecting_loops()
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()
 
         header = [
             "EC-LAB SETTING FILE",
@@ -863,7 +876,7 @@ class Protocol(BaseModel):
             "Ewe ctrl range : min = 0.00 V, max = 5.00 V",
             "Safety Limits :",
             "	Do not start on E overload",
-            f"Comments : {self.sample.name}",
+            f"Comments : {protocol.sample.name}",
             "Cycle Definition : Charge/Discharge alternance",
             "Turn to OCV between techniques",
             "",
@@ -947,7 +960,7 @@ class Protocol(BaseModel):
 
         # Make a list of dicts, one for each step
         step_dicts = []
-        for i, step in enumerate(self.method):
+        for i, step in enumerate(protocol.method):
             step_dict = default_step.copy()
             step_dict.update(
                 {
@@ -968,14 +981,14 @@ class Protocol(BaseModel):
                             "lim1_value_unit": "s",
                             "rec_nb": "1",
                             "rec1_type": "Time",
-                            "rec1_value": f"{self.record.time_s or 0:.3f}",
+                            "rec1_value": f"{protocol.record.time_s or 0:.3f}",
                             "rec1_value_unit": "s",
                         },
                     )
 
                 case ConstantCurrent():
-                    if step.rate_C and self.sample.capacity_mAh:
-                        current_mA = step.rate_C * self.sample.capacity_mAh
+                    if step.rate_C and protocol.sample.capacity_mAh:
+                        current_mA = step.rate_C * protocol.sample.capacity_mAh
                     elif step.current_mA:
                         current_mA = step.current_mA
                     else:
@@ -1039,21 +1052,21 @@ class Protocol(BaseModel):
 
                     # Add record details
                     rec_num = 0
-                    if self.record.time_s:
+                    if protocol.record.time_s:
                         rec_num += 1
                         step_dict.update(
                             {
                                 f"rec{rec_num}_type": "Time",
-                                f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
+                                f"rec{rec_num}_value": f"{protocol.record.time_s:.3f}",
                                 f"rec{rec_num}_value_unit": "s",
                             },
                         )
-                    if self.record.voltage_V:
+                    if protocol.record.voltage_V:
                         rec_num += 1
                         step_dict.update(
                             {
                                 f"rec{rec_num}_type": "Ewe",
-                                f"rec{rec_num}_value": f"{self.record.voltage_V:.3f}",
+                                f"rec{rec_num}_value": f"{protocol.record.voltage_V:.3f}",
                                 f"rec{rec_num}_value_unit": "V",
                             },
                         )
@@ -1085,8 +1098,8 @@ class Protocol(BaseModel):
                                 f"lim{lim_num}_value_unit": "s",
                             },
                         )
-                    if step.until_rate_C and self.sample.capacity_mAh:
-                        until_mA = step.until_rate_C * self.sample.capacity_mAh
+                    if step.until_rate_C and protocol.sample.capacity_mAh:
+                        until_mA = step.until_rate_C * protocol.sample.capacity_mAh
                     elif step.until_current_mA:
                         until_mA = step.until_current_mA
                     else:
@@ -1109,21 +1122,21 @@ class Protocol(BaseModel):
 
                     # Add record details
                     rec_num = 0
-                    if self.record.time_s:
+                    if protocol.record.time_s:
                         rec_num += 1
                         step_dict.update(
                             {
                                 f"rec{rec_num}_type": "Time",
-                                f"rec{rec_num}_value": f"{self.record.time_s:.3f}",
+                                f"rec{rec_num}_value": f"{protocol.record.time_s:.3f}",
                                 f"rec{rec_num}_value_unit": "s",
                             },
                         )
-                    if self.record.current_mA:
+                    if protocol.record.current_mA:
                         rec_num += 1
                         step_dict.update(
                             {
                                 f"rec{rec_num}_type": "I",
-                                f"rec{rec_num}_value": f"{self.record.current_mA:.3f}",
+                                f"rec{rec_num}_value": f"{protocol.record.current_mA:.3f}",
                                 f"rec{rec_num}_value_unit": "mA",
                             },
                         )
@@ -1291,7 +1304,7 @@ class Protocol(BaseModel):
                     tasks.append(step_number)
             return tasks[::-1]
 
-        def battinfoify_technique(step: AnyTechnique) -> dict:
+        def battinfoify_technique(step: AnyTechnique, capacity_mAh: float | None) -> dict:
             """Create a single BattINFO dict from a technique."""
             match step:
                 case OpenCircuitVoltage():
@@ -1311,8 +1324,8 @@ class Protocol(BaseModel):
                 case ConstantCurrent():
                     inputs = []
                     current_mA: float | None = None
-                    if step.rate_C and self.sample.capacity_mAh:
-                        current_mA = step.rate_C * self.sample.capacity_mAh
+                    if step.rate_C and capacity_mAh:
+                        current_mA = step.rate_C * capacity_mAh
                     elif step.current_mA:
                         current_mA = step.current_mA
                     charging = (current_mA and current_mA > 0) or (step.rate_C and step.rate_C > 0)
@@ -1379,8 +1392,8 @@ class Protocol(BaseModel):
                         }
                     ]
                     until_current_mA: None | float = None
-                    if step.until_rate_C and self.sample.capacity_mAh:
-                        until_current_mA = step.until_rate_C * self.sample.capacity_mAh
+                    if step.until_rate_C and capacity_mAh:
+                        until_current_mA = step.until_rate_C * capacity_mAh
                     elif step.until_current_mA:
                         until_current_mA = step.until_current_mA
                     if until_current_mA is not None:
@@ -1426,12 +1439,14 @@ class Protocol(BaseModel):
             return tech_dict
 
         def recursive_battinfo_build(
-            order: list[int | tuple[int, list]], methods: Sequence[AnyTechnique]
+            order: list[int | tuple[int, list]],
+            methods: Sequence[AnyTechnique],
+            capacity_mAh: float | None,
         ) -> dict:
             """Recursively build the a BattINFO JSON-LD from a method."""
             if isinstance(order[0], int):
                 # It is just a normal techqniue
-                this_tech = battinfoify_technique(methods[order[0]])
+                this_tech = battinfoify_technique(methods[order[0]], capacity_mAh)
             else:
                 # It is an iterative workflow
                 assert isinstance(order[0], tuple)  # noqa: S101
@@ -1447,27 +1462,32 @@ class Protocol(BaseModel):
                             "hasMeasurementUnit": "UnitOne",
                         }
                     ],
-                    "hasTask": recursive_battinfo_build(order[0][1], methods),
+                    "hasTask": recursive_battinfo_build(order[0][1], methods, capacity_mAh),
                 }
 
             # If there is another technique, keep going
             if len(order) > 1:
-                this_tech["hasNext"] = recursive_battinfo_build(order[1:], methods)
+                this_tech["hasNext"] = recursive_battinfo_build(order[1:], methods, capacity_mAh)
             return this_tech
+
+        # Create and operate on a copy of the original object
+        protocol = self.model_copy()
 
         # Allow overwriting capacity
         if capacity_mAh:
-            self.sample.capacity_mAh = capacity_mAh
+            protocol.sample.capacity_mAh = capacity_mAh
 
         # Make sure there are no tags or interecting loops
-        self.tag_to_indices()
-        self.check_for_intersecting_loops()
+        protocol.tag_to_indices()
+        protocol.check_for_intersecting_loops()
 
         # Get the order of techniques with nested loops
-        battinfo_order = group_iterative_tasks(list(range(len(self.method))), self.method)
+        battinfo_order = group_iterative_tasks(list(range(len(protocol.method))), protocol.method)
 
         # Build the battinfo JSON-LD
-        battinfo_dict = recursive_battinfo_build(battinfo_order, self.method)
+        battinfo_dict = recursive_battinfo_build(
+            battinfo_order, protocol.method, protocol.sample.capacity_mAh
+        )
 
         # Include context at this level, if requested
         if include_context:
