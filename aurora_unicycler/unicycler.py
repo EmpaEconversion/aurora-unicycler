@@ -105,6 +105,13 @@ class UnicyclerParams(BaseModel):
     version: str = Field(default=__version__)
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    @model_validator(mode="after")
+    def update_version(self) -> Self:
+        """Update version when model is read in or created."""
+        if self.version != __version__:
+            return self.model_copy(update={"version": __version__})
+        return self
+
 
 class SampleParams(BaseModel):
     """Sample parameters."""

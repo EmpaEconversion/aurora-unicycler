@@ -12,6 +12,7 @@ import pytest
 from defusedxml import ElementTree
 from pydantic import ValidationError
 
+from aurora_unicycler import __version__
 from aurora_unicycler.unicycler import (
     ConstantCurrent,
     ConstantVoltage,
@@ -851,3 +852,15 @@ class TestUnicycler(TestCase):
         # Check if adding context works
         bij = my_protocol.to_battinfo_jsonld(include_context=True)
         assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
+
+    def test_updating_version(self) -> None:
+        """Reading the file in should update the version to current version."""
+        my_protocol = Protocol.from_dict(
+            {
+                "unicycler": {"version": "x.y.z"},
+                "record": {"time_s": 1},
+                "safety": {},
+                "method": [{"step": "open_circuit_voltage", "until_time_s": 1}],
+            }
+        )
+        assert my_protocol.unicycler.version == __version__
