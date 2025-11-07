@@ -528,7 +528,12 @@ class Protocol(BaseModel):
             config, "Step_Info", Num=str(len(protocol.method) + 1)
         )  # +1 for end step
 
-        def _step_to_element(step: AnyTechnique, step_num: int, parent: ET.Element) -> None:
+        def _step_to_element(
+            step: AnyTechnique,
+            step_num: int,
+            parent: ET.Element,
+            prev_step: AnyTechnique | None = None,
+        ) -> None:
             """Create XML subelement from protocol technique."""
             match step:
                 case ConstantCurrent():
@@ -561,6 +566,19 @@ class Protocol(BaseModel):
                         ET.SubElement(main, "Stop_Volt", Value=f"{step.until_voltage_V * 10000:f}")
 
                 case ConstantVoltage():
+                    # Check if CV follows CC and has the same voltage cutoff
+                    prev_rate_C = None
+                    prev_current_mA = None
+                    if (
+                        isinstance(prev_step, ConstantCurrent)
+                        and prev_step.until_voltage_V == step.voltage_V
+                    ):
+                        if prev_step.rate_C is not None:
+                            assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
+                            prev_rate_C = abs(prev_step.rate_C)
+                            prev_current_mA = abs(prev_step.rate_C) * protocol.sample.capacity_mAh
+                        elif prev_step.current_mA is not None:
+                            prev_current_mA = abs(prev_step.current_mA)
                     if step.until_rate_C is not None and step.until_rate_C != 0:
                         step_type = "3" if step.until_rate_C > 0 else "19"
                     elif step.until_current_mA is not None and step.until_current_mA != 0:
@@ -585,6 +603,16 @@ class Protocol(BaseModel):
                         )
                     elif step.until_current_mA is not None:
                         ET.SubElement(main, "Stop_Curr", Value=f"{abs(step.until_current_mA):f}")
+                    if prev_rate_C is not None:
+                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
+                        ET.SubElement(main, "Rate", Value=f"{abs(prev_rate_C):f}")
+                        ET.SubElement(
+                            main,
+                            "Curr",
+                            Value=f"{abs(prev_rate_C) * protocol.sample.capacity_mAh:f}",
+                        )
+                    elif prev_current_mA is not None:
+                        ET.SubElement(main, "Curr", Value=f"{abs(prev_current_mA):f}")
 
                 case OpenCircuitVoltage():
                     step_element = ET.SubElement(
@@ -609,7 +637,8 @@ class Protocol(BaseModel):
 
         for i, technique in enumerate(protocol.method):
             step_num = i + 1
-            _step_to_element(technique, step_num, step_info)
+            prev_step = protocol.method[i - 1] if i >= 1 else None
+            _step_to_element(technique, step_num, step_info, prev_step)
 
         # Add an end step
         step_num = len(protocol.method) + 1
