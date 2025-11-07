@@ -7,6 +7,7 @@ import re
 from decimal import Decimal
 from pathlib import Path
 from unittest import TestCase
+from xml.etree.ElementTree import Element
 
 import pytest
 from defusedxml import ElementTree
@@ -486,6 +487,47 @@ class TestUnicycler(TestCase):
         neware1 = neware1[:idx] + neware1[idx + 65 :]
         neware2 = neware2[:idx] + neware2[idx + 65 :]
         assert neware1 == neware2
+
+    def test_cv_neware(self) -> None:
+        """Test if CV steps get start current from previous steps."""
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                ConstantCurrent(rate_C=0.1, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.01),
+                ConstantCurrent(rate_C=-0.1, until_voltage_V=3.5),
+            ],
+        )
+        xml = protocol.to_neware_xml(sample_name="test", capacity_mAh=5)
+        step3 = ElementTree.fromstring(xml).find("config/Step_Info/Step3/Limit/Main")
+        assert isinstance(step3, Element)
+        rate = step3.find("Rate")
+        assert isinstance(rate, Element)
+        assert float(rate.get("Value")) == 0.1
+        curr = step3.find("Curr")
+        assert isinstance(curr, Element)
+        assert float(curr.get("Value")) == 0.5
+
+        protocol = Protocol(
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                ConstantCurrent(current_mA=0.5, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_current_mA=0.05),
+                ConstantCurrent(current_mA=-0.5, until_voltage_V=3.5),
+            ],
+        )
+        xml = protocol.to_neware_xml(sample_name="test", capacity_mAh=1)
+        step3 = ElementTree.fromstring(xml).find("config/Step_Info/Step3/Limit/Main")
+        assert isinstance(step3, Element)
+        rate = step3.find("Rate")
+        assert rate is None
+        curr = step3.find("Curr")
+        assert isinstance(curr, Element)
+        assert float(curr.get("Value")) == 0.5
 
     def test_to_biologic_mps(self) -> None:
         """Test conversion to Biologic MPS."""
