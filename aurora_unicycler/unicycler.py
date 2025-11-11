@@ -910,7 +910,7 @@ class Protocol(BaseModel):
             "	Do not start on E overload",
             f"Comments : {protocol.sample.name}",
             "Cycle Definition : Charge/Discharge alternance",
-            "Turn to OCV between techniques",
+            "Do not turn to OCV between techniques",
             "",
             "Technique : 1",
             "Modulo Bat",
@@ -1151,6 +1151,20 @@ class Protocol(BaseModel):
                             "lim_nb": str(lim_num),
                         },
                     )
+                    if i > 0:
+                        prev_mA = None
+                        prev_step = protocol.method[i - 1]
+                        if isinstance(prev_step, ConstantCurrent):
+                            prev_mA = None
+                            if prev_step.rate_C and protocol.sample.capacity_mAh:
+                                prev_mA = prev_step.rate_C * protocol.sample.capacity_mAh
+                            elif prev_step.current_mA:
+                                prev_mA = prev_step.current_mA
+                            if prev_mA and prev_step.until_voltage_V == step.voltage_V:
+                                for val, range_str in I_ranges_mA.items():
+                                    if abs(prev_mA) <= val:
+                                        step_dict.update({"I Range": range_str})
+                                        break
 
                     # Add record details
                     rec_num = 0
