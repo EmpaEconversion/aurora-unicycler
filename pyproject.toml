@@ -72,3 +72,6 @@ push = true
 "aurora_unicycler/version.py" = [
     '__version__ = "{pep440_version}"',
 ]
+
+[tool.pytest.ini_options]
+norecursedirs = ["_*", ".*"]  # Ignore folders starting with . or _ e.g. .venv
