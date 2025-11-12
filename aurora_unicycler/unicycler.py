@@ -1279,7 +1279,7 @@ class Protocol(BaseModel):
         if save_path:
             save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
-            with save_path.open("w", encoding="utf-8") as f:
+            with save_path.open("w", encoding="cp1252") as f:
                 f.write(settings_string)
 
         return settings_string
