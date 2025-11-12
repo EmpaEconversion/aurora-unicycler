@@ -39,7 +39,7 @@ pip install aurora-unicycler
 ### Making a protocol
 Define a protocol using Python
 ```python
-from aurora-unicycler import *
+from aurora_unicycler import *
 
 my_protocol = Protocol(
     measurement = MeasurementParams(
@@ -81,20 +81,18 @@ my_protocol = Protocol(
 
 You can also create a protocol from a python dictionary or JSON - you will not get type checking in an IDE, but it will still validate at runtime.
 ```python
-my_protocol = Protocol.from_dict(
-    {
-        "measurement": {"time_s": 10, "voltage_V": 0.1}
-        "safety": {"max_voltage_V": 5}
-        "method": [
-            {"step": "open_circuit_voltage", "until_time_s": 1},
-            {"step": "tag", "tag": "tag1"},
-            {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
-            {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
-            {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
-            {"step": "loop", "loop_to": "tag1", "cycle_count": 100},
-        ],
-    ]
-)
+my_protocol = Protocol.from_dict({
+    "measurement": {"time_s": 10, "voltage_V": 0.1}
+    "safety": {"max_voltage_V": 5}
+    "method": [
+        {"step": "open_circuit_voltage", "until_time_s": 1},
+        {"step": "tag", "tag": "tag1"},
+        {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
+        {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
+        {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
+        {"step": "loop", "loop_to": "tag1", "cycle_count": 100},
+    ],
+})
 ```
 ```python
 my_protocol = Protocol.from_json("path/to/file.json")
