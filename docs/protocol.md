@@ -1,8 +1,9 @@
 ## With Python object
 
-Define a protocol using Python
+Writing the protocol using the Python objects gives the full power of type
+checking and validation in your developer environment, like VSCode.
 ```python
-from aurora-unicycler import *
+from aurora_unicycler import *
 
 my_protocol = Protocol(
     measurement = MeasurementParams(
@@ -44,7 +45,8 @@ my_protocol = Protocol(
 
 ## With dictionary
 
-You can also create a protocol from a python dictionary - you will not get type checking in an IDE, but it will still validate at runtime.
+You can also create a protocol from a python dictionary - you will not get type
+checking in an IDE, but it will still validate at runtime.
 ```python
 my_protocol = Protocol.from_dict({
     "measurement": {"time_s": 10, "voltage_V": 0.1}
