@@ -1,0 +1,42 @@
+site_name: Aurora unicycler
+theme:
+  name: material
+  logo: assets/favicon.ico
+  favicon: assets/favicon.ico
+  palette:
+    # Automatically detect system preference
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep-purple
+      accent: purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep-purple
+      accent: purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  copyright: "© 2025 Empa"
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+markdown_extensions:
+  - admonition
+  - codehilite        # basic syntax highlighting
+  - pymdownx.highlight # better highlighting for multiple languages
+  - pymdownx.superfences
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - Creating a protocol: protocol.md
+  - Exporting a protocol:
+    - To Biologic mps: biologic.md
+    - To Neware xml: neware.md
+    - To PyBaMM: pybamm.md
+    - To BattINFO: battinfo.md
+  - API Reference: api.md
+  - Acknowledgements: acknowledgements.md
