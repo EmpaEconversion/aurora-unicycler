@@ -1,23 +1,24 @@
 site_name: Aurora unicycler
+repo_url: https://github.com/empaeconversion/aurora-unicycler
 theme:
   name: material
-  logo: assets/favicon.ico
+  logo: assets/aurora-outline.svg
   favicon: assets/favicon.ico
   palette:
     # Automatically detect system preference
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: deep-purple
+      primary: teal
       accent: purple
       toggle:
-        icon: material/weather-night
+        icon: material/brightness-4
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: deep-purple
+      primary: teal
       accent: purple
       toggle:
-        icon: material/weather-sunny
+        icon: material/brightness-7
         name: Switch to light mode
   copyright: "© 2025 Empa"
 plugins:
@@ -40,3 +41,5 @@ nav:
     - To BattINFO: battinfo.md
   - API Reference: api.md
   - Acknowledgements: acknowledgements.md
+extra:
+  generator: false
