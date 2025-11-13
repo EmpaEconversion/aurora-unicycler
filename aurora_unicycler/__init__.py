@@ -1,4 +1,10 @@
-"""Universal cycling protocol."""
+"""A universal cycling protocol which can be converted to different formats.
+
+Create a Protocol object directly, or create from a dict or JSON file.
+
+Convert to different formats e.g. `.to_neware_xml()` or `to_biologic_mps()`.
+
+"""
 
 from .unicycler import (
     ConstantCurrent,
