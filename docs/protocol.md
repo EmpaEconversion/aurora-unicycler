@@ -3,10 +3,18 @@
 Writing the protocol using the Python objects gives the full power of type
 checking and validation in your developer environment, like VSCode.
 ```python
-from aurora_unicycler import *
+from aurora_unicycler import (
+    ConstantCurrent,
+    ConstantVoltage,
+    Loop,
+    Protocol,
+    RecordParams,
+    SafetyParams,
+    Tag,
+)
 
 my_protocol = Protocol(
-    measurement = MeasurementParams(
+    record = RecordParams(
         time_s=10,
         voltage_V=0.1,
     ),
@@ -48,9 +56,11 @@ my_protocol = Protocol(
 You can also create a protocol from a python dictionary - you will not get type
 checking in an IDE, but it will still validate at runtime.
 ```python
+from aurora_unicycler import Protocol
+
 my_protocol = Protocol.from_dict({
-    "measurement": {"time_s": 10, "voltage_V": 0.1}
-    "safety": {"max_voltage_V": 5}
+    "record": {"time_s": 10, "voltage_V": 0.1},
+    "safety": {"max_voltage_V": 5},
     "method": [
         {"step": "open_circuit_voltage", "until_time_s": 1},
         {"step": "tag", "tag": "tag1"},
@@ -66,5 +76,7 @@ my_protocol = Protocol.from_dict({
 
 It is also possible to load a protocol from a JSON file.
 ```python
+from aurora_unicycler import Protocol
+
 my_protocol = Protocol.from_json("path/to/file.json")
 ```
