@@ -1,10 +1,7 @@
-`aurora-unicycler` defines a universal battery cycling protocol that can be
-exported to different formats.
+`aurora-unicycler` provides a universal cycling protocol Python class.
 
-## Features
-- Define a cycling protocol based on a Python Pydantic model, with validation
-- Save a unicycler protocol as a human-readable .json
-- Export protocols into different formats:
+Cycling protocols can be defined in Python or with JSON, and exported to
+different formats:
   - Biologic .mps
   - Neware .xml
   - tomato 0.2.3 .json
@@ -14,3 +11,13 @@ exported to different formats.
 This is particularly useful for high-throughput battery experiments, as
 protocols can be programmatically defined, and sample IDs and capacities can be
 attached at the last second.
+
+We try to make the protocol clear and unambiguous, and abstract away
+idiosyncrasies of the backend of different cycling protocols.
+
+The main class in `aurora-unicycler` is the `Protocol`, which contains the
+`method` - a list of steps to carry out, as well as safety and recording
+parameters and limited sample details.
+
+Under-the-hood, these are `pydantic` models, which allows for powerful
+validation and type checking.
