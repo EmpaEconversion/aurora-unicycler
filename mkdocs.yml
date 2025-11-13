@@ -1,0 +1,49 @@
+site_name: Aurora unicycler
+repo_url: https://github.com/empaeconversion/aurora-unicycler
+theme:
+  name: material
+  logo: assets/aurora-outline.svg
+  favicon: assets/favicon.ico
+  home: index.md
+  features:
+    - content.code.copy
+  palette:
+    # Automatically detect system preference
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+  copyright: "© 2025 Empa"
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+markdown_extensions:
+  - admonition
+  - codehilite        # basic syntax highlighting
+  - pymdownx.highlight # better highlighting for multiple languages
+  - pymdownx.superfences
+
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - Creating a protocol: protocol.md
+  - Exporting a protocol:
+    - To Biologic mps: biologic.md
+    - To Neware xml: neware.md
+    - To PyBaMM: pybamm.md
+    - To BattINFO: battinfo.md
+  - API Reference: api.md
+  - Acknowledgements: acknowledgements.md
+extra:
+  generator: false

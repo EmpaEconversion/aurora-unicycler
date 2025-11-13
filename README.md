@@ -1,3 +1,9 @@
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue.svg)](https://empaeconversion.github.io/aurora-unicycler/)
+[![PyPI version](https://img.shields.io/pypi/v/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
+[![License](https://img.shields.io/github/license/empaeconversion/aurora-unicycler.svg)](https://github.com/empaeconversion/aurora-unicycler/blob/main/LICENSE)
+[![Python Versions](https://img.shields.io/pypi/pyversions/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
+[![Build](https://github.com/empaeconversion/aurora-unicycler/actions/workflows/test.yml/badge.svg)](https://github.com/empaeconversion/aurora-unicycler/actions/workflows/test.yml)
+
 <p align="center">
   <img src="https://github.com/user-attachments/assets/1136509f-c5ae-4ee0-b48d-535494706006#gh-light-mode-only" width="500" align="center" alt="aurora-biologic logo">
   <img src="https://github.com/user-attachments/assets/e224fa59-dec7-4347-9c24-fc4c9f62380a#gh-dark-mode-only" width="500" align="center" alt="aurora-biologic logo">
@@ -8,10 +14,11 @@
 ## Overview
 `aurora-unicycler` defines a universal battery cycling protocol that can be exported to different formats.
 
+See the [docs](https://empaeconversion.github.io/aurora-unicycler/) for more details.
+
 ## Features
-- Define a cycling protocol based on a Python Pydantic model, with validation
-- Save a unicycler protocol as a human-readable .json
-- Export protocols into different formats:
+- Define a cycling protocol in Python or JSON
+- Export the protocol to different formats
   - Biologic .mps
   - Neware .xml
   - tomato 0.2.3 .json
@@ -34,15 +41,22 @@ Install on Python >3.10 with
 pip install aurora-unicycler
 ```
 
-## Usage
+## Quick start
 
-### Making a protocol
 Define a protocol using Python
 ```python
-from aurora-unicycler import *
+from aurora_unicycler import (
+    ConstantCurrent,
+    ConstantVoltage,
+    Loop,
+    Protocol,
+    RecordParams,
+    SafetyParams,
+    Tag,
+)
 
 my_protocol = Protocol(
-    measurement = MeasurementParams(
+    record = RecordParams(
         time_s=10,
         voltage_V=0.1,
     ),
@@ -81,69 +95,45 @@ my_protocol = Protocol(
 
 You can also create a protocol from a python dictionary or JSON - you will not get type checking in an IDE, but it will still validate at runtime.
 ```python
-my_protocol = Protocol.from_dict(
-    {
-        "measurement": {"time_s": 10, "voltage_V": 0.1}
-        "safety": {"max_voltage_V": 5}
-        "method": [
-            {"step": "open_circuit_voltage", "until_time_s": 1},
-            {"step": "tag", "tag": "tag1"},
-            {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
-            {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
-            {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
-            {"step": "loop", "loop_to": "tag1", "cycle_count": 100},
-        ],
-    ]
-)
+my_protocol = Protocol.from_dict({
+    "record": {"time_s": 10, "voltage_V": 0.1}
+    "safety": {"max_voltage_V": 5}
+    "method": [
+        {"step": "open_circuit_voltage", "until_time_s": 1},
+        {"step": "tag", "tag": "tag1"},
+        {"step": "constant_current", "rate_C": 0.5, "until_voltage_V": 4.2},
+        {"step": "constant_voltage", "voltage_V": 4.2, "until_rate_C": 0.05},
+        {"step": "constant_current", "rate_C": -0.5, "until_voltage_V": 3.0},
+        {"step": "loop", "loop_to": "tag1", "cycle_count": 100},
+    ],
+})
 ```
 ```python
 my_protocol = Protocol.from_json("path/to/file.json")
 ```
 
-### Converting a protocol
-
-Once you have a protocol object, you can optionally attach a sample name and capacity and convert to other formats.
-
-- Biologic MPS settings, tested on MPG2 cyclers with EC-lab 11.52 and 11.61:
+You can then export the protocol to different formats, e.g.
 ```python
-mps_string = my_protocol.to_biologic_mps(
+my_protocol.to_biologic_mps(
     sample_name="test-sample",
     capacity_mAh=45,
     save_path="some/location/settings.mps",
 )
-```
 
-- Neware XML, tested on BTS8:
-```python
-xml_string = my_protocol.to_neware_xml(
+my_protocol.to_neware_xml(
     sample_name="test-sample",
     capacity_mAh=45,
     save_path="some/location/protocol.xml",
 )
-```
 
-- Tomato, tested on 0.2.3:
-```python
-json_string = my_protocol.to_tomato_json(
-    sample_name="test-sample",
-    capacity_mAh=45,
-    save_path="some/location/protocol.json",
-)
-```
-
-- PyBaMM experiment (list of strings):
-```python
-pybamm_list = my_protocol.to_pybamm_experiment()
-```
-
-- BattINFO JSON-LD:
-```python
-jsonld_string = my_protocol.to_battinfo_jsonld(
+my_protocol.to_battinfo_jsonld(
     capacity_mAh=45,
     include_context=True,
     save_path="some/location/protocol.jsonld",
 )
 ```
+
+See the [docs](https://empaeconversion.github.io/aurora-unicycler/) for more details and the full API reference.
 
 ## Contributors
 

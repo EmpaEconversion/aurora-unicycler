@@ -60,7 +60,7 @@ from typing_extensions import Self
 from aurora_unicycler.version import __version__
 
 
-def coerce_c_rate(v: float | str | None) -> float | None:
+def _coerce_c_rate(v: float | str | None) -> float | None:
     """Allow C rates to be defined as fraction strings.
 
     e.g. "1/5" -> 0.2, "C/3" -> 0.333333, "D/2" -> -0.5.
@@ -93,7 +93,7 @@ def coerce_c_rate(v: float | str | None) -> float | None:
     raise ValueError(msg)
 
 
-def empty_string_is_none(v: float | str | None) -> float | None:
+def _empty_string_is_none(v: float | str | None) -> float | None:
     """Empty strings are interpretted as None type."""
     if v is None or (isinstance(v, str) and v.strip() == ""):
         return None
@@ -101,13 +101,19 @@ def empty_string_is_none(v: float | str | None) -> float | None:
 
 
 class UnicyclerParams(BaseModel):
-    """Unicycler details."""
+    """Unicycler details - generated automatically.
+
+    Attributes:
+        version: aurora-unicycler version used to generate protocol, set
+            automatically.
+
+    """
 
     version: str = Field(default=__version__)
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     @model_validator(mode="after")
-    def update_version(self) -> Self:
+    def _update_version(self) -> Self:
         """Update version when model is read in or created."""
         if self.version != __version__:
             return self.model_copy(update={"version": __version__})
@@ -115,7 +121,13 @@ class UnicyclerParams(BaseModel):
 
 
 class SampleParams(BaseModel):
-    """Sample parameters."""
+    """Sample parameters.
+
+    Attributes:
+        name: Sample name.
+        capacity_mAh: Sample capacity in mAh, used to calculate current from C-rates.
+
+    """
 
     name: str = Field(default="$NAME")
     capacity_mAh: float | None = Field(gt=0, default=None)
@@ -124,7 +136,14 @@ class SampleParams(BaseModel):
 
 
 class RecordParams(BaseModel):
-    """Recording parameters."""
+    """Recording parameters.
+
+    Attributes:
+        current_mA: Current change in mA which triggers recording data.
+        voltage_V: Voltage change in V which triggers recording data.
+        time_s: Time in seconds between recording data.
+
+    """
 
     current_mA: float | None = None
     voltage_V: float | None = None
@@ -134,7 +153,16 @@ class RecordParams(BaseModel):
 
 
 class SafetyParams(BaseModel):
-    """Safety parameters, i.e. limits before cancelling measurement."""
+    """Safety parameters, i.e. limits before cancelling the entire experiment.
+
+    Attributes:
+        max_voltage_V: Maximum voltage in V.
+        min_voltage_V: Minimum voltage in V.
+        max_current_mA: Maximum current in mA.
+        min_current_mA: Minimum current in mA (can be negative).
+        delay_s: How long in seconds limits must be exceeded before cancelling.
+
+    """
 
     max_voltage_V: float | None = None
     min_voltage_V: float | None = None
@@ -147,7 +175,7 @@ class SafetyParams(BaseModel):
 
 
 class Step(BaseModel):
-    """Base class for all technique steps."""
+    """Base class for all steps."""
 
     # optional id field
     id: str | None = Field(default=None, description="Optional ID for the technique step")
@@ -155,20 +183,40 @@ class Step(BaseModel):
 
 
 class OpenCircuitVoltage(Step):
-    """Open circuit voltage technique."""
+    """Open circuit voltage step.
+
+    Attributes:
+        until_time_s: Duration of step in seconds.
+
+    """
 
     step: Literal["open_circuit_voltage"] = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: float = Field(gt=0)
 
     @field_validator("until_time_s", mode="before")
     @classmethod
-    def allow_empty_string(cls, v: float | str) -> float | None:
+    def _allow_empty_string(cls, v: float | str) -> float | None:
         """Empty string is interpreted as None."""
-        return empty_string_is_none(v)
+        return _empty_string_is_none(v)
 
 
 class ConstantCurrent(Step):
-    """Constant current technique."""
+    """Constant current step.
+
+    At least one of `rate_C` or `current_mA` must be set. If `rate_C` is used, a
+    sample capacity must be set in the Protocol, and it will take priority over
+    `current_mA`.
+
+    The termination ('until') conditions are OR conditions, the step will end
+    when any one of these is met.
+
+    Attributes:
+        rate_C: (optional) The current applied in C-rate units (i.e. mA per mAh).
+        current_mA: (optional) The current applied in mA.
+        until_time_s: Duration of step in seconds.
+        until_voltage_V: End step when this voltage in V is reached.
+
+    """
 
     step: Literal["constant_current"] = Field(default="constant_current", frozen=True)
     rate_C: float | None = None
@@ -178,18 +226,18 @@ class ConstantCurrent(Step):
 
     @field_validator("rate_C", mode="before")
     @classmethod
-    def parse_c_rate(cls, v: float | str) -> float | None:
+    def _parse_c_rate(cls, v: float | str) -> float | None:
         """C-rate can be a string e.g. "C/2"."""
-        return coerce_c_rate(v)
+        return _coerce_c_rate(v)
 
     @field_validator("current_mA", "until_time_s", "until_voltage_V", mode="before")
     @classmethod
-    def allow_empty_string(cls, v: float | str) -> float | None:
+    def _allow_empty_string(cls, v: float | str) -> float | None:
         """Empty string is interpreted as None."""
-        return empty_string_is_none(v)
+        return _empty_string_is_none(v)
 
     @model_validator(mode="after")
-    def ensure_rate_or_current(self) -> Self:
+    def _ensure_rate_or_current(self) -> Self:
         """Ensure at least one of rate_C or current_mA is set."""
         has_rate_C = self.rate_C is not None and self.rate_C != 0
         has_current_mA = self.current_mA is not None and self.current_mA != 0
@@ -199,7 +247,7 @@ class ConstantCurrent(Step):
         return self
 
     @model_validator(mode="after")
-    def ensure_stop_condition(self) -> Self:
+    def _ensure_stop_condition(self) -> Self:
         """Ensure at least one stop condition is set."""
         has_time_s = self.until_time_s is not None and self.until_time_s != 0
         has_voltage_V = self.until_voltage_V is not None and self.until_voltage_V != 0
@@ -210,7 +258,22 @@ class ConstantCurrent(Step):
 
 
 class ConstantVoltage(Step):
-    """Constant voltage technique."""
+    """Constant voltage step.
+
+    The termination ('until') conditions are OR conditions, the step will end
+    when any one of these is met. If both `until_rate_C` and `until_current_mA`
+    are set, C-rate will take priority.
+
+    Note that in most cyclers, a voltage is not applied directly, instead the
+    current is adjusted to achieve a certain voltage.
+
+    Attributes:
+        voltage_V: The voltage applied in V.
+        until_time_s: Duration of step in seconds.
+        until_rate_C: End step when this C-rate (i.e. mA per mAh) is reached.
+        until_current_mA: End step when this current in mA is reached.
+
+    """
 
     step: Literal["constant_voltage"] = Field(default="constant_voltage", frozen=True)
     voltage_V: float
@@ -220,18 +283,18 @@ class ConstantVoltage(Step):
 
     @field_validator("until_rate_C", mode="before")
     @classmethod
-    def parse_c_rate(cls, v: float | str) -> float | None:
+    def _parse_c_rate(cls, v: float | str) -> float | None:
         """C-rate can be a string e.g. "C/2"."""
-        return coerce_c_rate(v)
+        return _coerce_c_rate(v)
 
     @field_validator("voltage_V", "until_time_s", "until_current_mA", mode="before")
     @classmethod
-    def allow_empty_string(cls, v: float | str) -> float | None:
+    def _allow_empty_string(cls, v: float | str) -> float | None:
         """Empty string is interpreted as None."""
-        return empty_string_is_none(v)
+        return _empty_string_is_none(v)
 
     @model_validator(mode="after")
-    def check_stop_condition(self) -> Self:
+    def _check_stop_condition(self) -> Self:
         """Ensure at least one of until_rate_C or until_current_mA is set."""
         has_time_s = self.until_time_s is not None and self.until_time_s != 0
         has_rate_C = self.until_rate_C is not None and self.until_rate_C != 0
@@ -243,7 +306,24 @@ class ConstantVoltage(Step):
 
 
 class ImpedanceSpectroscopy(Step):
-    """Electrochemical Impedance Spectroscopy (EIS) technique."""
+    """Electrochemical Impedance Spectroscopy (EIS) step.
+
+    Only one of `amplitude_V` (PEIS) or `amplitude_mA` (GEIS) can be set.
+
+    Attributes:
+        amplitude_V: (optional) Oscillation amplitude in V.
+        amplitude_mA: (optional) Oscillation amplitude in mA.
+        start_frequency_Hz: Beginning frequency in Hz.
+        end_frequency_Hz: End frequency in Hz.
+        points_per_decade: How many points to measure per decade, i.e. power of 10.
+        measures_per_point: How many measurements to average per point.
+        drift_correction: Corrects for drift in the system - requires twice as
+            many measurements. Compensates measured current/voltage at frequency
+            `f_m` with points`f_m-1` and `f_m+1` using the formula for PEIS
+            `∆I(f_m) = I(f_m) + (I(f_m+1) - I(f_m-1))/2`, (and similar for V in
+            GEIS). Operates on both real and imaginary parts.
+
+    """
 
     step: Literal["impedance_spectroscopy"] = Field(default="impedance_spectroscopy", frozen=True)
     amplitude_V: float | None = None
@@ -257,12 +337,12 @@ class ImpedanceSpectroscopy(Step):
 
     @field_validator("amplitude_V", "amplitude_mA", mode="before")
     @classmethod
-    def allow_empty_string(cls, v: float | str) -> float | None:
+    def _allow_empty_string(cls, v: float | str) -> float | None:
         """Empty string is interpreted as None."""
-        return empty_string_is_none(v)
+        return _empty_string_is_none(v)
 
     @model_validator(mode="after")
-    def validate_amplitude(self) -> Self:
+    def _validate_amplitude(self) -> Self:
         """Cannot set both amplitude_V and amplitude_mA."""
         if self.amplitude_V is not None and self.amplitude_mA is not None:
             msg = "Cannot set both amplitude_V and amplitude_mA."
@@ -274,7 +354,22 @@ class ImpedanceSpectroscopy(Step):
 
 
 class Loop(Step):
-    """Loop technique."""
+    """Loop step.
+
+    Supports both looping to a tag or the step number (1-indexed). It is
+    recommened to use tags to avoid potential errors with indexing or when
+    adding/removing steps.
+
+    Internally, tags are converted to indexes with the correct indexing when
+    sending to cyclers.
+
+    Attributes:
+        loop_to: The tag or step number (1-indexed) to loop back to.
+        cycle_count: How many times to loop. This is the TOTAL number of cycles.
+            Different cyclers define this differently. Here, a cycle_count of 3
+            means 3 cycles in total will be performed.
+
+    """
 
     step: Literal["loop"] = Field(default="loop", frozen=True)
     loop_to: Annotated[int | str, Field()] = Field(default=1)
@@ -283,7 +378,7 @@ class Loop(Step):
 
     @field_validator("loop_to")
     @classmethod
-    def validate_loop_to(cls, v: int | str) -> int | str:
+    def _validate_loop_to(cls, v: int | str) -> int | str:
         """Ensure loop_to is a positive integer or a string."""
         if isinstance(v, int) and v <= 0:
             msg = "Start step must be positive integer or a string"
@@ -295,7 +390,28 @@ class Loop(Step):
 
 
 class Tag(Step):
-    """Tag technique."""
+    """Tag step.
+
+    Used in combination with the Loop step, e.g.
+    ```
+    [
+        Tag(tag="formation")
+        # Your cycling steps here
+        Loop(loop_to="formation", cycle_count=3)
+    ]
+    ```
+
+    This will loop over the cycling steps 3 times. Put the tag before the step
+    you want to loop to.
+
+    Can also be used for comments or organisation, but note that it will only be
+    stored in unicycler, when sending to e.g. Biologic or Neware, loops/tags are
+    converted to indices and the tag steps are removed.
+
+    Attributes:
+        tag: The tag name.
+
+    """
 
     step: Literal["tag"] = Field(default="tag", frozen=True)
     tag: str = Field(default="")
@@ -322,7 +438,7 @@ class Protocol(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Only checked when outputting
-    def validate_capacity_c_rates(self) -> None:
+    def _validate_capacity_c_rates(self) -> None:
         """Ensure if using C-rate steps, a capacity is set."""
         if not self.sample.capacity_mAh and any(
             getattr(s, "rate_C", None) or getattr(s, "until_rate_C", None) for s in self.method
@@ -332,7 +448,7 @@ class Protocol(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def check_no_blank_steps(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def _check_no_blank_steps(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Check if any 'blank' steps are in the method before trying to parse them."""
         steps = values.get("method", [])
         for i, step in enumerate(steps):
@@ -388,7 +504,7 @@ class Protocol(BaseModel):
                 raise ValueError(msg)
         return self
 
-    def tag_to_indices(self) -> None:
+    def _tag_to_indices(self) -> None:
         """Convert tag steps into indices to be processed later."""
         # In a protocol the steps are 1-indexed and tags should be ignored
         # The loop function should point to the index of the step AFTER the corresponding tag
@@ -411,7 +527,10 @@ class Protocol(BaseModel):
                         try:
                             step.loop_to = tags[step.loop_to]
                         except KeyError as e:
-                            msg = f"Loop step with tag {step.loop_to} does not have a corresponding tag step."
+                            msg = (
+                                f"Loop step with tag {step.loop_to} "
+                                "does not have a corresponding tag step."
+                            )
                             raise ValueError(msg) from e
                     else:
                         # If the start step is an int, it should be the NEW index of the step
@@ -421,7 +540,7 @@ class Protocol(BaseModel):
         # Remove tags and other invalid steps
         self.method = [step for i, step in enumerate(self.method) if i not in methods_to_remove]
 
-    def check_for_intersecting_loops(self) -> None:
+    def _check_for_intersecting_loops(self) -> None:
         """Check if a method has intersecting loops. Cannot contain Tags."""
         loops = []
         for i, step in enumerate(self.method):
@@ -449,7 +568,19 @@ class Protocol(BaseModel):
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
     ) -> str:
-        """Convert the protocol to Neware XML format."""
+        """Convert the protocol to Neware XML format.
+
+        Args:
+            save_path: (optional) File path of where to save the xml file.
+            sample_name: (optional) Override the protocol sample name. A sample
+                name must be provided in this function. It is stored as the
+                'barcode' of the Neware protocol.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+
+        Returns:
+            xml string representation of the protocol.
+
+        """
         # Create and operate on a copy of the original object
         protocol = self.model_copy()
 
@@ -468,11 +599,11 @@ class Protocol(BaseModel):
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
-        protocol.validate_capacity_c_rates()
+        protocol._validate_capacity_c_rates()
 
         # Remove tags and convert to indices
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()
 
         # Create XML structure
         root = ET.Element("root")
@@ -551,7 +682,7 @@ class Protocol(BaseModel):
                     limit = ET.SubElement(step_element, "Limit")
                     main = ET.SubElement(limit, "Main")
                     if step.rate_C is not None:
-                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
+                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
                         ET.SubElement(main, "Rate", Value=f"{abs(step.rate_C):f}")
                         ET.SubElement(
                             main,
@@ -574,7 +705,7 @@ class Protocol(BaseModel):
                         and prev_step.until_voltage_V == step.voltage_V
                     ):
                         if prev_step.rate_C is not None:
-                            assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
+                            assert protocol.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
                             prev_rate_C = abs(prev_step.rate_C)
                             prev_current_mA = abs(prev_step.rate_C) * protocol.sample.capacity_mAh
                         elif prev_step.current_mA is not None:
@@ -594,7 +725,7 @@ class Protocol(BaseModel):
                     if step.until_time_s is not None:
                         ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
                     if step.until_rate_C is not None:
-                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
+                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
                         ET.SubElement(main, "Stop_Rate", Value=f"{abs(step.until_rate_C):f}")
                         ET.SubElement(
                             main,
@@ -604,7 +735,7 @@ class Protocol(BaseModel):
                     elif step.until_current_mA is not None:
                         ET.SubElement(main, "Stop_Curr", Value=f"{abs(step.until_current_mA):f}")
                     if prev_rate_C is not None:
-                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from validate_capacity_c_rates()
+                        assert protocol.sample.capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
                         ET.SubElement(main, "Rate", Value=f"{abs(prev_rate_C):f}")
                         ET.SubElement(
                             main,
@@ -663,7 +794,18 @@ class Protocol(BaseModel):
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
     ) -> str:
-        """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format."""
+        """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format.
+
+        Args:
+            save_path: (optional) File path of where to save the json file.
+            tomato_output: (optional) Where to save the data from tomato.
+            sample_name: (optional) Override the protocol sample name.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+
+        Returns:
+            json string representation of the protocol.
+
+        """
         # Create and operate on a copy of the original object
         protocol = self.model_copy()
 
@@ -682,11 +824,11 @@ class Protocol(BaseModel):
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
-        protocol.validate_capacity_c_rates()
+        protocol._validate_capacity_c_rates()
 
         # Remove tags and convert to indices
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()
 
         # Create JSON structure
         tomato_dict: dict = {
@@ -760,7 +902,7 @@ class Protocol(BaseModel):
                             tomato_step["limit_current_max"] = str(abs(step.until_rate_C)) + "D"
 
                 case Loop():
-                    assert isinstance(step.loop_to, int)  # noqa: S101, from tag_to_indices()
+                    assert isinstance(step.loop_to, int)  # noqa: S101, from _tag_to_indices()
                     tomato_step["goto"] = step.loop_to - 1  # 0-indexed in mpr
                     tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
 
@@ -778,15 +920,21 @@ class Protocol(BaseModel):
         return json.dumps(tomato_dict, indent=4)
 
     def to_pybamm_experiment(self) -> list[str]:
-        """Convert protocol to PyBaMM experiment format."""
-        # A PyBaMM experiment doesn't need capacity or sample name
+        """Convert protocol to PyBaMM experiment format.
+
+        A PyBaMM experiment does not need capacity or sample name.
+
+        Returns:
+            list of strings representing the PyBaMM experiment.
+
+        """
         # Don't need to validate capacity if using C-rate steps
         # Create and operate on a copy of the original object
         protocol = self.model_copy()
 
         # Remove tags and convert to indices
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()
 
         pybamm_experiment: list[str] = []
         loops: dict[int, dict] = {}
@@ -836,7 +984,7 @@ class Protocol(BaseModel):
 
                 case Loop():
                     # The string from this will get dropped later
-                    assert isinstance(step.loop_to, int)  # noqa: S101, from tag_to_indices()
+                    assert isinstance(step.loop_to, int)  # noqa: S101, from _tag_to_indices()
                     loops[i] = {"goto": step.loop_to - 1, "n": step.cycle_count, "n_done": 0}
 
                 case _:
@@ -861,7 +1009,10 @@ class Protocol(BaseModel):
                 i += 1
             total_itr += 1
             if total_itr > 10000:
-                msg = "Over 10000 steps in protocol to_pybamm_experiment(), likely a loop definition error."
+                msg = (
+                    "Over 10000 steps in protocol to_pybamm_experiment(), "
+                    "likely a loop definition error."
+                )
                 raise RuntimeError(msg)
 
         # remove all loop steps from the list
@@ -875,7 +1026,22 @@ class Protocol(BaseModel):
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
     ) -> str:
-        """Make one giant technique for the entire protocol."""
+        """Convert protocol to a Biologic Settings file (.mps).
+
+        Uses the ModuloBatt technique.
+
+        Note that you must add OCV steps inbetween CC/CV steps if you want the
+        current range to be able to change.
+
+        Args:
+            save_path: (optional) File path of where to save the mps file.
+            sample_name: (optional) Override the protocol sample name.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+
+        Returns:
+            mps string representation of the protocol.
+
+        """
         # Create and operate on a copy of the original object
         protocol = self.model_copy()
 
@@ -887,15 +1053,18 @@ class Protocol(BaseModel):
 
         # Make sure sample name is set
         if not protocol.sample.name or protocol.sample.name == "$NAME":
-            msg = "If using blank sample name or $NAME placeholder, a sample name must be provided in this function."
+            msg = (
+                "If using blank sample name or $NAME placeholder, "
+                "a sample name must be provided in this function."
+            )
             raise ValueError(msg)
 
         # Make sure capacity is set if using C-rate steps
-        protocol.validate_capacity_c_rates()
+        protocol._validate_capacity_c_rates()
 
         # Remove tags and convert to indices
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()
 
         header = [
             "EC-LAB SETTING FILE",
@@ -1218,7 +1387,8 @@ class Protocol(BaseModel):
                             step_dict.update({"ctrl1_val_unit": "uA"})
 
                         for val, range_str in I_ranges_mA.items():
-                            # GEIS I range behaves differently to CC, 1 mA range means 0.5 mA max amplitude
+                            # GEIS I range behaves differently to CC
+                            # 1 mA range means 0.5 mA max amplitude
                             if abs(step.amplitude_mA) * 2 <= val:
                                 step_dict.update({"I Range": range_str})
                                 break
@@ -1249,7 +1419,7 @@ class Protocol(BaseModel):
                     )
 
                 case Loop():
-                    assert isinstance(step.loop_to, int)  # noqa: S101, from tag_to_indices()
+                    assert isinstance(step.loop_to, int)  # noqa: S101, from _tag_to_indices()
                     step_dict.update(
                         {
                             "ctrl_type": "Loop",
@@ -1295,6 +1465,16 @@ class Protocol(BaseModel):
 
         This generates the 'hasTask' key in BattINFO, and does not include the
         creator, lab, instrument etc.
+
+        Args:
+            save_path: (optional) File path of where to save the JSON-LD file.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+            include_context: (optional) Add a `@context` key to the root of the
+                JSON-LD.
+
+        Returns:
+            Dictionary representation of the JSON-LD.
+
         """
 
         def group_iterative_tasks(
@@ -1525,8 +1705,8 @@ class Protocol(BaseModel):
             protocol.sample.capacity_mAh = capacity_mAh
 
         # Make sure there are no tags or interecting loops
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()
 
         # Get the order of techniques with nested loops
         battinfo_order = group_iterative_tasks(list(range(len(protocol.method))), protocol.method)
