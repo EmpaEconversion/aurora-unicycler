@@ -1,4 +1,4 @@
-[![Docs](https://img.shields.io/badge/docs-online-blue.svg)](https://empaeconversion.github.io/aurora-unicycler/)
+[![Docs](https://img.shields.io/badge/docs-gh--pages-blue.svg)](https://empaeconversion.github.io/aurora-unicycler/)
 [![PyPI version](https://img.shields.io/pypi/v/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
 [![License](https://img.shields.io/github/license/empaeconversion/aurora-unicycler.svg)](https://github.com/empaeconversion/aurora-unicycler/blob/main/LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
@@ -42,8 +42,6 @@ pip install aurora-unicycler
 ```
 
 ## Quick start
-
-See the [docs](https://empaeconversion.github.io/aurora-unicycler/) for more details.
 
 Define a protocol using Python
 ```python
@@ -134,6 +132,8 @@ my_protocol.to_battinfo_jsonld(
     save_path="some/location/protocol.jsonld",
 )
 ```
+
+See the [docs](https://empaeconversion.github.io/aurora-unicycler/) for more details and the full API reference.
 
 ## Contributors
 
