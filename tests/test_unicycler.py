@@ -26,7 +26,7 @@ from aurora_unicycler.unicycler import (
     SampleParams,
     Step,
     Tag,
-    coerce_c_rate,
+    _coerce_c_rate,
 )
 
 
@@ -305,7 +305,7 @@ class TestUnicycler(TestCase):
                 Loop(loop_to=2, cycle_count=3),
             ],
         )
-        protocol.tag_to_indices()
+        protocol._tag_to_indices()
         # this should not change the loop step
         assert isinstance(protocol.method[4], Loop)
         assert protocol.method[4].loop_to == 2
@@ -325,7 +325,7 @@ class TestUnicycler(TestCase):
             ],
         )
         # tag should be removed and replaced with the index
-        protocol.tag_to_indices()
+        protocol._tag_to_indices()
         assert isinstance(protocol.method[4], Loop)
         assert protocol.method[4].loop_to == 3
         assert isinstance(protocol.method[6], Loop)
@@ -354,7 +354,7 @@ class TestUnicycler(TestCase):
                 Loop(loop_to="tag3", cycle_count=3),  # 12
             ],
         )
-        protocol.tag_to_indices()
+        protocol._tag_to_indices()
         assert isinstance(protocol.method[4], Loop)
         assert protocol.method[4].loop_to == 3
         assert isinstance(protocol.method[6], Loop)
@@ -560,33 +560,33 @@ class TestUnicycler(TestCase):
 
     def test_coerce_c_rate(self) -> None:
         """Test the coerce_c_rate function."""
-        assert coerce_c_rate("0.05") == 0.05
-        assert coerce_c_rate("  0.05  ") == 0.05
-        assert coerce_c_rate("1/20") == 0.05
-        assert coerce_c_rate("C/5") == 0.2
-        assert coerce_c_rate("D/5") == -0.2
-        assert coerce_c_rate("3D/3") == -1.0
-        assert coerce_c_rate("C5/25") == 0.2
-        assert coerce_c_rate("2e-1") == 0.2
-        assert coerce_c_rate("1.23e3 C / 1.23e4") == 0.1
-        assert coerce_c_rate(" C 3   /    1 0 ") == 0.3
-        assert coerce_c_rate(0.1) == 0.1
-        assert coerce_c_rate(1) == 1.0
-        assert coerce_c_rate(Decimal("0.1")) == 0.1
+        assert _coerce_c_rate("0.05") == 0.05
+        assert _coerce_c_rate("  0.05  ") == 0.05
+        assert _coerce_c_rate("1/20") == 0.05
+        assert _coerce_c_rate("C/5") == 0.2
+        assert _coerce_c_rate("D/5") == -0.2
+        assert _coerce_c_rate("3D/3") == -1.0
+        assert _coerce_c_rate("C5/25") == 0.2
+        assert _coerce_c_rate("2e-1") == 0.2
+        assert _coerce_c_rate("1.23e3 C / 1.23e4") == 0.1
+        assert _coerce_c_rate(" C 3   /    1 0 ") == 0.3
+        assert _coerce_c_rate(0.1) == 0.1
+        assert _coerce_c_rate(1) == 1.0
+        assert _coerce_c_rate(Decimal("0.1")) == 0.1
         with pytest.raises(ValueError):
-            coerce_c_rate("invalid")
+            _coerce_c_rate("invalid")
         with pytest.raises(ValueError):
-            coerce_c_rate("1/2/3")
+            _coerce_c_rate("1/2/3")
         with pytest.raises(ValueError):
-            coerce_c_rate("1\5")
+            _coerce_c_rate("1\5")
         with pytest.raises(ValueError):
-            coerce_c_rate(" 1 . 0 ")
+            _coerce_c_rate(" 1 . 0 ")
         with pytest.raises(ValueError):
-            coerce_c_rate("5C/2D")
+            _coerce_c_rate("5C/2D")
         with pytest.raises(ValueError):
-            coerce_c_rate("3C/2C")
+            _coerce_c_rate("3C/2C")
         with pytest.raises(ZeroDivisionError):
-            coerce_c_rate("C/0")
+            _coerce_c_rate("C/0")
 
     def test_coerce_c_rate_in_protocol(self) -> None:
         """Test the coerce_c_rate function in a protocol context."""
@@ -760,8 +760,8 @@ class TestUnicycler(TestCase):
                 Loop(loop_to="tag1", cycle_count=3),
             ],
         )
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()  # Should be fine
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()  # Should be fine
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -780,8 +780,8 @@ class TestUnicycler(TestCase):
                 Loop(loop_to=1, cycle_count=3),
             ],
         )
-        protocol.tag_to_indices()
-        protocol.check_for_intersecting_loops()  # Should be fine
+        protocol._tag_to_indices()
+        protocol._check_for_intersecting_loops()  # Should be fine
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -803,9 +803,9 @@ class TestUnicycler(TestCase):
                 Loop(loop_to="tag1", cycle_count=3),
             ],
         )
-        protocol.tag_to_indices()
+        protocol._tag_to_indices()
         with pytest.raises(ValueError):  # Should fail
-            protocol.check_for_intersecting_loops()
+            protocol._check_for_intersecting_loops()
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -824,9 +824,9 @@ class TestUnicycler(TestCase):
                 Loop(loop_to=1, cycle_count=3),
             ],
         )
-        protocol.tag_to_indices()
+        protocol._tag_to_indices()
         with pytest.raises(ValueError):  # Should fail
-            protocol.check_for_intersecting_loops()
+            protocol._check_for_intersecting_loops()
 
     def test_to_battinfo_jsonld(self) -> None:
         """Test converting to BattINFO JSON-LD."""
