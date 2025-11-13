@@ -4,6 +4,7 @@ theme:
   name: material
   logo: assets/aurora-outline.svg
   favicon: assets/favicon.ico
+  home: index.md
   features:
     - content.code.copy
   palette:
