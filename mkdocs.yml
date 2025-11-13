@@ -4,6 +4,8 @@ theme:
   name: material
   logo: assets/aurora-outline.svg
   favicon: assets/favicon.ico
+  features:
+    - content.code.copy
   palette:
     # Automatically detect system preference
     - media: "(prefers-color-scheme: light)"
@@ -30,6 +32,7 @@ markdown_extensions:
   - codehilite        # basic syntax highlighting
   - pymdownx.highlight # better highlighting for multiple languages
   - pymdownx.superfences
+
 nav:
   - Overview: index.md
   - Installation: installation.md
