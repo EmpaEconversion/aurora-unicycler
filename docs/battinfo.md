@@ -1,4 +1,4 @@
-With a `Protocol` object, use , use `to_battinfo_jsonld()`
+With a `Protocol` object, use `to_battinfo_jsonld()`
 
 ```python
 jsonld_string = my_protocol.to_battinfo_jsonld(
