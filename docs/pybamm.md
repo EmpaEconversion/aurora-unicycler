@@ -1,4 +1,4 @@
-With a `Protocol` object, use , use `to_pybamm_experiment()`
+With a `Protocol` object, use `to_pybamm_experiment()`
 
 ```python
 pybamm_list = my_protocol.to_pybamm_experiment()

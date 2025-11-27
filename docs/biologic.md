@@ -10,7 +10,7 @@ mps_string = my_protocol.to_biologic_mps(
 
 This returns a Biologic MPS settings string, and optionally saves a .mps file.
 
-This has tested on MPG2 cyclers with EC-lab 11.52 and 11.61.
+This has been tested on MPG2 cyclers with EC-lab 11.52 and 11.61.
 
 !!! warning "Important!"
     If you save the string to a file yourself, use `cp1252` encoding.

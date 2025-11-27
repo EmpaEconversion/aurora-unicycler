@@ -2,6 +2,7 @@
 
 Cycling protocols can be defined in Python or with JSON, and exported to
 different formats:
+
   - Biologic .mps
   - Neware .xml
   - tomato 0.2.3 .json
