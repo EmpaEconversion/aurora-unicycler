@@ -9,25 +9,13 @@ from xml.dom import minidom
 from aurora_unicycler import _core, _utils
 
 
-def to_neware_xml(  # noqa: D417
+def to_neware_xml(
     protocol: _core.BaseProtocol,
     save_path: Path | str | None = None,
     sample_name: str | None = None,
     capacity_mAh: float | None = None,
 ) -> str:
-    """Convert the protocol to Neware XML format.
-
-    Args:
-        save_path: (optional) File path of where to save the xml file.
-        sample_name: (optional) Override the protocol sample name. A sample
-            name must be provided in this function. It is stored as the
-            'barcode' of the Neware protocol.
-        capacity_mAh: (optional) Override the protocol sample capacity.
-
-    Returns:
-        xml string representation of the protocol.
-
-    """
+    """Convert the protocol to Neware XML format."""
     # Create and operate on a copy of the original object
     protocol = protocol.model_copy(deep=True)
 

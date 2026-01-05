@@ -4,14 +4,7 @@ from aurora_unicycler import _core, _utils
 
 
 def to_pybamm_experiment(protocol: _core.BaseProtocol) -> list[str]:
-    """Convert protocol to PyBaMM experiment format.
-
-    A PyBaMM experiment does not need capacity or sample name.
-
-    Returns:
-        list of strings representing the PyBaMM experiment.
-
-    """
+    """Convert protocol to PyBaMM experiment format."""
     # Don't need to validate capacity if using C-rate steps
     # Create and operate on a copy of the original object
     protocol = protocol.model_copy(deep=True)

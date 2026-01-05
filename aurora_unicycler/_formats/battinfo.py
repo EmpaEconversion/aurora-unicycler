@@ -235,21 +235,7 @@ def to_battinfo_jsonld(  # noqa: D417
     *,
     include_context: bool = False,
 ) -> dict:
-    """Convert protocol to BattInfo JSON-LD format.
-
-    This generates the 'hasTask' key in BattINFO, and does not include the
-    creator, lab, instrument etc.
-
-    Args:
-        save_path: (optional) File path of where to save the JSON-LD file.
-        capacity_mAh: (optional) Override the protocol sample capacity.
-        include_context: (optional) Add a `@context` key to the root of the
-            JSON-LD.
-
-    Returns:
-        Dictionary representation of the JSON-LD.
-
-    """
+    """Convert protocol to BattInfo JSON-LD format."""
     # Create and operate on a copy of the original object
     protocol = protocol.model_copy(deep=True)
 

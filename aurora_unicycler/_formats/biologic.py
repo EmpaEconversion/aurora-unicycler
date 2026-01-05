@@ -5,28 +5,13 @@ from pathlib import Path
 from aurora_unicycler import _core, _utils
 
 
-def to_biologic_mps(  # noqa: D417
+def to_biologic_mps(
     protocol: _core.BaseProtocol,
     save_path: Path | str | None = None,
     sample_name: str | None = None,
     capacity_mAh: float | None = None,
 ) -> str:
-    """Convert protocol to a Biologic Settings file (.mps).
-
-    Uses the ModuloBatt technique.
-
-    Note that you must add OCV steps inbetween CC/CV steps if you want the
-    current range to be able to change.
-
-    Args:
-        save_path: (optional) File path of where to save the mps file.
-        sample_name: (optional) Override the protocol sample name.
-        capacity_mAh: (optional) Override the protocol sample capacity.
-
-    Returns:
-        mps string representation of the protocol.
-
-    """
+    """Convert protocol to a Biologic Settings file (.mps)."""
     # Create and operate on a copy of the original object
     protocol = protocol.model_copy(deep=True)
 

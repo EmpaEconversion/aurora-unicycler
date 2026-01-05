@@ -45,12 +45,10 @@ A unicycler Protocol object can be converted into:
 - BattINFO-compatible JSON-LD dict - to_battinfo_jsonld()
 """
 
+from pathlib import Path
+
 from aurora_unicycler._core import BaseProtocol
-from aurora_unicycler._formats.battinfo import to_battinfo_jsonld
-from aurora_unicycler._formats.biologic import to_biologic_mps
-from aurora_unicycler._formats.neware import to_neware_xml
-from aurora_unicycler._formats.pybamm import to_pybamm_experiment
-from aurora_unicycler._formats.tomato import to_tomato_mpg2
+from aurora_unicycler._formats import battinfo, biologic, neware, pybamm, tomato
 
 
 class Protocol(BaseProtocol):
@@ -60,9 +58,109 @@ class Protocol(BaseProtocol):
     cycler machine vendors.
     """
 
-    # Add conversion methods to the base class
-    to_neware_xml = to_neware_xml
-    to_biologic_mps = to_biologic_mps
-    to_tomato_mpg2 = to_tomato_mpg2
-    to_battinfo_jsonld = to_battinfo_jsonld
-    to_pybamm_experiment = to_pybamm_experiment
+    # Add conversion methods to the base class, include docstrings here so mkdocs work
+    def to_battinfo_jsonld(
+        self,
+        save_path: Path | str | None = None,
+        capacity_mAh: float | None = None,
+        *,
+        include_context: bool = False,
+    ) -> dict:
+        """Convert protocol to BattInfo JSON-LD format.
+
+        This generates the 'hasTask' key in BattINFO, and does not include the
+        creator, lab, instrument etc.
+
+        Args:
+            save_path: (optional) File path of where to save the JSON-LD file.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+            include_context: (optional) Add a `@context` key to the root of the
+                JSON-LD.
+
+        Returns:
+            Dictionary representation of the JSON-LD.
+
+        """
+        return battinfo.to_battinfo_jsonld(
+            self,
+            save_path,
+            capacity_mAh,
+            include_context=include_context,
+        )
+
+    def to_biologic_mps(
+        self,
+        save_path: Path | str | None = None,
+        sample_name: str | None = None,
+        capacity_mAh: float | None = None,
+    ) -> str:
+        """Convert protocol to a Biologic Settings file (.mps).
+
+        Uses the ModuloBatt technique.
+
+        Note that you must add OCV steps inbetween CC/CV steps if you want the
+        current range to be able to change.
+
+        Args:
+            save_path: (optional) File path of where to save the mps file.
+            sample_name: (optional) Override the protocol sample name.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+
+        Returns:
+            mps string representation of the protocol.
+
+        """
+        return biologic.to_biologic_mps(self, save_path, sample_name, capacity_mAh)
+
+    def to_neware_xml(
+        self,
+        save_path: Path | str | None = None,
+        sample_name: str | None = None,
+        capacity_mAh: float | None = None,
+    ) -> str:
+        """Convert the protocol to Neware XML format.
+
+        Args:
+            save_path: (optional) File path of where to save the xml file.
+            sample_name: (optional) Override the protocol sample name. A sample
+                name must be provided in this function. It is stored as the
+                'barcode' of the Neware protocol.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+
+        Returns:
+            xml string representation of the protocol.
+
+        """
+        return neware.to_neware_xml(self, save_path, sample_name, capacity_mAh)
+
+    def to_pybamm_experiment(self) -> list[str]:
+        """Convert protocol to PyBaMM experiment format.
+
+        A PyBaMM experiment does not need capacity or sample name.
+
+        Returns:
+            list of strings representing the PyBaMM experiment.
+
+        """
+        return pybamm.to_pybamm_experiment(self)
+
+    def to_tomato_mpg2(
+        self,
+        save_path: Path | str | None = None,
+        tomato_output: Path = Path("C:/tomato_data/"),
+        sample_name: str | None = None,
+        capacity_mAh: float | None = None,
+    ) -> str:
+        """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format.
+
+        Args:
+            save_path: (optional) File path of where to save the json file.
+            tomato_output: (optional) Where to save the data from tomato.
+            sample_name: (optional) Override the protocol sample name.
+            capacity_mAh: (optional) Override the protocol sample capacity.
+
+        Returns:
+            json string representation of the protocol.
+
+        """
+        return tomato.to_tomato_mpg2(self, save_path, tomato_output, sample_name, capacity_mAh)

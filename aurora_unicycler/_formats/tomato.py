@@ -6,25 +6,14 @@ from pathlib import Path
 from aurora_unicycler import _core, _utils
 
 
-def to_tomato_mpg2(  # noqa: D417
+def to_tomato_mpg2(
     protocol: _core.BaseProtocol,
     save_path: Path | str | None = None,
     tomato_output: Path = Path("C:/tomato_data/"),
     sample_name: str | None = None,
     capacity_mAh: float | None = None,
 ) -> str:
-    """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format.
-
-    Args:
-        save_path: (optional) File path of where to save the json file.
-        tomato_output: (optional) Where to save the data from tomato.
-        sample_name: (optional) Override the protocol sample name.
-        capacity_mAh: (optional) Override the protocol sample capacity.
-
-    Returns:
-        json string representation of the protocol.
-
-    """
+    """Convert protocol to tomato 0.2.3 + MPG2 compatible JSON format."""
     # Create and operate on a copy of the original object
     protocol = protocol.model_copy(deep=True)
 
