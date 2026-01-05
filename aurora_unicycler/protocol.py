@@ -46,6 +46,7 @@ A unicycler Protocol object can be converted into:
 """
 
 from pathlib import Path
+from typing import Literal
 
 from aurora_unicycler._core import BaseProtocol
 from aurora_unicycler._formats import battinfo, biologic, neware, pybamm, tomato
@@ -93,6 +94,7 @@ class Protocol(BaseProtocol):
         save_path: Path | str | None = None,
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
+        range_V: Literal["-1-1", "-2.5-2.5", "0-5", "-5-5", "0-10", "-5-10", "-10-10"] = "0-5",
     ) -> str:
         """Convert protocol to a Biologic Settings file (.mps).
 
@@ -105,12 +107,15 @@ class Protocol(BaseProtocol):
             save_path: (optional) File path of where to save the mps file.
             sample_name: (optional) Override the protocol sample name.
             capacity_mAh: (optional) Override the protocol sample capacity.
+            range_V: (default 0-5 V) Voltage range of instrument in volts.
+                Allowed values: "-1-1", "-2.5-2.5", "0-5", "-5-5", "0-10", "-5-10", "-10-10".
+                Smaller ranges improve resolution.
 
         Returns:
             mps string representation of the protocol.
 
         """
-        return biologic.to_biologic_mps(self, save_path, sample_name, capacity_mAh)
+        return biologic.to_biologic_mps(self, save_path, sample_name, capacity_mAh, range_V)
 
     def to_neware_xml(
         self,

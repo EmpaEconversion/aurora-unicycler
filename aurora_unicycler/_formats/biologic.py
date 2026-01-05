@@ -1,8 +1,12 @@
 """Extension for Biologic mps settings."""
 
+import logging
 from pathlib import Path
+from typing import Literal
 
 from aurora_unicycler import _core, _utils
+
+logger = logging.getLogger(__name__)
 
 
 def to_biologic_mps(
@@ -10,6 +14,7 @@ def to_biologic_mps(
     save_path: Path | str | None = None,
     sample_name: str | None = None,
     capacity_mAh: float | None = None,
+    range_V: Literal["-1-1", "-2.5-2.5", "0-5", "-5-5", "0-10", "-5-10", "-10-10"] = "0-5",
 ) -> str:
     """Convert protocol to a Biologic Settings file (.mps)."""
     # Create and operate on a copy of the original object
@@ -36,6 +41,38 @@ def to_biologic_mps(
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
 
+    safety = ["Safety Limits :"]
+    if protocol.safety.min_voltage_V:
+        safety += [f"\tEwe min = {protocol.safety.min_voltage_V:.5f} V"]
+    if protocol.safety.max_voltage_V:
+        safety += [f"\tEwe max = {protocol.safety.max_voltage_V:.5f} V"]
+    if protocol.safety.max_current_mA and protocol.safety.min_current_mA:
+        max_abs_current_mA = max(
+            [abs(protocol.safety.max_current_mA), abs(protocol.safety.min_current_mA)]
+        )
+        safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
+    delay_ms = (protocol.safety.delay_s or 0) * 1000
+    if delay_ms > 1000:
+        logger.warning(
+            "Biologic max safety delay is 1000 ms, your value of %d ms will be capped",
+            int(delay_ms),
+        )
+    safety += [f"\tfor t > {delay_ms} ms", "\tDo not start on E overload"]
+
+    low_range_V, high_range_V = (float(x) for x in range_V.rsplit("-", 1))
+    for step in protocol.method:
+        if (
+            isinstance(step, _core.ConstantCurrent)
+            and step.until_voltage_V
+            and (step.until_voltage_V > high_range_V or step.until_voltage_V < low_range_V)
+        ) or (
+            isinstance(step, _core.ConstantVoltage)
+            and step.voltage_V
+            and (step.voltage_V > high_range_V or step.voltage_V < low_range_V)
+        ):
+            msg = f"Method contains step with voltage outside of range ({range_V} V)"
+            raise ValueError(msg)
+
     header = [
         "EC-LAB SETTING FILE",
         "",
@@ -44,9 +81,8 @@ def to_biologic_mps(
         "CE vs. WE compliance from -10 V to 10 V",
         "Electrode connection : standard",
         "Potential control : Ewe",
-        "Ewe ctrl range : min = 0.00 V, max = 5.00 V",
-        "Safety Limits :",
-        "	Do not start on E overload",
+        f"Ewe ctrl range : min = {low_range_V:.2f} V, max = {high_range_V:.2f} V",
+        *safety,
         f"Comments : {protocol.sample.name}",
         "Cycle Definition : Charge/Discharge alternance",
         "Do not turn to OCV between techniques",
@@ -109,8 +145,8 @@ def to_biologic_mps(
         "rec2_type": "",
         "rec2_value": "",
         "rec2_value_unit": "",
-        "E range min (V)": "0.000",
-        "E range max (V)": "5.000",
+        "E range min (V)": f"{low_range_V:.3f}",
+        "E range max (V)": f"{high_range_V:.3f}",
         "I Range": "Auto",
         "I Range min": "Unset",
         "I Range max": "Unset",
