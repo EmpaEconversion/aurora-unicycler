@@ -55,7 +55,7 @@ def _explode_loops(loops: dict[int, dict], end_idx: int) -> list[int]:
     total_itr = 0
     while i < end_idx:
         exploded_indices.append(i)
-        if i in loops and loops[i]["n_done"] < loops[i]["n"]:
+        if i in loops and loops[i].setdefault("n_done", 0) < loops[i]["n"] - 1:
             # Check if it passes over a different loop, if so reset its count
             for j in loops:  # noqa: PLC0206
                 if j < i and j >= loops[i]["goto"]:
@@ -104,7 +104,7 @@ def to_pybamm_experiment(protocol: _core.BaseProtocol) -> list[str]:
             case _core.Loop():
                 # The string from this will get dropped later
                 assert isinstance(step.loop_to, int)  # noqa: S101, from _tag_to_indices()
-                loops[i] = {"goto": step.loop_to - 1, "n": step.cycle_count, "n_done": 0}
+                loops[i] = {"goto": step.loop_to - 1, "n": step.cycle_count}
 
             case _:
                 msg = f"to_pybamm_experiment does not support step type: {step.step}"

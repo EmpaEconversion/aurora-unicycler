@@ -178,6 +178,42 @@ class TestUnicycler(TestCase):
         assert experiment_list[5].startswith("Discharge at")
         assert experiment_list[6].startswith("Charge at")  # no 'loop' in pybamm experiment
 
+    def test_pybamm_loops(self) -> None:
+        """Ensure PyBaMM loops as expected."""
+        protocol = Protocol(
+            sample=SampleParams(
+                name="test_sample",
+                capacity_mAh=123,
+            ),
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                Tag(tag="A"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="A", cycle_count=123),
+            ],
+        )
+        pybamm_experiment = protocol.to_pybamm_experiment()
+        assert len(pybamm_experiment) == 123
+
+        protocol = Protocol(
+            sample=SampleParams(
+                name="test_sample",
+                capacity_mAh=123,
+            ),
+            record=RecordParams(time_s=1),
+            safety=SafetyParams(),
+            method=[
+                Tag(tag="A"),
+                Tag(tag="B"),
+                OpenCircuitVoltage(until_time_s=1),
+                Loop(loop_to="B", cycle_count=12),
+                Loop(loop_to="A", cycle_count=34),
+            ],
+        )
+        pybamm_experiment = protocol.to_pybamm_experiment()
+        assert len(pybamm_experiment) == 12 * 34
+
     def test_constant_current_validation(self) -> None:
         """Test validation of ConstantCurrent technique."""
         with pytest.raises(ValueError):
