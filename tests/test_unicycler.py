@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 import re
 from decimal import Decimal
-from pathlib import Path
-from unittest import TestCase
 from xml.etree.ElementTree import Element
 
 import pytest
@@ -31,29 +29,12 @@ from aurora_unicycler._utils import check_for_intersecting_loops, tag_to_indices
 from aurora_unicycler.version import __version__
 
 
-class TestUnicycler(TestCase):
+class TestUnicycler:
     """Unit tests for the unicycler module."""
 
-    def setUp(self) -> None:
-        """Set up for the tests."""
-        base_folder = Path(__file__).parent / "test_data"
-        self.example_protocol_paths = [
-            base_folder / "test_protocol.json",
-            base_folder / "test_protocol_placeholder_sample.json",
-            base_folder / "test_protocol_no_sample.json",
-            base_folder / "test_protocol_with_floats.json",
-        ]
-        data = []
-        for path in self.example_protocol_paths:
-            with path.open("r") as f:
-                data.append(json.load(f))
-        self.example_protocol_data = data
-        self.example_jsonld_path = base_folder / "test_battinfo.jsonld"
-        self.emmo_context_path = base_folder / "emmo_context.json"
-
-    def test_from_json(self) -> None:
+    def test_from_json(self, test_data: dict) -> None:
         """Test creating a Protocol instance from a JSON file."""
-        protocol = Protocol.from_json(self.example_protocol_paths[0])
+        protocol = Protocol.from_json(test_data["protocol_paths"][0])
         assert isinstance(protocol, Protocol)
         assert protocol.sample.name == "test_sample"
         assert protocol.sample.capacity_mAh == Decimal(123)
@@ -66,43 +47,43 @@ class TestUnicycler(TestCase):
         assert isinstance(protocol.method[5], ConstantCurrent)
         assert isinstance(protocol.method[6], Loop)
 
-    def test_from_dict(self) -> None:
+    def test_from_dict(self, test_data: dict) -> None:
         """Test creating a Protocol instance from a dictionary."""
-        protocol_from_dict = Protocol.from_dict(self.example_protocol_data[0])
-        protocol_from_file = Protocol.from_json(self.example_protocol_paths[0])
+        protocol_from_dict = Protocol.from_dict(test_data["protocol_dicts"][0])
+        protocol_from_file = Protocol.from_json(test_data["protocol_paths"][0])
         assert protocol_from_dict == protocol_from_file
 
-    def test_check_sample_details(self) -> None:
+    def test_check_sample_details(self, test_data: dict) -> None:
         """Test handling of missing sample details."""
         missing_name_msg = (
             "If using blank sample name or $NAME placeholder, "
             "a sample name must be provided in this function."
         )
-        protocol = Protocol.from_dict(self.example_protocol_data[1])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][1])
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_name_msg
-        protocol = Protocol.from_dict(self.example_protocol_data[2])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][2])
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_name_msg
 
         missing_cap_msg = "Sample capacity must be set if using C-rate steps."
-        protocol = Protocol.from_dict(self.example_protocol_data[1], sample_name="test_sample")
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][1], sample_name="test_sample")
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_cap_msg
-        protocol = Protocol.from_dict(self.example_protocol_data[2], sample_name="test_sample")
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][2], sample_name="test_sample")
         with pytest.raises(ValueError) as context:
             protocol.to_neware_xml()
         assert str(context.value) == missing_cap_msg
 
         # should not raise error if both are provided
         protocol1 = Protocol.from_dict(
-            self.example_protocol_data[1], sample_name="test_sample", sample_capacity_mAh=123
+            test_data["protocol_dicts"][1], sample_name="test_sample", sample_capacity_mAh=123
         )
         protocol2 = Protocol.from_dict(
-            self.example_protocol_data[2],
+            test_data["protocol_dicts"][2],
             sample_name="test_sample",
             sample_capacity_mAh=123,
         )
@@ -112,17 +93,17 @@ class TestUnicycler(TestCase):
         assert protocol1.sample.capacity_mAh == Decimal(123)
         assert protocol1 == protocol2
 
-    def test_overwriting_sample_details(self) -> None:
+    def test_overwriting_sample_details(self, test_data: dict) -> None:
         """Test overwriting sample details when creating from a dictionary."""
         protocol = Protocol.from_dict(
-            self.example_protocol_data[0], sample_name="NewName", sample_capacity_mAh=456
+            test_data["protocol_dicts"][0], sample_name="NewName", sample_capacity_mAh=456
         )
         assert protocol.sample.name == "NewName"
         assert protocol.sample.capacity_mAh == Decimal(456)
 
-    def test_to_neware_xml(self) -> None:
+    def test_to_neware_xml(self, test_data: dict) -> None:
         """Test converting a Protocol instance to Neware XML format."""
-        protocol = Protocol.from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
         xml_string = protocol.to_neware_xml()
         assert isinstance(xml_string, str)
         assert xml_string.startswith("<?xml")
@@ -145,9 +126,9 @@ class TestUnicycler(TestCase):
         )  # +1 for 'End' step added for Neware
         assert len(step_info) == int(step_info.attrib["Num"])
 
-    def test_to_tomato_mpg2(self) -> None:
+    def test_to_tomato_mpg2(self, test_data: dict) -> None:
         """Test converting a Protocol instance to Tomato MPG2 format."""
-        protocol = Protocol.from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
         json_string = protocol.to_tomato_mpg2()
         assert isinstance(json_string, str)
         tomato_dict = json.loads(json_string)
@@ -163,9 +144,9 @@ class TestUnicycler(TestCase):
         assert tomato_dict["method"][5]["technique"] == "constant_current"
         assert tomato_dict["method"][6]["technique"] == "loop"
 
-    def test_to_pybamm_experiment(self) -> None:
+    def test_to_pybamm_experiment(self, test_data: dict) -> None:
         """Test converting a Protocol instance to PyBaMM experiment format."""
-        protocol = Protocol.from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
         experiment_list = protocol.to_pybamm_experiment()
         assert isinstance(experiment_list, list)
         assert len(experiment_list) > 0
@@ -178,7 +159,7 @@ class TestUnicycler(TestCase):
         assert experiment_list[5].startswith("Discharge at")
         assert experiment_list[6].startswith("Charge at")  # no 'loop' in pybamm experiment
 
-    def test_pybamm_loops(self) -> None:
+    def test_pybamm_loops(self, test_data: dict) -> None:
         """Ensure PyBaMM loops as expected."""
         protocol = Protocol(
             sample=SampleParams(
@@ -214,7 +195,7 @@ class TestUnicycler(TestCase):
         pybamm_experiment = protocol.to_pybamm_experiment()
         assert len(pybamm_experiment) == 12 * 34
 
-    def test_constant_current_validation(self) -> None:
+    def test_constant_current_validation(self, test_data: dict) -> None:
         """Test validation of ConstantCurrent technique."""
         with pytest.raises(ValueError):
             # Missing rate_C and current_mA
@@ -231,7 +212,7 @@ class TestUnicycler(TestCase):
         cc = ConstantCurrent(rate_C=0.1, until_voltage_V=4.2)
         assert isinstance(cc, ConstantCurrent)
 
-    def test_constant_voltage_validation(self) -> None:
+    def test_constant_voltage_validation(self, test_data: dict) -> None:
         """Test validation of ConstantVoltage technique."""
         with pytest.raises(ValueError):
             # Missing stop condition
@@ -247,10 +228,10 @@ class TestUnicycler(TestCase):
         cv = ConstantVoltage(voltage_V=4.2, until_rate_C=0.05)
         assert isinstance(cv, ConstantVoltage)
 
-    def test_protocol_c_rate_validation(self) -> None:
+    def test_protocol_c_rate_validation(self, test_data: dict) -> None:
         """Test validation of Protocol with C-rate steps."""
         # Valid protocol
-        protocol = Protocol.from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
         assert isinstance(protocol, Protocol)
 
         # Invalid protocol (missing capacity)
@@ -259,7 +240,7 @@ class TestUnicycler(TestCase):
             protocol.to_neware_xml()
         assert str(context.value) == "Sample capacity must be set if using C-rate steps."
 
-    def test_loop_validation(self) -> None:
+    def test_loop_validation(self, test_data: dict) -> None:
         """Test validation of Loop technique."""
         with pytest.raises(ValueError):
             Loop(loop_to=0, cycle_count=1)  # loop_to is zero
@@ -268,9 +249,9 @@ class TestUnicycler(TestCase):
         loop = Loop(loop_to=1, cycle_count=1)
         assert isinstance(loop, Loop)
 
-    def test_create_protocol(self) -> None:
+    def test_create_protocol(self, test_data: dict) -> None:
         """Test creating a Protocol instance from a dictionary."""
-        protocol = Protocol.from_dict(self.example_protocol_data[0])
+        protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
         protocol = Protocol(
             sample=SampleParams(
                 name="test_sample",
@@ -329,7 +310,7 @@ class TestUnicycler(TestCase):
         protocol.to_pybamm_experiment()
         protocol.to_biologic_mps()
 
-    def test_tags(self) -> None:
+    def test_tags(self, test_data: dict) -> None:
         """Test tags in Protocol."""
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -460,7 +441,7 @@ class TestUnicycler(TestCase):
                 ],
             )
 
-    def test_tag_neware(self) -> None:
+    def test_tag_neware(self, test_data: dict) -> None:
         """Test tags in Neware XML."""
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -525,7 +506,7 @@ class TestUnicycler(TestCase):
         neware2 = neware2[:idx] + neware2[idx + 65 :]
         assert neware1 == neware2
 
-    def test_cv_neware(self) -> None:
+    def test_cv_neware(self, test_data: dict) -> None:
         """Test if CV steps get start current from previous steps."""
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -566,7 +547,7 @@ class TestUnicycler(TestCase):
         assert isinstance(curr, Element)
         assert float(curr.get("Value")) == 0.5
 
-    def test_to_biologic_mps(self) -> None:
+    def test_to_biologic_mps(self, test_data: dict) -> None:
         """Test conversion to Biologic MPS."""
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -595,7 +576,7 @@ class TestUnicycler(TestCase):
         )
         assert lines[ctrl_seq_start] == test_str, "ctrl_seq line does not match expected"
 
-    def test_coerce_c_rate(self) -> None:
+    def test_coerce_c_rate(self, test_data: dict) -> None:
         """Test the coerce_c_rate function."""
         assert _coerce_c_rate("0.05") == 0.05
         assert _coerce_c_rate("  0.05  ") == 0.05
@@ -625,7 +606,7 @@ class TestUnicycler(TestCase):
         with pytest.raises(ZeroDivisionError):
             _coerce_c_rate("C/0")
 
-    def test_coerce_c_rate_in_protocol(self) -> None:
+    def test_coerce_c_rate_in_protocol(self, test_data: dict) -> None:
         """Test the coerce_c_rate function in a protocol context."""
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -656,7 +637,7 @@ class TestUnicycler(TestCase):
         assert protocol.method[9].until_rate_C == 0.2
         assert protocol.method[10].until_rate_C == 0.2
 
-    def test_biologic_mps(self) -> None:
+    def test_biologic_mps(self, test_data: dict) -> None:
         """Test filling in mps details."""
         kw1 = {"until_time_s": 10.0}
         kw2 = {"start_frequency_Hz": 1e3, "end_frequency_Hz": 1}
@@ -706,7 +687,7 @@ class TestUnicycler(TestCase):
         print(vals)
         assert vals[:10] == [0.001, 0.01, 0.011, 0.1, 0.11, 1.0, 1.1, 10.0, 10.1, 100]
 
-    def test_build_steps(self) -> None:
+    def test_build_steps(self, test_data: dict) -> None:
         """User should be able to make steps with Step base class."""
         Protocol.from_dict(
             {
@@ -729,7 +710,7 @@ class TestUnicycler(TestCase):
             }
         )
 
-    def test_naughty_step_building(self) -> None:
+    def test_naughty_step_building(self, test_data: dict) -> None:
         """Users can give a dict for methods without from_dict, but type checkers don't like it."""
         Protocol(
             record=RecordParams(time_s=1),
@@ -750,7 +731,7 @@ class TestUnicycler(TestCase):
             ],
         )
 
-    def test_empty_steps(self) -> None:
+    def test_empty_steps(self, test_data: dict) -> None:
         """Protocols with empty steps should give a nice error."""
         # As a protocol
         with pytest.raises(ValidationError) as exc_info:
@@ -775,7 +756,7 @@ class TestUnicycler(TestCase):
             )
         assert "is incomplete" in str(exc_info.value)
 
-    def test_intersecting_loops(self) -> None:
+    def test_intersecting_loops(self, test_data: dict) -> None:
         """Protocols with intersecting loops should give a error."""
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -865,7 +846,7 @@ class TestUnicycler(TestCase):
         with pytest.raises(ValueError):  # Should fail
             check_for_intersecting_loops(protocol)
 
-    def test_to_battinfo_jsonld(self) -> None:
+    def test_to_battinfo_jsonld(self, test_data: dict) -> None:
         """Test converting to BattINFO JSON-LD."""
         my_protocol = Protocol(
             sample=SampleParams(
@@ -896,7 +877,7 @@ class TestUnicycler(TestCase):
         json.dumps(bij)  # should be valid JSON
 
         # Check that every key is valid term from emmo
-        with self.emmo_context_path.open("r") as f:
+        with test_data["emmo_context_path"].open("r") as f:
             emmo_context = set(json.load(f))
         emmo_context.add("@type")
 
@@ -919,7 +900,7 @@ class TestUnicycler(TestCase):
         recursive_search(bij, emmo_context)
 
         # This is only a regression test, does not check for correctness
-        with self.example_jsonld_path.open("r") as f:
+        with test_data["jsonld_path"].open("r") as f:
             expected = json.load(f)
         assert bij == expected
 
@@ -932,7 +913,7 @@ class TestUnicycler(TestCase):
         bij = my_protocol.to_battinfo_jsonld(include_context=True)
         assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
 
-    def test_updating_version(self) -> None:
+    def test_updating_version(self, test_data: dict) -> None:
         """Reading the file in should update the version to current version."""
         my_protocol = Protocol.from_dict(
             {
@@ -944,7 +925,7 @@ class TestUnicycler(TestCase):
         )
         assert my_protocol.unicycler.version == __version__
 
-    def test_mutability(self) -> None:
+    def test_mutability(self, test_data: dict) -> None:
         """Conversion functions should not mutate the protocol object."""
         my_protocol = Protocol.from_dict(
             {
