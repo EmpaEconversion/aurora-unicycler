@@ -6,18 +6,20 @@ Convert to different formats e.g. `.to_neware_xml()` or `to_biologic_mps()`.
 
 """
 
-from .unicycler import (
+from ._core import (
     ConstantCurrent,
     ConstantVoltage,
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SafetyParams,
     SampleParams,
     Step,
     Tag,
+)
+from .protocol import (
+    Protocol,
 )
 from .version import __version__
 

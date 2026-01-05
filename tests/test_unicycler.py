@@ -13,8 +13,7 @@ import pytest
 from defusedxml import ElementTree
 from pydantic import ValidationError
 
-from aurora_unicycler import __version__
-from aurora_unicycler.unicycler import (
+from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
     ImpedanceSpectroscopy,
@@ -26,8 +25,10 @@ from aurora_unicycler.unicycler import (
     SampleParams,
     Step,
     Tag,
-    _coerce_c_rate,
 )
+from aurora_unicycler._core import _coerce_c_rate
+from aurora_unicycler._utils import check_for_intersecting_loops, tag_to_indices
+from aurora_unicycler.version import __version__
 
 
 class TestUnicycler(TestCase):
@@ -305,7 +306,7 @@ class TestUnicycler(TestCase):
                 Loop(loop_to=2, cycle_count=3),
             ],
         )
-        protocol._tag_to_indices()
+        tag_to_indices(protocol)
         # this should not change the loop step
         assert isinstance(protocol.method[4], Loop)
         assert protocol.method[4].loop_to == 2
@@ -325,7 +326,7 @@ class TestUnicycler(TestCase):
             ],
         )
         # tag should be removed and replaced with the index
-        protocol._tag_to_indices()
+        tag_to_indices(protocol)
         assert isinstance(protocol.method[4], Loop)
         assert protocol.method[4].loop_to == 3
         assert isinstance(protocol.method[6], Loop)
@@ -354,7 +355,7 @@ class TestUnicycler(TestCase):
                 Loop(loop_to="tag3", cycle_count=3),  # 12
             ],
         )
-        protocol._tag_to_indices()
+        tag_to_indices(protocol)
         assert isinstance(protocol.method[4], Loop)
         assert protocol.method[4].loop_to == 3
         assert isinstance(protocol.method[6], Loop)
@@ -693,7 +694,7 @@ class TestUnicycler(TestCase):
         )
 
     def test_naughty_step_building(self) -> None:
-        """User can also give a dict for methods without from_dict, but type checkers don't like it."""
+        """Users can give a dict for methods without from_dict, but type checkers don't like it."""
         Protocol(
             record=RecordParams(time_s=1),
             safety=SafetyParams(),
@@ -760,8 +761,8 @@ class TestUnicycler(TestCase):
                 Loop(loop_to="tag1", cycle_count=3),
             ],
         )
-        protocol._tag_to_indices()
-        protocol._check_for_intersecting_loops()  # Should be fine
+        tag_to_indices(protocol)
+        check_for_intersecting_loops(protocol)  # Should be fine
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -780,8 +781,8 @@ class TestUnicycler(TestCase):
                 Loop(loop_to=1, cycle_count=3),
             ],
         )
-        protocol._tag_to_indices()
-        protocol._check_for_intersecting_loops()  # Should be fine
+        tag_to_indices(protocol)
+        check_for_intersecting_loops(protocol)  # Should be fine
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -803,9 +804,9 @@ class TestUnicycler(TestCase):
                 Loop(loop_to="tag1", cycle_count=3),
             ],
         )
-        protocol._tag_to_indices()
+        tag_to_indices(protocol)
         with pytest.raises(ValueError):  # Should fail
-            protocol._check_for_intersecting_loops()
+            check_for_intersecting_loops(protocol)
 
         protocol = Protocol(
             record=RecordParams(time_s=1),
@@ -824,9 +825,9 @@ class TestUnicycler(TestCase):
                 Loop(loop_to=1, cycle_count=3),
             ],
         )
-        protocol._tag_to_indices()
+        tag_to_indices(protocol)
         with pytest.raises(ValueError):  # Should fail
-            protocol._check_for_intersecting_loops()
+            check_for_intersecting_loops(protocol)
 
     def test_to_battinfo_jsonld(self) -> None:
         """Test converting to BattINFO JSON-LD."""
