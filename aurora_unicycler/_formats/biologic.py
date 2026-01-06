@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Literal
 
 from aurora_unicycler import _core, _utils
 
@@ -14,7 +13,7 @@ def to_biologic_mps(
     save_path: Path | str | None = None,
     sample_name: str | None = None,
     capacity_mAh: float | None = None,
-    range_V: Literal["-1-1", "-2.5-2.5", "0-5", "-5-5", "0-10", "-5-10", "-10-10"] = "0-5",
+    range_V: tuple[float, float] = (0.0, 5.0),
 ) -> str:
     """Convert protocol to a Biologic Settings file (.mps)."""
     # Create and operate on a copy of the original object
@@ -59,7 +58,12 @@ def to_biologic_mps(
         )
     safety += [f"\tfor t > {delay_ms} ms", "\tDo not start on E overload"]
 
-    low_range_V, high_range_V = (float(x) for x in range_V.rsplit("-", 1))
+    low_range_V, high_range_V = sorted(range_V)
+    if any(abs(V) > 10 for V in range_V):
+        logger.warning(
+            "Biologic max voltage range is usually +-10 V, your range %d-%d V may be capped",
+            *range_V,
+        )
     for step in protocol.method:
         if (
             isinstance(step, _core.ConstantCurrent)
