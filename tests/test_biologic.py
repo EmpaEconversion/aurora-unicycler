@@ -17,6 +17,7 @@ from aurora_unicycler import (
     Protocol,
     RecordParams,
     SafetyParams,
+    Step,
     Tag,
 )
 
@@ -380,3 +381,18 @@ def test_save_file(tmpdir: Path) -> None:
     with (tmpdir / "test.mps").open("r", encoding="cp1252") as f:
         text = f.read()
     assert res == text
+
+
+def test_unknown_step() -> None:
+    """If unsupported steps are in protocol, raise error."""
+
+    class UnknownStep(Step):
+        step: str = "wait, what"
+
+    protocol = Protocol.model_construct(
+        record=RecordParams(time_s=1),
+        method=[UnknownStep()],
+    )
+    with pytest.raises(NotImplementedError) as excinfo:
+        protocol.to_biologic_mps(sample_name="test")
+    assert "to_biologic_mps() does not support step type: wait, what" in str(excinfo.value)
