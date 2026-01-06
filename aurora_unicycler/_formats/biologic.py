@@ -375,7 +375,7 @@ def to_biologic_mps(
             case _core.ImpedanceSpectroscopy():
                 if step.amplitude_V:
                     step_dict.update({"ctrl_type": "PEIS"})
-                    if step.amplitude_V >= 0.1:
+                    if step.amplitude_V >= 1:
                         step_dict.update({"ctrl1_val": f"{step.amplitude_V:.3f}"})
                         step_dict.update({"ctrl1_val_unit": "V"})
                     elif step.amplitude_V >= 0.001:
