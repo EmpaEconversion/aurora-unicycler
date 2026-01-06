@@ -61,7 +61,7 @@ def to_biologic_mps(
     low_range_V, high_range_V = sorted(range_V)
     if any(abs(V) > 10 for V in range_V):
         logger.warning(
-            "Biologic max voltage range is usually +-10 V, your range %d-%d V may be capped",
+            "Biologic max voltage range is usually +-10 V, your range %s-%s V may be capped",
             *range_V,
         )
     for step in protocol.method:
