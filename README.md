@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/github/license/empaeconversion/aurora-unicycler.svg)](https://github.com/empaeconversion/aurora-unicycler/blob/main/LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
 [![Build](https://github.com/empaeconversion/aurora-unicycler/actions/workflows/test.yml/badge.svg)](https://github.com/empaeconversion/aurora-unicycler/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/EmpaEconversion/aurora-unicycler/graph/badge.svg?token=LUGBOMSGUA)](https://codecov.io/gh/EmpaEconversion/aurora-unicycler)
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/1136509f-c5ae-4ee0-b48d-535494706006#gh-light-mode-only" width="500" align="center" alt="aurora-biologic logo">
