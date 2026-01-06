@@ -167,6 +167,7 @@ def to_biologic_mps(
         1: "1 mA",
         10: "10 mA",
         100: "100 mA",
+        1000: "1 A",
     }
 
     # Make a list of dicts, one for each step
