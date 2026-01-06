@@ -201,11 +201,9 @@ def to_biologic_mps(
             case _core.ConstantCurrent():
                 if step.rate_C and protocol.sample.capacity_mAh:
                     current_mA = step.rate_C * protocol.sample.capacity_mAh
-                elif step.current_mA:
-                    current_mA = step.current_mA
                 else:
-                    msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
-                    raise ValueError(msg)
+                    current_mA = step.current_mA
+                    assert current_mA is not None  # noqa: S101  must be true from Pydantic
 
                 if abs(current_mA) < 1:
                     step_dict.update(
@@ -385,12 +383,10 @@ def to_biologic_mps(
                         step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e6:.3f}"})
                         step_dict.update({"ctrl1_val_unit": "uV"})
 
-                elif step.amplitude_mA:
+                else:
+                    assert step.amplitude_mA is not None  # noqa: S101  must be true from Pydantic
                     step_dict.update({"ctrl_type": "GEIS"})
-                    if step.amplitude_mA >= 1000:
-                        step_dict.update({"ctrl1_val": f"{step.amplitude_mA / 1000:.3f}"})
-                        step_dict.update({"ctrl1_val_unit": "A"})
-                    elif step.amplitude_mA >= 1:
+                    if step.amplitude_mA >= 1:
                         step_dict.update({"ctrl1_val": f"{step.amplitude_mA:.3f}"})
                         step_dict.update({"ctrl1_val_unit": "mA"})
                     else:
@@ -406,10 +402,6 @@ def to_biologic_mps(
                     else:
                         msg = f"I range not supported for {step.amplitude_mA} mA"
                         raise ValueError(msg)
-
-                else:
-                    msg = "Either amplitude_V or amplitude_mA must be set."
-                    raise ValueError(msg)
 
                 for freq, ctrl in ((step.start_frequency_Hz, 2), (step.end_frequency_Hz, 3)):
                     if freq >= 1e3:
