@@ -1,8 +1,11 @@
 """Extension for Biologic mps settings."""
 
+import logging
 from pathlib import Path
 
 from aurora_unicycler import _core, _utils
+
+logger = logging.getLogger(__name__)
 
 
 def to_biologic_mps(
@@ -10,6 +13,7 @@ def to_biologic_mps(
     save_path: Path | str | None = None,
     sample_name: str | None = None,
     capacity_mAh: float | None = None,
+    range_V: tuple[float, float] = (0.0, 5.0),
 ) -> str:
     """Convert protocol to a Biologic Settings file (.mps)."""
     # Create and operate on a copy of the original object
@@ -36,6 +40,51 @@ def to_biologic_mps(
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
 
+    safety = ["Safety Limits :"]
+    if protocol.safety.min_voltage_V is not None:
+        safety += [f"\tEwe min = {protocol.safety.min_voltage_V:.5f} V"]
+    if protocol.safety.max_voltage_V is not None:
+        safety += [f"\tEwe max = {protocol.safety.max_voltage_V:.5f} V"]
+    if protocol.safety.max_current_mA is not None or protocol.safety.min_current_mA is not None:
+        curr_lim1 = abs(protocol.safety.min_current_mA or 0)
+        curr_lim2 = abs(protocol.safety.max_current_mA or 0)
+        if curr_lim1 != curr_lim2:
+            logger.warning(
+                "Biologic only sets one absolute current limit. You set limits to %s - %s mA. "
+                "Using %s mA as the absolute limit.",
+                protocol.safety.min_current_mA,
+                protocol.safety.max_current_mA,
+                max(curr_lim1, curr_lim2),
+            )
+        max_abs_current_mA = max(curr_lim1, curr_lim2)
+        safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
+    delay_ms = (protocol.safety.delay_s or 0) * 1000
+    if delay_ms > 1000:
+        logger.warning(
+            "Biologic max safety delay is 1000 ms, your value of %d ms will be capped",
+            int(delay_ms),
+        )
+    safety += [f"\tfor t > {delay_ms} ms", "\tDo not start on E overload"]
+
+    low_range_V, high_range_V = sorted(range_V)
+    if any(abs(V) > 10 for V in range_V):
+        logger.warning(
+            "Biologic max voltage range is usually +-10 V, your range %s-%s V may be capped",
+            *range_V,
+        )
+    for step in protocol.method:
+        if (
+            isinstance(step, _core.ConstantCurrent)
+            and step.until_voltage_V
+            and (step.until_voltage_V > high_range_V or step.until_voltage_V < low_range_V)
+        ) or (
+            isinstance(step, _core.ConstantVoltage)
+            and step.voltage_V
+            and (step.voltage_V > high_range_V or step.voltage_V < low_range_V)
+        ):
+            msg = f"Method contains step with voltage outside of range ({range_V} V)"
+            raise ValueError(msg)
+
     header = [
         "EC-LAB SETTING FILE",
         "",
@@ -44,9 +93,8 @@ def to_biologic_mps(
         "CE vs. WE compliance from -10 V to 10 V",
         "Electrode connection : standard",
         "Potential control : Ewe",
-        "Ewe ctrl range : min = 0.00 V, max = 5.00 V",
-        "Safety Limits :",
-        "	Do not start on E overload",
+        f"Ewe ctrl range : min = {low_range_V:.2f} V, max = {high_range_V:.2f} V",
+        *safety,
         f"Comments : {protocol.sample.name}",
         "Cycle Definition : Charge/Discharge alternance",
         "Do not turn to OCV between techniques",
@@ -109,8 +157,8 @@ def to_biologic_mps(
         "rec2_type": "",
         "rec2_value": "",
         "rec2_value_unit": "",
-        "E range min (V)": "0.000",
-        "E range max (V)": "5.000",
+        "E range min (V)": f"{low_range_V:.3f}",
+        "E range max (V)": f"{high_range_V:.3f}",
         "I Range": "Auto",
         "I Range min": "Unset",
         "I Range max": "Unset",
@@ -127,6 +175,7 @@ def to_biologic_mps(
         1: "1 mA",
         10: "10 mA",
         100: "100 mA",
+        1000: "1 A",
     }
 
     # Make a list of dicts, one for each step
@@ -160,11 +209,9 @@ def to_biologic_mps(
             case _core.ConstantCurrent():
                 if step.rate_C and protocol.sample.capacity_mAh:
                     current_mA = step.rate_C * protocol.sample.capacity_mAh
-                elif step.current_mA:
-                    current_mA = step.current_mA
                 else:
-                    msg = "Either rate_C or current_mA must be set for ConstantCurrent step."
-                    raise ValueError(msg)
+                    current_mA = step.current_mA
+                    assert current_mA is not None  # noqa: S101  must be true from Pydantic
 
                 if abs(current_mA) < 1:
                     step_dict.update(
@@ -334,7 +381,7 @@ def to_biologic_mps(
             case _core.ImpedanceSpectroscopy():
                 if step.amplitude_V:
                     step_dict.update({"ctrl_type": "PEIS"})
-                    if step.amplitude_V >= 0.1:
+                    if step.amplitude_V >= 1:
                         step_dict.update({"ctrl1_val": f"{step.amplitude_V:.3f}"})
                         step_dict.update({"ctrl1_val_unit": "V"})
                     elif step.amplitude_V >= 0.001:
@@ -344,12 +391,10 @@ def to_biologic_mps(
                         step_dict.update({"ctrl1_val": f"{step.amplitude_V * 1e6:.3f}"})
                         step_dict.update({"ctrl1_val_unit": "uV"})
 
-                elif step.amplitude_mA:
+                else:
+                    assert step.amplitude_mA is not None  # noqa: S101  must be true from Pydantic
                     step_dict.update({"ctrl_type": "GEIS"})
-                    if step.amplitude_mA >= 1000:
-                        step_dict.update({"ctrl1_val": f"{step.amplitude_mA / 1000:.3f}"})
-                        step_dict.update({"ctrl1_val_unit": "A"})
-                    elif step.amplitude_mA >= 1:
+                    if step.amplitude_mA >= 1:
                         step_dict.update({"ctrl1_val": f"{step.amplitude_mA:.3f}"})
                         step_dict.update({"ctrl1_val_unit": "mA"})
                     else:
@@ -365,10 +410,6 @@ def to_biologic_mps(
                     else:
                         msg = f"I range not supported for {step.amplitude_mA} mA"
                         raise ValueError(msg)
-
-                else:
-                    msg = "Either amplitude_V or amplitude_mA must be set."
-                    raise ValueError(msg)
 
                 for freq, ctrl in ((step.start_frequency_Hz, 2), (step.end_frequency_Hz, 3)):
                     if freq >= 1e3:

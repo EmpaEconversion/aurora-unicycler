@@ -93,6 +93,7 @@ class Protocol(BaseProtocol):
         save_path: Path | str | None = None,
         sample_name: str | None = None,
         capacity_mAh: float | None = None,
+        range_V: tuple[float, float] = (0.0, 5.0),
     ) -> str:
         """Convert protocol to a Biologic Settings file (.mps).
 
@@ -105,12 +106,14 @@ class Protocol(BaseProtocol):
             save_path: (optional) File path of where to save the mps file.
             sample_name: (optional) Override the protocol sample name.
             capacity_mAh: (optional) Override the protocol sample capacity.
+            range_V: (optional) Voltage range of instrument in volts, default 0-5 V.
+                Usually capped at +- 10 V. Smaller ranges can improve resolution.
 
         Returns:
             mps string representation of the protocol.
 
         """
-        return biologic.to_biologic_mps(self, save_path, sample_name, capacity_mAh)
+        return biologic.to_biologic_mps(self, save_path, sample_name, capacity_mAh, range_V)
 
     def to_neware_xml(
         self,
