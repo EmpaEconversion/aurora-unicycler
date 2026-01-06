@@ -39,7 +39,12 @@ jobs:
   
       - name: Test with pytest
         run: |
-          pytest --cov=aurora_unicycler --cov-report=term
+          pytest --cov=aurora_unicycler --cov-report=term --cov-report=xml
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # Publish to PyPI if tagged and tests pass
   publish:
