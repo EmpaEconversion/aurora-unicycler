@@ -396,3 +396,97 @@ def test_unknown_step() -> None:
     with pytest.raises(NotImplementedError) as excinfo:
         protocol.to_biologic_mps(sample_name="test")
     assert "to_biologic_mps() does not support step type: wait, what" in str(excinfo.value)
+
+
+def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
+    """Check that safety limits are applied."""
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(
+            max_voltage_V=1,
+            min_voltage_V=0,
+        ),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Safety Limits :" in res
+    assert "\tEwe min = 0.00000 V" in res
+    assert "\tEwe max = 1.00000 V" in res
+    assert "\tfor t > 0 ms" in res
+
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(
+            max_voltage_V=4,
+            min_voltage_V=-3,
+            delay_s=0.123,
+        ),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Safety Limits :" in res
+    assert "\tEwe min = -3.00000 V" in res
+    assert "\tEwe max = 4.00000 V" in res
+    assert "\tfor t > 123.0 ms" in res
+
+    # Adding currents - should not warn if symmetric
+    caplog.clear()
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(
+            max_voltage_V=4,
+            min_voltage_V=-3,
+            min_current_mA=-3,
+            max_current_mA=3,
+            delay_s=0.123,
+        ),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Safety Limits :" in res
+    assert "\tEwe min = -3.00000 V" in res
+    assert "\tEwe max = 4.00000 V" in res
+    assert "\t|I| = 3.00000 mA" in res
+    assert "\tfor t > 123.0 ms" in res
+    assert not caplog.text
+
+    # Assymetric currents - should warn and use biggest
+    caplog.clear()
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(
+            max_voltage_V=4,
+            min_voltage_V=-3,
+            min_current_mA=-1,
+            max_current_mA=3,
+            delay_s=0.123,
+        ),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Safety Limits :" in res
+    assert "\tEwe min = -3.00000 V" in res
+    assert "\tEwe max = 4.00000 V" in res
+    assert "\t|I| = 3.00000 mA" in res
+    assert "\tfor t > 123.0 ms" in res
+    assert "Using 3.0 mA as the absolute limit." in caplog.text
+
+    # Assymetric currents - should warn and use biggest
+    caplog.clear()
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(
+            max_voltage_V=4,
+            min_voltage_V=-3,
+            max_current_mA=2.5,
+            delay_s=0.123,
+        ),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Safety Limits :" in res
+    assert "\tEwe min = -3.00000 V" in res
+    assert "\tEwe max = 4.00000 V" in res
+    assert "\t|I| = 2.50000 mA" in res
+    assert "\tfor t > 123.0 ms" in res
+    assert "Using 2.5 mA as the absolute limit." in caplog.text

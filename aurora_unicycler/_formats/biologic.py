@@ -41,14 +41,22 @@ def to_biologic_mps(
     _utils.check_for_intersecting_loops(protocol)
 
     safety = ["Safety Limits :"]
-    if protocol.safety.min_voltage_V:
+    if protocol.safety.min_voltage_V is not None:
         safety += [f"\tEwe min = {protocol.safety.min_voltage_V:.5f} V"]
-    if protocol.safety.max_voltage_V:
+    if protocol.safety.max_voltage_V is not None:
         safety += [f"\tEwe max = {protocol.safety.max_voltage_V:.5f} V"]
-    if protocol.safety.max_current_mA and protocol.safety.min_current_mA:
-        max_abs_current_mA = max(
-            [abs(protocol.safety.max_current_mA), abs(protocol.safety.min_current_mA)]
-        )
+    if protocol.safety.max_current_mA is not None or protocol.safety.min_current_mA is not None:
+        curr_lim1 = abs(protocol.safety.min_current_mA or 0)
+        curr_lim2 = abs(protocol.safety.max_current_mA or 0)
+        if curr_lim1 != curr_lim2:
+            logger.warning(
+                "Biologic only sets one absolute current limit. You set limits to %s - %s mA. "
+                "Using %s mA as the absolute limit.",
+                protocol.safety.min_current_mA,
+                protocol.safety.max_current_mA,
+                max(curr_lim1, curr_lim2),
+            )
+        max_abs_current_mA = max(curr_lim1, curr_lim2)
         safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
     delay_ms = (protocol.safety.delay_s or 0) * 1000
     if delay_ms > 1000:
