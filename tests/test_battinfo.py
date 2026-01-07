@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+
+import pytest
 
 from aurora_unicycler import (
     ConstantCurrent,
@@ -12,6 +15,7 @@ from aurora_unicycler import (
     Protocol,
     RecordParams,
     SampleParams,
+    Step,
     Tag,
 )
 
@@ -32,13 +36,13 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
             Loop(loop_to=2, cycle_count=5),
             Tag(tag="longterm"),
             Tag(tag="recovery"),
-            ConstantCurrent(rate_C=0.5, until_voltage_V=4.2),
-            ConstantVoltage(voltage_V=4.2, until_rate_C=0.05),
-            ConstantCurrent(rate_C=-0.5, until_voltage_V=3.2),
+            ConstantCurrent(rate_C=0.5, until_voltage_V=4.2, until_time_s=3 * 60 * 60),
+            ConstantVoltage(voltage_V=4.2, until_rate_C=0.05, until_time_s=1 * 60 * 60),
+            ConstantCurrent(rate_C=-0.5, until_voltage_V=3.2, until_time_s=3 * 60 * 60),
             Loop(loop_to="longterm", cycle_count=24),
-            ConstantCurrent(rate_C=0.1, until_voltage_V=4.2),
-            ConstantVoltage(voltage_V=4.2, until_rate_C=0.01),
-            ConstantCurrent(rate_C=-0.1, until_voltage_V=3.2),
+            ConstantCurrent(current_mA=0.1, until_voltage_V=4.2),
+            ConstantVoltage(voltage_V=4.2, until_current_mA=0.01),
+            ConstantCurrent(current_mA=-0.1, until_voltage_V=3.2),
             Loop(loop_to="recovery", cycle_count=10),
         ],
     )
@@ -75,6 +79,13 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
     assert bij == expected
 
     # Check if capacity overriding works
+    bij = my_protocol.to_battinfo_jsonld(capacity_mAh=200)
+    assert bij["hasNext"]["hasTask"]["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 10
+
+    # But doesn't affect original capacity
+    assert my_protocol.sample.capacity_mAh == 45
+
+    # Overwriting capacity directly is also allowed
     my_protocol.sample.capacity_mAh = 100
     bij = my_protocol.to_battinfo_jsonld()
     assert bij["hasNext"]["hasTask"]["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 5
@@ -82,3 +93,38 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
     # Check if adding context works
     bij = my_protocol.to_battinfo_jsonld(include_context=True)
     assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
+
+
+def test_unknown_step() -> None:
+    """If unsupported steps are in protocol, raise error."""
+
+    class UnknownStep(Step):
+        step: str = "wait, what"
+
+    protocol = Protocol.model_construct(
+        record=RecordParams(time_s=1),
+        method=[UnknownStep()],
+    )
+    with pytest.raises(NotImplementedError) as excinfo:
+        protocol.to_battinfo_jsonld()
+    assert "to_battinfo_jsonld() does not support step type: wait, what" in str(excinfo.value)
+
+
+def test_save_file(tmpdir: Path) -> None:
+    """Check file is written correctly."""
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        method=[
+            Tag(tag="a"),
+            ConstantCurrent(current_mA=0.01, until_voltage_V=4),
+            ConstantVoltage(voltage_V=4, until_time_s=1),
+            ConstantCurrent(current_mA=0.01, until_voltage_V=3),
+            Loop(loop_to="a", cycle_count=100),
+        ],
+    )
+    filepath = Path(tmpdir / "test.jsonld")
+    res = protocol.to_battinfo_jsonld(save_path=filepath)
+    assert filepath.exists()
+    with (tmpdir / "test.jsonld").open("r") as f:
+        file_res = json.loads(f.read())
+    assert res == file_res

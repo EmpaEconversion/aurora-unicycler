@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -159,8 +160,24 @@ def test_create_protocol(test_data: dict) -> None:
     protocol.to_biologic_mps()
 
 
-def test_tags(test_data: dict) -> None:
+def test_tags() -> None:
     """Test tags in Protocol."""
+    # Different tags are fine
+    Protocol(
+        record=RecordParams(time_s=1),
+        method=[Tag(tag="a"), Tag(tag="aa"), Tag(tag="aaa")],
+    )
+    # Duplicates not allowed
+    with pytest.raises(ValueError) as exc_info:
+        Protocol(
+            record=RecordParams(time_s=1),
+            method=[Tag(tag="a"), Tag(tag="b"), Tag(tag="b")],
+        )
+    assert "Duplicate tags" in str(exc_info)
+
+
+def test_tags_to_indices() -> None:
+    """Test converting tags to indices in Protocol."""
     protocol = Protocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
@@ -266,7 +283,7 @@ def test_coerce_c_rate_in_protocol(test_data: dict) -> None:
     assert protocol.method[10].until_rate_C == 0.2
 
 
-def test_build_steps(test_data: dict) -> None:
+def test_build_steps() -> None:
     """User should be able to make steps with Step base class."""
     Protocol.from_dict(
         {
@@ -290,7 +307,7 @@ def test_build_steps(test_data: dict) -> None:
     )
 
 
-def test_naughty_step_building(test_data: dict) -> None:
+def test_naughty_step_building() -> None:
     """Users can give a dict for methods without from_dict, but type checkers don't like it."""
     Protocol(
         record=RecordParams(time_s=1),
@@ -312,7 +329,7 @@ def test_naughty_step_building(test_data: dict) -> None:
     )
 
 
-def test_empty_steps(test_data: dict) -> None:
+def test_empty_steps() -> None:
     """Protocols with empty steps should give a nice error."""
     # As a protocol
     with pytest.raises(ValidationError) as exc_info:
@@ -338,7 +355,7 @@ def test_empty_steps(test_data: dict) -> None:
     assert "is incomplete" in str(exc_info.value)
 
 
-def test_updating_version(test_data: dict) -> None:
+def test_updating_version() -> None:
     """Reading the file in should update the version to current version."""
     my_protocol = Protocol.from_dict(
         {
@@ -351,7 +368,7 @@ def test_updating_version(test_data: dict) -> None:
     assert my_protocol.unicycler.version == __version__
 
 
-def test_mutability(test_data: dict) -> None:
+def test_mutability() -> None:
     """Conversion functions should not mutate the protocol object."""
     my_protocol = Protocol.from_dict(
         {
@@ -384,3 +401,60 @@ def test_mutability(test_data: dict) -> None:
 
     my_protocol.to_battinfo_jsonld()
     assert my_protocol == my_original_protocol
+
+
+def test_protocol_export() -> None:
+    """Check converting to dict or JSON works."""
+    ref_protocol_dict = {
+        "record": {
+            "time_s": 1.0,
+            "current_mA": None,
+            "voltage_V": None,
+        },
+        "sample": {"capacity_mAh": None, "name": "test"},
+        "safety": {
+            "min_voltage_V": 0.0,
+            "max_voltage_V": 5.0,
+            "min_current_mA": -10.0,
+            "max_current_mA": 10.0,
+            "delay_s": 0.5,
+            "max_capacity_mAh": None,
+        },
+        "method": [
+            {"id": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
+        ],
+    }
+    protocol_dict = Protocol.from_dict(ref_protocol_dict).to_dict()
+    ref_protocol_dict["unicycler"] = "don't check this"
+    protocol_dict["unicycler"] = "don't check this"
+    assert protocol_dict == ref_protocol_dict
+
+
+def test_write_json(tmpdir: Path) -> None:
+    """Test reading and writing to JSON file."""
+    filepath = Path(tmpdir) / "protocol.json"
+    ref_protocol_dict = {
+        "record": {
+            "time_s": 1.0,
+            "current_mA": None,
+            "voltage_V": None,
+        },
+        "sample": {"capacity_mAh": None, "name": "test"},
+        "safety": {
+            "min_voltage_V": 0.0,
+            "max_voltage_V": 5.0,
+            "min_current_mA": -10.0,
+            "max_current_mA": 10.0,
+            "delay_s": 0.5,
+            "max_capacity_mAh": None,
+        },
+        "method": [
+            {"id": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
+        ],
+    }
+    protocol = Protocol.from_dict(ref_protocol_dict)
+    protocol_str = protocol.to_json(filepath, indent=4)
+    protocol2 = Protocol.from_json(filepath)
+    protocol3 = Protocol.from_dict(json.loads(protocol_str))
+    assert protocol == protocol2
+    assert protocol == protocol3

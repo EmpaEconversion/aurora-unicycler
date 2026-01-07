@@ -83,16 +83,14 @@ def to_tomato_mpg2(
                     else:
                         charging = False
                         tomato_step["current"] = str(abs(step.rate_C)) + "D"
-                elif step.current_mA:
+                else:
+                    assert step.current_mA  # noqa: S101, ensured by Pydantic
                     if step.current_mA > 0:
                         charging = True
                         tomato_step["current"] = step.current_mA / 1000
                     else:
                         charging = False
                         tomato_step["current"] = step.current_mA / 1000
-                else:
-                    msg = "Must have a current or C-rate"
-                    raise ValueError(msg)
                 if step.until_time_s:
                     tomato_step["time"] = step.until_time_s
                 if step.until_voltage_V:
@@ -117,8 +115,8 @@ def to_tomato_mpg2(
                 tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
 
             case _:
-                msg = f"to_tomato_mpg2 does not support step type: {step.step}"
-                raise TypeError(msg)
+                msg = f"to_tomato_mpg2() does not support step type: {step.step}"
+                raise NotImplementedError(msg)
 
         tomato_dict["method"].append(tomato_step)
 

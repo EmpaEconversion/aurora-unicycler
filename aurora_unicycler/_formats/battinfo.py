@@ -190,7 +190,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                 "hasInput": inputs,
             }
         case _:
-            msg = f"Technique {step.step} not supported by to_battinfo_jsonld()"
+            msg = f"to_battinfo_jsonld() does not support step type: {step.step}"
             raise NotImplementedError(msg)
     return tech_dict
 

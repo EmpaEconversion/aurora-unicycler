@@ -15,11 +15,10 @@ def _neware_cc(
     """Create ConstantCurrent step XML element."""
     if step.rate_C is not None and step.rate_C != 0:
         step_type = "1" if step.rate_C > 0 else "2"
-    elif step.current_mA is not None and step.current_mA != 0:
-        step_type = "1" if step.current_mA > 0 else "2"
     else:
-        msg = "Must have a current or C-rate"
-        raise ValueError(msg)
+        assert step.current_mA is not None  # noqa: S101  ensured by Pydantic
+        assert step.current_mA != 0  # noqa: S101  ensured by Pydantic
+        step_type = "1" if step.current_mA > 0 else "2"
 
     step_element = ET.Element(f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type)
     limit = ET.SubElement(step_element, "Limit")
@@ -133,8 +132,8 @@ def _step_to_element(
             return _neware_loop(step, step_num)
 
         case _:
-            msg = f"to_neware_xml does not support step type: {step.step}"
-            raise TypeError(msg)
+            msg = f"to_neware_xml() does not support step type: {step.step}"
+            raise NotImplementedError(msg)
 
 
 def _neware_record_params(record_params: _core.RecordParams) -> ET.Element:
@@ -155,9 +154,9 @@ def _neware_safety_params(safety: _core.SafetyParams) -> ET.Element:
     protect_element = ET.Element("Protect")
     main_protect = ET.SubElement(protect_element, "Main")
     volt = ET.SubElement(main_protect, "Volt")
-    if safety.max_voltage_V:
+    if safety.max_voltage_V is not None:
         ET.SubElement(volt, "Upper", Value=f"{safety.max_voltage_V * 10000:f}")
-    if safety.min_voltage_V:
+    if safety.min_voltage_V is not None:
         ET.SubElement(volt, "Lower", Value=f"{safety.min_voltage_V * 10000:f}")
     curr = ET.SubElement(main_protect, "Curr")
     if safety.max_current_mA:
