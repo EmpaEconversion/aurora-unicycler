@@ -15,11 +15,10 @@ def _neware_cc(
     """Create ConstantCurrent step XML element."""
     if step.rate_C is not None and step.rate_C != 0:
         step_type = "1" if step.rate_C > 0 else "2"
-    elif step.current_mA is not None and step.current_mA != 0:
-        step_type = "1" if step.current_mA > 0 else "2"
     else:
-        msg = "Must have a current or C-rate"
-        raise ValueError(msg)
+        assert step.current_mA is not None  # noqa: S101  ensured by Pydantic
+        assert step.current_mA != 0  # noqa: S101  ensured by Pydantic
+        step_type = "1" if step.current_mA > 0 else "2"
 
     step_element = ET.Element(f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type)
     limit = ET.SubElement(step_element, "Limit")
