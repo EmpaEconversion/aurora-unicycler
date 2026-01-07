@@ -1,6 +1,6 @@
 """Additional protocol validation functions used by exporters in _formats."""
 
-from aurora_unicycler._core import BaseProtocol, Loop, Step, Tag
+from aurora_unicycler._core import BaseProtocol, Loop, Tag
 
 
 def tag_to_indices(protocol: BaseProtocol) -> None:
@@ -17,25 +17,17 @@ def tag_to_indices(protocol: BaseProtocol) -> None:
             tags[step.tag] = j + 1
             # drop this step from the list
             methods_to_remove.append(i)
-        elif isinstance(step, Step):
+        else:
             j += 1
             indices[i] = j
             if isinstance(step, Loop):
                 if isinstance(step.loop_to, str):
                     # If the start step is a string, it should be a tag, go to the tag index
-                    try:
-                        step.loop_to = tags[step.loop_to]
-                    except KeyError as e:
-                        msg = (
-                            f"Loop step with tag {step.loop_to} "
-                            "does not have a corresponding tag step."
-                        )
-                        raise ValueError(msg) from e
+                    # Tag must exist from Pydantic validation
+                    step.loop_to = tags[step.loop_to]
                 else:
                     # If the start step is an int, it should be the NEW index of the step
                     step.loop_to = indices[step.loop_to - 1]
-        else:
-            methods_to_remove.append(i)
     # Remove tags and other invalid steps
     protocol.method = [step for i, step in enumerate(protocol.method) if i not in methods_to_remove]
 
