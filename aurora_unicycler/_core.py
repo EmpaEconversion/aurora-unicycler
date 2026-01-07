@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Sequence
+from copy import deepcopy
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -459,6 +460,8 @@ class BaseProtocol(BaseModel):
         """Create a Protocol from a dictionary."""
         # If values given then overwrite
         data.setdefault("sample", {})
+        if sample_name or sample_capacity_mAh:
+            data = deepcopy(data)
         if sample_name:
             data["sample"]["name"] = sample_name
         if sample_capacity_mAh:
