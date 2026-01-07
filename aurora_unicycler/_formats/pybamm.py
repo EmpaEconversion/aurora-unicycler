@@ -3,6 +3,19 @@
 from aurora_unicycler import _core, _utils
 
 
+def _make_time_condition(until_time_s: float) -> str:
+    """Convert time to a string condition."""
+    if until_time_s % 3600 == 0:
+        if until_time_s == 3600:
+            return "for 1 hour"
+        return f"for {int(until_time_s / 3600)} hours"
+    if until_time_s % 60 == 0:
+        if until_time_s == 60:
+            return "for 1 minute"
+        return f"for {int(until_time_s / 60)} minutes"
+    return f"for {until_time_s} seconds"
+
+
 def _stringify_constant_current(step: _core.ConstantCurrent) -> str:
     """Convert constant current step to PyBaMM string."""
     step_str = ""
@@ -16,15 +29,13 @@ def _stringify_constant_current(step: _core.ConstantCurrent) -> str:
             step_str += f"Charge at {step.current_mA} mA"
         else:
             step_str += f"Discharge at {abs(step.current_mA)} mA"
+    conditions = []
     if step.until_time_s:
-        if step.until_time_s % 3600 == 0:
-            step_str += f" for {int(step.until_time_s / 3600)} hours"
-        elif step.until_time_s % 60 == 0:
-            step_str += f" for {int(step.until_time_s / 60)} minutes"
-        else:
-            step_str += f" for {step.until_time_s} seconds"
+        conditions.append(_make_time_condition(step.until_time_s))
     if step.until_voltage_V:
-        step_str += f" until {step.until_voltage_V} V"
+        conditions.append(f"until {step.until_voltage_V} V")
+    if conditions:
+        step_str += " " + " or ".join(conditions)
     return step_str
 
 
@@ -33,16 +44,11 @@ def _stringify_constant_voltage(step: _core.ConstantVoltage) -> str:
     step_str = f"Hold at {step.voltage_V} V"
     conditions = []
     if step.until_time_s:
-        if step.until_time_s % 3600 == 0:
-            step_str += f" for {int(step.until_time_s / 3600)} hours"
-        elif step.until_time_s % 60 == 0:
-            step_str += f" for {int(step.until_time_s / 60)} minutes"
-        else:
-            conditions.append(f"for {step.until_time_s} seconds")
+        conditions.append(_make_time_condition(step.until_time_s))
     if step.until_rate_C:
         conditions.append(f"until {step.until_rate_C}C")
     if step.until_current_mA:
-        conditions.append(f" until {step.until_current_mA} mA")
+        conditions.append(f"until {step.until_current_mA} mA")
     if conditions:
         step_str += " " + " or ".join(conditions)
     return step_str
