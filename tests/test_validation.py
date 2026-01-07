@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
     Protocol,
@@ -21,7 +22,7 @@ from aurora_unicycler._core import _coerce_c_rate
 from aurora_unicycler._utils import check_for_intersecting_loops, tag_to_indices
 
 
-def test_constant_current_validation(test_data: dict) -> None:
+def test_constant_current_validation() -> None:
     """Test validation of ConstantCurrent technique."""
     with pytest.raises(ValueError):
         # Missing rate_C and current_mA
@@ -39,7 +40,7 @@ def test_constant_current_validation(test_data: dict) -> None:
     assert isinstance(cc, ConstantCurrent)
 
 
-def test_constant_voltage_validation(test_data: dict) -> None:
+def test_constant_voltage_validation() -> None:
     """Test validation of ConstantVoltage technique."""
     with pytest.raises(ValueError):
         # Missing stop condition
@@ -69,18 +70,23 @@ def test_protocol_c_rate_validation(test_data: dict) -> None:
     assert str(context.value) == "Sample capacity must be set if using C-rate steps."
 
 
-def test_loop_validation(test_data: dict) -> None:
+def test_loop_validation() -> None:
     """Test validation of Loop technique."""
     with pytest.raises(ValueError):
         Loop(loop_to=0, cycle_count=1)  # loop_to is zero
     with pytest.raises(ValueError):
         Loop(loop_to=1, cycle_count=0)  # cycle_count is zero
+    with pytest.raises(ValueError):
+        Loop(loop_to=" ", cycle_count=0)  # no start step
     loop = Loop(loop_to=1, cycle_count=1)
     assert isinstance(loop, Loop)
 
 
-def test_coerce_c_rate(test_data: dict) -> None:
+def test_coerce_c_rate() -> None:
     """Test the coerce_c_rate function."""
+    assert _coerce_c_rate(None) is None
+    assert _coerce_c_rate("") is None
+    assert _coerce_c_rate("              ") is None
     assert _coerce_c_rate("0.05") == 0.05
     assert _coerce_c_rate("  0.05  ") == 0.05
     assert _coerce_c_rate("1/20") == 0.05
@@ -108,6 +114,8 @@ def test_coerce_c_rate(test_data: dict) -> None:
         _coerce_c_rate("3C/2C")
     with pytest.raises(ZeroDivisionError):
         _coerce_c_rate("C/0")
+    with pytest.raises(ValueError):
+        _coerce_c_rate("3CD/2")
 
 
 def test_intersecting_loops(test_data: dict) -> None:
@@ -201,12 +209,11 @@ def test_intersecting_loops(test_data: dict) -> None:
         check_for_intersecting_loops(protocol)
 
 
-def test_nonexistent_tag(test_data) -> None:
+def test_nonexistent_tag() -> None:
     """You should not be able to create a loop with a tag that does not exist."""
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         Protocol(
             record=RecordParams(time_s=1),
-            safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
                 OpenCircuitVoltage(until_time_s=1),
@@ -215,14 +222,38 @@ def test_nonexistent_tag(test_data) -> None:
                 Loop(loop_to="this tag does not exist", cycle_count=3),
             ],
         )
+    assert "Tag 'this tag does not exist' is missing" in str(excinfo.value)
 
 
-def test_forward_loop(test_data) -> None:
+def test_unused_tags() -> None:
+    """Check unused tags get removed."""
+    protocol = Protocol(
+        record=RecordParams(time_s=1),
+        method=[
+            Tag(tag="tag1"),
+            Tag(tag="tag2"),
+            Tag(tag="tag3"),
+            OpenCircuitVoltage(until_time_s=1.0),
+            Tag(tag="tag4"),
+            Tag(tag="tag5"),
+            OpenCircuitVoltage(until_time_s=1.0),
+            Loop(loop_to="tag1", cycle_count=3),
+        ],
+    )
+    tag_to_indices(protocol)
+    expected_method = [
+        OpenCircuitVoltage(until_time_s=1.0),
+        OpenCircuitVoltage(until_time_s=1.0),
+        Loop(loop_to=1, cycle_count=3),
+    ]
+    assert protocol.method == expected_method
+
+
+def test_forward_loop() -> None:
     """Loops are not allowed to go fowards, or land on themselves, or only go back one step."""
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         Protocol(
             record=RecordParams(time_s=1),
-            safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
                 Loop(loop_to="tag1", cycle_count=3),
@@ -230,13 +261,13 @@ def test_forward_loop(test_data) -> None:
                 Tag(tag="tag1"),
             ],
         )
+    assert "Loops must go backwards" in str(excinfo.value)
 
     # Loops cannot go forwards or land on themselves
-    for i in [4, 5]:
-        with pytest.raises(ValidationError):
+    for i in [3, 4]:
+        with pytest.raises(ValidationError) as excinfo:
             Protocol(
                 record=RecordParams(time_s=1),
-                safety=SafetyParams(),
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
                     OpenCircuitVoltage(until_time_s=1),
@@ -247,12 +278,12 @@ def test_forward_loop(test_data) -> None:
                     OpenCircuitVoltage(until_time_s=1),
                 ],
             )
+        assert "cannot be on or after the loop index" in str(excinfo.value)
 
     # Loops cannot go back to one index to a tag
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as excinfo:
         Protocol(
             record=RecordParams(time_s=1),
-            safety=SafetyParams(),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
                 Tag(tag="tag1"),
@@ -260,3 +291,23 @@ def test_forward_loop(test_data) -> None:
                 OpenCircuitVoltage(until_time_s=1),
             ],
         )
+    assert "cannot start immediately after its tag" in str(excinfo.value)
+
+
+def test_impedance_ampliudes() -> None:
+    """Check amplitudes are set correctly."""
+    with pytest.raises(ValueError) as excinfo:
+        ImpedanceSpectroscopy(
+            amplitude_mA=1,
+            amplitude_V=1,
+            start_frequency_Hz=1,
+            end_frequency_Hz=100,
+        )
+    assert "Cannot set both" in str(excinfo)
+
+    with pytest.raises(ValueError) as excinfo:
+        ImpedanceSpectroscopy(
+            start_frequency_Hz=1,
+            end_frequency_Hz=100,
+        )
+    assert "must be set" in str(excinfo)
