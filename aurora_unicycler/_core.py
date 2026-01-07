@@ -97,9 +97,9 @@ class RecordParams(BaseModel):
 
     """
 
-    current_mA: float | None = None
-    voltage_V: float | None = None
-    time_s: float = Field(gt=0)
+    current_mA: Annotated[float, Field(gt=0)] | None = None
+    voltage_V: Annotated[float, Field(gt=0)] | None = None
+    time_s: Annotated[float, Field(gt=0)]
 
     model_config = ConfigDict(extra="forbid")
 
@@ -112,6 +112,7 @@ class SafetyParams(BaseModel):
         min_voltage_V: Minimum voltage in V.
         max_current_mA: Maximum current in mA.
         min_current_mA: Minimum current in mA (can be negative).
+        max_capacity_mAh: Maximum capacity in mAh.
         delay_s: How long in seconds limits must be exceeded before cancelling.
 
     """
@@ -124,6 +125,25 @@ class SafetyParams(BaseModel):
     delay_s: float | None = Field(ge=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _validate_limits(self) -> Self:
+        """Check max > min for current and voltage."""
+        if (
+            self.max_voltage_V is not None
+            and self.min_voltage_V is not None
+            and self.max_voltage_V <= self.min_voltage_V
+        ):
+            msg = "Max voltage must be larger than min voltage."
+            raise ValueError(msg)
+        if (
+            self.max_current_mA is not None
+            and self.min_current_mA is not None
+            and self.max_current_mA <= self.min_current_mA
+        ):
+            msg = "Max current must be larger than min current."
+            raise ValueError(msg)
+        return self
 
 
 class Step(BaseModel):
@@ -369,6 +389,15 @@ class Tag(Step):
     tag: str = Field(default="")
 
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("tag", mode="before")
+    @classmethod
+    def _dont_allow_empty(cls, v: str) -> str:
+        """Empty string is interpreted as None."""
+        if v.strip() == "":
+            msg = "Tag must not be empty."
+            raise ValueError(msg)
+        return v
 
 
 AnyTechnique = Annotated[

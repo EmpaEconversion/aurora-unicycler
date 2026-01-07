@@ -249,6 +249,14 @@ def test_unused_tags() -> None:
     assert protocol.method == expected_method
 
 
+def test_empty_tags() -> None:
+    """Empty tags not allowed."""
+    for tag in ["", " ", "  "]:
+        with pytest.raises(ValueError) as excinfo:
+            Tag(tag=tag)
+        assert "Tag must not be empty" in str(excinfo.value)
+
+
 def test_forward_loop() -> None:
     """Loops are not allowed to go fowards, or land on themselves, or only go back one step."""
     with pytest.raises(ValidationError) as excinfo:
@@ -311,3 +319,35 @@ def test_impedance_ampliudes() -> None:
             end_frequency_Hz=100,
         )
     assert "must be set" in str(excinfo)
+
+
+def test_invalid_safety_limits() -> None:
+    """Check min > max not allowed."""
+    with pytest.raises(ValueError) as excinfo:
+        SafetyParams(max_voltage_V=1, min_voltage_V=2)
+    assert "Max voltage must be larger than min voltage" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        SafetyParams(max_voltage_V=1, min_voltage_V=1)
+    assert "Max voltage must be larger than min voltage" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        SafetyParams(max_current_mA=1, min_current_mA=2)
+    assert "Max current must be larger than min current" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        SafetyParams(max_current_mA=1, min_current_mA=1)
+    assert "Max current must be larger than min current" in str(excinfo.value)
+
+
+def test_invalid_record_params() -> None:
+    """Check bad recording parameters."""
+    with pytest.raises(ValueError) as excinfo:
+        RecordParams(time_s=1, current_mA=0)
+    assert "Input should be greater than 0" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        RecordParams(time_s=1, current_mA=-1)
+    assert "Input should be greater than 0" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        RecordParams(time_s=1, voltage_V=0)
+    assert "Input should be greater than 0" in str(excinfo.value)
+    with pytest.raises(ValueError) as excinfo:
+        RecordParams(time_s=1, voltage_V=-1)
+    assert "Input should be greater than 0" in str(excinfo.value)
