@@ -154,9 +154,9 @@ def _neware_safety_params(safety: _core.SafetyParams) -> ET.Element:
     protect_element = ET.Element("Protect")
     main_protect = ET.SubElement(protect_element, "Main")
     volt = ET.SubElement(main_protect, "Volt")
-    if safety.max_voltage_V:
+    if safety.max_voltage_V is not None:
         ET.SubElement(volt, "Upper", Value=f"{safety.max_voltage_V * 10000:f}")
-    if safety.min_voltage_V:
+    if safety.min_voltage_V is not None:
         ET.SubElement(volt, "Lower", Value=f"{safety.min_voltage_V * 10000:f}")
     curr = ET.SubElement(main_protect, "Curr")
     if safety.max_current_mA:
