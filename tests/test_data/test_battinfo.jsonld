@@ -174,6 +174,14 @@
                                 "hasNumberValue": 4.2
                             },
                             "hasMeasurementUnit": "Volt"
+                        },
+                        {
+                            "@type": "Duration",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 10800.0
+                            },
+                            "hasMeasurementUnit": "Second"
                         }
                     ],
                     "hasNext": {
@@ -208,6 +216,14 @@
                                     "hasNumberValue": 0.05
                                 },
                                 "hasMeasurementUnit": "CRateUnit"
+                            },
+                            {
+                                "@type": "Duration",
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 3600.0
+                                },
+                                "hasMeasurementUnit": "Second"
                             }
                         ],
                         "hasNext": {
@@ -239,6 +255,14 @@
                                         "hasNumberValue": 3.2
                                     },
                                     "hasMeasurementUnit": "Volt"
+                                },
+                                {
+                                    "@type": "Duration",
+                                    "hasNumericalPart": {
+                                        "@type": "RealData",
+                                        "hasNumberValue": 10800.0
+                                    },
+                                    "hasMeasurementUnit": "Second"
                                 }
                             ]
                         }
@@ -251,17 +275,9 @@
                             "@type": "ElectricCurrent",
                             "hasNumericalPart": {
                                 "@type": "RealData",
-                                "hasNumberValue": 4.5
-                            },
-                            "hasMeasurementUnit": "MilliAmpere"
-                        },
-                        {
-                            "@type": "CRate",
-                            "hasNumericalPart": {
-                                "@type": "RealData",
                                 "hasNumberValue": 0.1
                             },
-                            "hasMeasurementUnit": "CRateUnit"
+                            "hasMeasurementUnit": "MilliAmpere"
                         },
                         {
                             "@type": [
@@ -293,20 +309,9 @@
                                 ],
                                 "hasNumericalPart": {
                                     "@type": "RealData",
-                                    "hasNumberValue": 0.45
-                                },
-                                "hasMeasurementUnit": "MilliAmpere"
-                            },
-                            {
-                                "@type": [
-                                    "LowerCRateLimit",
-                                    "TerminationQuantity"
-                                ],
-                                "hasNumericalPart": {
-                                    "@type": "RealData",
                                     "hasNumberValue": 0.01
                                 },
-                                "hasMeasurementUnit": "CRateUnit"
+                                "hasMeasurementUnit": "MilliAmpere"
                             }
                         ],
                         "hasNext": {
@@ -316,17 +321,9 @@
                                     "@type": "ElectricCurrent",
                                     "hasNumericalPart": {
                                         "@type": "RealData",
-                                        "hasNumberValue": 4.5
-                                    },
-                                    "hasMeasurementUnit": "MilliAmpere"
-                                },
-                                {
-                                    "@type": "CRate",
-                                    "hasNumericalPart": {
-                                        "@type": "RealData",
                                         "hasNumberValue": 0.1
                                     },
-                                    "hasMeasurementUnit": "CRateUnit"
+                                    "hasMeasurementUnit": "MilliAmpere"
                                 },
                                 {
                                     "@type": [
