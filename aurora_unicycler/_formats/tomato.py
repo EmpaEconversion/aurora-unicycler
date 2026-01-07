@@ -117,8 +117,8 @@ def to_tomato_mpg2(
                 tomato_step["n_gotos"] = step.cycle_count - 1  # gotos is one less than cycles
 
             case _:
-                msg = f"to_tomato_mpg2 does not support step type: {step.step}"
-                raise TypeError(msg)
+                msg = f"to_tomato_mpg2() does not support step type: {step.step}"
+                raise NotImplementedError(msg)
 
         tomato_dict["method"].append(tomato_step)
 

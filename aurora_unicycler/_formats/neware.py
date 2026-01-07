@@ -133,8 +133,8 @@ def _step_to_element(
             return _neware_loop(step, step_num)
 
         case _:
-            msg = f"to_neware_xml does not support step type: {step.step}"
-            raise TypeError(msg)
+            msg = f"to_neware_xml() does not support step type: {step.step}"
+            raise NotImplementedError(msg)
 
 
 def _neware_record_params(record_params: _core.RecordParams) -> ET.Element:

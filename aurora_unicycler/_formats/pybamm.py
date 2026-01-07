@@ -107,8 +107,8 @@ def to_pybamm_experiment(protocol: _core.BaseProtocol) -> list[str]:
                 loops[i] = {"goto": step.loop_to - 1, "n": step.cycle_count}
 
             case _:
-                msg = f"to_pybamm_experiment does not support step type: {step.step}"
-                raise TypeError(msg)
+                msg = f"to_pybamm_experiment() does not support step type: {step.step}"
+                raise NotImplementedError(msg)
 
         pybamm_experiment.append(step_str)
 
