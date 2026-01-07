@@ -435,7 +435,7 @@ class BaseProtocol(BaseModel):
                 msg = f"Loop start index {loop_start} cannot be on or after the loop index {i}."
                 raise ValueError(msg)
 
-        # Loops cannot go forwards to tags, or back one index to a tag
+        # Loops cannot have missing tags, go forwards to tags, or back one index to a tag
         for i, loop_tag in loop_tags.items():
             if loop_tag not in tags_rev:
                 msg = f"Tag '{loop_tag}' is missing."
@@ -481,9 +481,12 @@ class BaseProtocol(BaseModel):
             data = json.load(f)
         return cls.from_dict(data, sample_name, sample_capacity_mAh)
 
-    def to_dict(self) -> dict:
-        """Convert a Protocol to a dictionary."""
-        return self.model_dump()
+    def to_dict(self, **kwargs) -> dict:  # noqa: ANN003
+        """Convert a Protocol to a dictionary.
+
+        Alias of Pydantic model_dump() method.
+        """
+        return self.model_dump(**kwargs)
 
     def to_json(self, json_file: str | Path | None = None, indent: int = 4) -> str:
         """Dump model as JSON string, optionally save as a JSON file."""
