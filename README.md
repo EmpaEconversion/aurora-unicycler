@@ -1,6 +1,5 @@
 <h1 align="center">
-  <img src="https://github.com/user-attachments/assets/1136509f-c5ae-4ee0-b48d-535494706006#gh-light-mode-only" width="500" align="center" alt="aurora-biologic logo">
-  <img src="https://github.com/user-attachments/assets/e224fa59-dec7-4347-9c24-fc4c9f62380a#gh-dark-mode-only" width="500" align="center" alt="aurora-biologic logo">
+  <img src="https://github.com/user-attachments/assets/e904058b-bf9a-435c-aaa0-4ed4f2fc09f8" width="500" align="center" alt="aurora-biologic logo">
 </h1>
 
 <br>
