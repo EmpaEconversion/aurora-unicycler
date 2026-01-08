@@ -7,10 +7,10 @@
 
 [![Docs](https://img.shields.io/badge/docs-gh--pages-blue.svg)](https://empaeconversion.github.io/aurora-unicycler/)
 [![PyPI version](https://img.shields.io/pypi/v/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
-[![License](https://img.shields.io/github/license/empaeconversion/aurora-unicycler.svg)](https://github.com/empaeconversion/aurora-unicycler/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/empaeconversion/aurora-unicycler?color=blue)](https://github.com/empaeconversion/aurora-unicycler/blob/main/LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/aurora-unicycler.svg)](https://pypi.org/project/aurora-unicycler/)
-[![Build](https://github.com/empaeconversion/aurora-unicycler/actions/workflows/test.yml/badge.svg)](https://github.com/empaeconversion/aurora-unicycler/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/EmpaEconversion/aurora-unicycler/graph/badge.svg?token=LUGBOMSGUA)](https://codecov.io/gh/EmpaEconversion/aurora-unicycler)
+[![Checks](https://img.shields.io/github/actions/workflow/status/empaeconversion/aurora-unicycler/test.yml)](https://github.com/EmpaEconversion/aurora-unicycler/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/empaeconversion/aurora-unicycler)](https://app.codecov.io/gh/EmpaEconversion/aurora-unicycler)
 
 
 A universal battery cycling protocol that can be exported to different formats.
