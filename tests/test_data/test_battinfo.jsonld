@@ -54,7 +54,7 @@
                 }
             ],
             "hasNext": {
-                "@type": "Hold",
+                "@type": "VoltageHold",
                 "hasInput": [
                     {
                         "@type": "Voltage",
@@ -185,7 +185,7 @@
                         }
                     ],
                     "hasNext": {
-                        "@type": "Hold",
+                        "@type": "VoltageHold",
                         "hasInput": [
                             {
                                 "@type": "Voltage",
@@ -292,7 +292,7 @@
                         }
                     ],
                     "hasNext": {
-                        "@type": "Hold",
+                        "@type": "VoltageHold",
                         "hasInput": [
                             {
                                 "@type": "Voltage",

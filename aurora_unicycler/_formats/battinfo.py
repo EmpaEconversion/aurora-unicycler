@@ -186,7 +186,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                     }
                 )
             tech_dict = {
-                "@type": "Hold",
+                "@type": "VoltageHold",
                 "hasInput": inputs,
             }
         case _:
