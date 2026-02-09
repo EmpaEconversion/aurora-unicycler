@@ -69,6 +69,15 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
                 if k not in context:
                     msg = f"Unknown key: {k}"
                     raise ValueError(msg)
+                if k == "@type":
+                    if isinstance(v, str) and v not in context:
+                        msg = f"Unknown @type: {v}"
+                        raise ValueError(msg)
+                    if isinstance(v, list):
+                        for el in v:
+                            if el not in context:
+                                msg = f"Unknown @type: {el}"
+                                raise ValueError(msg)
                 recursive_search(v, context)
 
     recursive_search(bij, emmo_context)
