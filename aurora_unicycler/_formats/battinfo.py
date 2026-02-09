@@ -73,7 +73,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_time_s,
                         },
-                        "hasMeasurementUnit": "Second",
+                        "hasMeasurementUnit": "ns1:Second",
                     }
                 ],
             }
@@ -93,7 +93,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(current_mA),
                         },
-                        "hasMeasurementUnit": "MilliAmpere",
+                        "hasMeasurementUnit": "ns1:MilliAmpere",
                     },
                 )
             if step.rate_C:
@@ -104,7 +104,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(step.rate_C),
                         },
-                        "hasMeasurementUnit": "CRateUnit",
+                        "hasMeasurementUnit": "ns3:CRateUnit",
                     },
                 )
             if step.until_voltage_V:
@@ -118,7 +118,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_voltage_V,
                         },
-                        "hasMeasurementUnit": "Volt",
+                        "hasMeasurementUnit": "ns1:Volt",
                     }
                 )
             if step.until_time_s:
@@ -129,7 +129,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_time_s,
                         },
-                        "hasMeasurementUnit": "Second",
+                        "hasMeasurementUnit": "ns1:Second",
                     }
                 )
             tech_dict = {
@@ -144,7 +144,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                         "@type": "RealData",
                         "hasNumberValue": step.voltage_V,
                     },
-                    "hasMeasurementUnit": "Volt",
+                    "hasMeasurementUnit": "ns1:Volt",
                 }
             ]
             until_current_mA: None | float = None
@@ -160,7 +160,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(until_current_mA),
                         },
-                        "hasMeasurementUnit": "MilliAmpere",
+                        "hasMeasurementUnit": "ns1:MilliAmpere",
                     }
                 )
             if step.until_rate_C:
@@ -171,7 +171,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(step.until_rate_C),
                         },
-                        "hasMeasurementUnit": "CRateUnit",
+                        "hasMeasurementUnit": "ns3:CRateUnit",
                     },
                 )
             if step.until_time_s:
@@ -182,7 +182,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_time_s,
                         },
-                        "hasMeasurementUnit": "Second",
+                        "hasMeasurementUnit": "ns1:Second",
                     }
                 )
             tech_dict = {
@@ -216,7 +216,7 @@ def _recursive_battinfo_build(
                         "@type": "RealData",
                         "hasNumberValue": order[0][0],
                     },
-                    "hasMeasurementUnit": "UnitOne",
+                    "hasMeasurementUnit": "ns1:UnitOne",
                 }
             ],
             "hasTask": _recursive_battinfo_build(order[0][1], methods, capacity_mAh),
@@ -257,9 +257,7 @@ def to_battinfo_jsonld(  # noqa: D417
 
     # Include context at this level, if requested
     if include_context:
-        battinfo_dict["@context"] = [
-            "https://w3id.org/emmo/domain/battery/context",
-        ]
+        battinfo_dict["@context"] = "https://w3id.org/emmo/domain/battery/context"
 
     # Optionally save
     if save_path:

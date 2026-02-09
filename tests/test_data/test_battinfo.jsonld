@@ -1,4 +1,5 @@
 {
+    "@context": "https://w3id.org/emmo/domain/battery/context",
     "@type": "Resting",
     "hasInput": [
         {
@@ -7,7 +8,7 @@
                 "@type": "RealData",
                 "hasNumberValue": 300.0
             },
-            "hasMeasurementUnit": "Second"
+            "hasMeasurementUnit": "ns1:Second"
         }
     ],
     "hasNext": {
@@ -19,7 +20,7 @@
                     "@type": "RealData",
                     "hasNumberValue": 5
                 },
-                "hasMeasurementUnit": "UnitOne"
+                "hasMeasurementUnit": "ns1:UnitOne"
             }
         ],
         "hasTask": {
@@ -31,7 +32,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 2.25
                     },
-                    "hasMeasurementUnit": "MilliAmpere"
+                    "hasMeasurementUnit": "ns1:MilliAmpere"
                 },
                 {
                     "@type": "CRate",
@@ -39,7 +40,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 0.05
                     },
-                    "hasMeasurementUnit": "CRateUnit"
+                    "hasMeasurementUnit": "ns3:CRateUnit"
                 },
                 {
                     "@type": [
@@ -50,7 +51,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 4.2
                     },
-                    "hasMeasurementUnit": "Volt"
+                    "hasMeasurementUnit": "ns1:Volt"
                 }
             ],
             "hasNext": {
@@ -62,7 +63,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 4.2
                         },
-                        "hasMeasurementUnit": "Volt"
+                        "hasMeasurementUnit": "ns1:Volt"
                     },
                     {
                         "@type": [
@@ -73,7 +74,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.45
                         },
-                        "hasMeasurementUnit": "MilliAmpere"
+                        "hasMeasurementUnit": "ns1:MilliAmpere"
                     },
                     {
                         "@type": [
@@ -84,7 +85,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.01
                         },
-                        "hasMeasurementUnit": "CRateUnit"
+                        "hasMeasurementUnit": "ns3:CRateUnit"
                     }
                 ],
                 "hasNext": {
@@ -96,7 +97,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 2.25
                             },
-                            "hasMeasurementUnit": "MilliAmpere"
+                            "hasMeasurementUnit": "ns1:MilliAmpere"
                         },
                         {
                             "@type": "CRate",
@@ -104,7 +105,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.05
                             },
-                            "hasMeasurementUnit": "CRateUnit"
+                            "hasMeasurementUnit": "ns3:CRateUnit"
                         },
                         {
                             "@type": [
@@ -115,7 +116,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 3.2
                             },
-                            "hasMeasurementUnit": "Volt"
+                            "hasMeasurementUnit": "ns1:Volt"
                         }
                     ]
                 }
@@ -130,7 +131,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 10
                     },
-                    "hasMeasurementUnit": "UnitOne"
+                    "hasMeasurementUnit": "ns1:UnitOne"
                 }
             ],
             "hasTask": {
@@ -142,7 +143,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 24
                         },
-                        "hasMeasurementUnit": "UnitOne"
+                        "hasMeasurementUnit": "ns1:UnitOne"
                     }
                 ],
                 "hasTask": {
@@ -154,7 +155,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 22.5
                             },
-                            "hasMeasurementUnit": "MilliAmpere"
+                            "hasMeasurementUnit": "ns1:MilliAmpere"
                         },
                         {
                             "@type": "CRate",
@@ -162,7 +163,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.5
                             },
-                            "hasMeasurementUnit": "CRateUnit"
+                            "hasMeasurementUnit": "ns3:CRateUnit"
                         },
                         {
                             "@type": [
@@ -173,7 +174,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 4.2
                             },
-                            "hasMeasurementUnit": "Volt"
+                            "hasMeasurementUnit": "ns1:Volt"
                         },
                         {
                             "@type": "Duration",
@@ -181,7 +182,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 10800.0
                             },
-                            "hasMeasurementUnit": "Second"
+                            "hasMeasurementUnit": "ns1:Second"
                         }
                     ],
                     "hasNext": {
@@ -193,7 +194,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 4.2
                                 },
-                                "hasMeasurementUnit": "Volt"
+                                "hasMeasurementUnit": "ns1:Volt"
                             },
                             {
                                 "@type": [
@@ -204,7 +205,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 2.25
                                 },
-                                "hasMeasurementUnit": "MilliAmpere"
+                                "hasMeasurementUnit": "ns1:MilliAmpere"
                             },
                             {
                                 "@type": [
@@ -215,7 +216,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 0.05
                                 },
-                                "hasMeasurementUnit": "CRateUnit"
+                                "hasMeasurementUnit": "ns3:CRateUnit"
                             },
                             {
                                 "@type": "Duration",
@@ -223,7 +224,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 3600.0
                                 },
-                                "hasMeasurementUnit": "Second"
+                                "hasMeasurementUnit": "ns1:Second"
                             }
                         ],
                         "hasNext": {
@@ -235,7 +236,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 22.5
                                     },
-                                    "hasMeasurementUnit": "MilliAmpere"
+                                    "hasMeasurementUnit": "ns1:MilliAmpere"
                                 },
                                 {
                                     "@type": "CRate",
@@ -243,7 +244,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 0.5
                                     },
-                                    "hasMeasurementUnit": "CRateUnit"
+                                    "hasMeasurementUnit": "ns3:CRateUnit"
                                 },
                                 {
                                     "@type": [
@@ -254,7 +255,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 3.2
                                     },
-                                    "hasMeasurementUnit": "Volt"
+                                    "hasMeasurementUnit": "ns1:Volt"
                                 },
                                 {
                                     "@type": "Duration",
@@ -262,7 +263,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 10800.0
                                     },
-                                    "hasMeasurementUnit": "Second"
+                                    "hasMeasurementUnit": "ns1:Second"
                                 }
                             ]
                         }
@@ -277,7 +278,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.1
                             },
-                            "hasMeasurementUnit": "MilliAmpere"
+                            "hasMeasurementUnit": "ns1:MilliAmpere"
                         },
                         {
                             "@type": [
@@ -288,7 +289,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 4.2
                             },
-                            "hasMeasurementUnit": "Volt"
+                            "hasMeasurementUnit": "ns1:Volt"
                         }
                     ],
                     "hasNext": {
@@ -300,7 +301,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 4.2
                                 },
-                                "hasMeasurementUnit": "Volt"
+                                "hasMeasurementUnit": "ns1:Volt"
                             },
                             {
                                 "@type": [
@@ -311,7 +312,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 0.01
                                 },
-                                "hasMeasurementUnit": "MilliAmpere"
+                                "hasMeasurementUnit": "ns1:MilliAmpere"
                             }
                         ],
                         "hasNext": {
@@ -323,7 +324,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 0.1
                                     },
-                                    "hasMeasurementUnit": "MilliAmpere"
+                                    "hasMeasurementUnit": "ns1:MilliAmpere"
                                 },
                                 {
                                     "@type": [
@@ -334,7 +335,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 3.2
                                     },
-                                    "hasMeasurementUnit": "Volt"
+                                    "hasMeasurementUnit": "ns1:Volt"
                                 }
                             ]
                         }

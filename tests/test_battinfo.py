@@ -46,14 +46,18 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
             Loop(loop_to="recovery", cycle_count=10),
         ],
     )
-    bij = my_protocol.to_battinfo_jsonld()
+    bij = my_protocol.to_battinfo_jsonld(include_context=True)
     assert isinstance(bij, dict)
     json.dumps(bij)  # should be valid JSON
 
     # Check that every key is valid term from emmo
-    with test_data["emmo_context_path"].open("r") as f:
-        emmo_context = set(json.load(f))
-    emmo_context.add("@type")
+    context = []
+    for key, file in test_data["context_paths"].items():
+        with file.open("r") as f:
+            term_list = json.load(f)
+            context += [key + c.split(".")[-1] for c in term_list]
+    context += ["@type", "@id", "@context"]
+    context = set(context)
 
     def recursive_search(obj: dict | list | str | float, context: set) -> None:
         if isinstance(obj, (int, float)):
@@ -78,9 +82,10 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
                             if el not in context:
                                 msg = f"Unknown @type: {el}"
                                 raise ValueError(msg)
-                recursive_search(v, context)
+                if k != "@context":
+                    recursive_search(v, context)
 
-    recursive_search(bij, emmo_context)
+    recursive_search(bij, context)
 
     # This is only a regression test, does not check for correctness
     with test_data["jsonld_path"].open("r") as f:
@@ -101,7 +106,7 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
 
     # Check if adding context works
     bij = my_protocol.to_battinfo_jsonld(include_context=True)
-    assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
+    assert bij["@context"] == "https://w3id.org/emmo/domain/battery/context"
 
 
 def test_unknown_step() -> None:
