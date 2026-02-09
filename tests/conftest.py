@@ -27,7 +27,7 @@ def test_data() -> dict:
         "jsonld_path": base_folder / "test_battinfo.jsonld",
         "context_paths": {
             "": base_folder / "battery_context.json",
-            "ns1:": base_folder / "ns1_context.json",
-            "ns3:": base_folder / "ns3_context.json",
+            "emmo:": base_folder / "emmo_context.json",
+            "echem:": base_folder / "echem_context.json",
         },
     }
