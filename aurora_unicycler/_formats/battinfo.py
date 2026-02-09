@@ -65,7 +65,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
     match step:
         case _core.OpenCircuitVoltage():
             tech_dict = {
-                "@type": "Resting",
+                "@type": "OpenCircuitHold",
                 "hasInput": [
                     {
                         "@type": "Duration",

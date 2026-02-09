@@ -1,6 +1,6 @@
 {
     "@context": "https://w3id.org/emmo/domain/battery/context",
-    "@type": "Resting",
+    "@type": "OpenCircuitHold",
     "hasInput": [
         {
             "@type": "Duration",
