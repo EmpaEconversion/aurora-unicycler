@@ -24,7 +24,7 @@
             }
         ],
         "hasTask": {
-            "@type": "Charging",
+            "@type": "ConstantCurrentCharging",
             "hasInput": [
                 {
                     "@type": "ElectricCurrent",
@@ -89,7 +89,7 @@
                     }
                 ],
                 "hasNext": {
-                    "@type": "Discharging",
+                    "@type": "ConstantCurrentDischarging",
                     "hasInput": [
                         {
                             "@type": "ElectricCurrent",
@@ -147,7 +147,7 @@
                     }
                 ],
                 "hasTask": {
-                    "@type": "Charging",
+                    "@type": "ConstantCurrentCharging",
                     "hasInput": [
                         {
                             "@type": "ElectricCurrent",
@@ -228,7 +228,7 @@
                             }
                         ],
                         "hasNext": {
-                            "@type": "Discharging",
+                            "@type": "ConstantCurrentDischarging",
                             "hasInput": [
                                 {
                                     "@type": "ElectricCurrent",
@@ -270,7 +270,7 @@
                     }
                 },
                 "hasNext": {
-                    "@type": "Charging",
+                    "@type": "ConstantCurrentCharging",
                     "hasInput": [
                         {
                             "@type": "ElectricCurrent",
@@ -316,7 +316,7 @@
                             }
                         ],
                         "hasNext": {
-                            "@type": "Discharging",
+                            "@type": "ConstantCurrentDischarging",
                             "hasInput": [
                                 {
                                     "@type": "ElectricCurrent",

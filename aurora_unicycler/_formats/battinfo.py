@@ -133,7 +133,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                     }
                 )
             tech_dict = {
-                "@type": "Charging" if charging else "Discharging",
+                "@type": "ConstantCurrentCharging" if charging else "ConstantCurrentDischarging",
                 "hasInput": inputs,
             }
         case _core.ConstantVoltage():
