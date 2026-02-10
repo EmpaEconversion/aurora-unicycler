@@ -25,6 +25,7 @@ def test_data() -> dict:
         "protocol_dicts": data,
         "protocol_paths": example_protocol_paths,
         "jsonld_path": base_folder / "test_battinfo.jsonld",
+        "nq_path": base_folder / "test_battinfo_canonized.nq",
         "context_paths": {
             "": base_folder / "battery_context.json",
             "emmo:": base_folder / "emmo_context.json",

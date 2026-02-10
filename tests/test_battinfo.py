@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pyld import jsonld
 
 from aurora_unicycler import (
     ConstantCurrent,
@@ -91,6 +92,12 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
     with test_data["jsonld_path"].open("r") as f:
         expected = json.load(f)
     assert bij == expected
+
+    # Check that it canonizes as expected
+    canon_bij = jsonld.normalize(bij, {"algorithm": "URDNA2015", "format": "application/n-quads"})
+    with test_data["nq_path"].open("r") as f:
+        canon_ref = f.read()
+    assert canon_bij == canon_ref
 
     # Check if capacity overriding works
     bij = my_protocol.to_battinfo_jsonld(capacity_mAh=200)
