@@ -1,5 +1,11 @@
 {
-    "@context": "https://w3id.org/emmo/domain/battery/context",
+    "@context": [
+        "https://w3id.org/emmo/domain/battery/context",
+        {
+            "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+            "emmo": "https://w3id.org/emmo#"
+        }
+    ],
     "@type": "OpenCircuitHold",
     "hasInput": [
         {

@@ -106,7 +106,13 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
 
     # Check if adding context works
     bij = my_protocol.to_battinfo_jsonld(include_context=True)
-    assert bij["@context"] == "https://w3id.org/emmo/domain/battery/context"
+    assert bij["@context"] == [
+        "https://w3id.org/emmo/domain/battery/context",
+        {
+            "emmo": "https://w3id.org/emmo#",
+            "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+        },
+    ]
 
 
 def test_unknown_step() -> None:

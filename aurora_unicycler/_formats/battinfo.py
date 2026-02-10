@@ -257,7 +257,13 @@ def to_battinfo_jsonld(
 
     # Include context at this level, if requested
     if include_context:
-        battinfo_dict["@context"] = "https://w3id.org/emmo/domain/battery/context"
+        battinfo_dict["@context"] = [
+            "https://w3id.org/emmo/domain/battery/context",
+            {
+                "emmo": "https://w3id.org/emmo#",
+                "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+            },
+        ]
 
     # Optionally save
     if save_path:
