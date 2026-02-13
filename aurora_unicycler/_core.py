@@ -176,7 +176,7 @@ class ConstantCurrent(Step):
     """Constant current step.
 
     At least one of `rate_C` or `current_mA` must be set. If `rate_C` is used, a
-    sample capacity must be set in the Protocol, and it will take priority over
+    sample capacity must be set in the CyclingProtocol, and it will take priority over
     `current_mA`.
 
     The termination ('until') conditions are OR conditions, the step will end
@@ -407,7 +407,7 @@ AnyTechnique = Annotated[
 
 
 class BaseProtocol(BaseModel):
-    """Internal base protocol model. Users should use `Protocol` instead.
+    """Internal base protocol model. Users should use `CyclingProtocol` instead.
 
     This class provides attributes used to define a Unicycler protocol and constructors.
     It does not contain methods to convert to different formats.
@@ -486,7 +486,7 @@ class BaseProtocol(BaseModel):
         sample_name: str | None = None,
         sample_capacity_mAh: float | None = None,
     ) -> Self:
-        """Create a Protocol from a dictionary."""
+        """Create a CyclingProtocol from a dictionary."""
         # If values given then overwrite
         data.setdefault("sample", {})
         if sample_name or sample_capacity_mAh:
@@ -504,14 +504,14 @@ class BaseProtocol(BaseModel):
         sample_name: str | None = None,
         sample_capacity_mAh: float | None = None,
     ) -> Self:
-        """Create a Protocol from a JSON file."""
+        """Create a CyclingProtocol from a JSON file."""
         json_file = Path(json_file)
         with json_file.open("r", encoding="utf-8") as f:
             data = json.load(f)
         return cls.from_dict(data, sample_name, sample_capacity_mAh)
 
     def to_dict(self, **kwargs) -> dict:  # noqa: ANN003
-        """Convert a Protocol to a dictionary.
+        """Convert a CyclingProtocol to a dictionary.
 
         Alias of Pydantic model_dump() method.
         """

@@ -11,9 +11,9 @@ from pyld import jsonld
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SampleParams,
     Step,
@@ -23,7 +23,7 @@ from aurora_unicycler import (
 
 def test_to_battinfo_jsonld(test_data: dict) -> None:
     """Test converting to BattINFO JSON-LD."""
-    my_protocol = Protocol(
+    my_protocol = CyclingProtocol(
         sample=SampleParams(
             name="test_sample",
             capacity_mAh=45,
@@ -128,7 +128,7 @@ def test_unknown_step() -> None:
     class UnknownStep(Step):
         step: str = "wait, what"
 
-    protocol = Protocol.model_construct(
+    protocol = CyclingProtocol.model_construct(
         record=RecordParams(time_s=1),
         method=[UnknownStep()],
     )
@@ -139,7 +139,7 @@ def test_unknown_step() -> None:
 
 def test_save_file(tmpdir: Path) -> None:
     """Check file is written correctly."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             Tag(tag="a"),

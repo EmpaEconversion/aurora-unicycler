@@ -10,10 +10,10 @@ from pydantic import ValidationError
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SafetyParams,
     Tag,
@@ -58,10 +58,10 @@ def test_constant_voltage_validation() -> None:
 
 
 def test_protocol_c_rate_validation(test_data: dict) -> None:
-    """Test validation of Protocol with C-rate steps."""
+    """Test validation of CyclingProtocol with C-rate steps."""
     # Valid protocol
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
-    assert isinstance(protocol, Protocol)
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
+    assert isinstance(protocol, CyclingProtocol)
 
     # Invalid protocol (missing capacity)
     protocol.sample.capacity_mAh = Decimal(0)
@@ -119,8 +119,8 @@ def test_coerce_c_rate() -> None:
 
 
 def test_intersecting_loops(test_data: dict) -> None:
-    """Protocols with intersecting loops should give a error."""
-    protocol = Protocol(
+    """CyclingProtocols with intersecting loops should give a error."""
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -143,7 +143,7 @@ def test_intersecting_loops(test_data: dict) -> None:
     tag_to_indices(protocol)
     check_for_intersecting_loops(protocol)  # Should be fine
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -163,7 +163,7 @@ def test_intersecting_loops(test_data: dict) -> None:
     tag_to_indices(protocol)
     check_for_intersecting_loops(protocol)  # Should be fine
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -187,7 +187,7 @@ def test_intersecting_loops(test_data: dict) -> None:
     with pytest.raises(ValueError):  # Should fail
         check_for_intersecting_loops(protocol)
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -212,7 +212,7 @@ def test_intersecting_loops(test_data: dict) -> None:
 def test_nonexistent_tag() -> None:
     """You should not be able to create a loop with a tag that does not exist."""
     with pytest.raises(ValidationError) as excinfo:
-        Protocol(
+        CyclingProtocol(
             record=RecordParams(time_s=1),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -227,7 +227,7 @@ def test_nonexistent_tag() -> None:
 
 def test_unused_tags() -> None:
     """Check unused tags get removed."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             Tag(tag="tag1"),
@@ -260,7 +260,7 @@ def test_empty_tags() -> None:
 def test_forward_loop() -> None:
     """Loops are not allowed to go fowards, or land on themselves, or only go back one step."""
     with pytest.raises(ValidationError) as excinfo:
-        Protocol(
+        CyclingProtocol(
             record=RecordParams(time_s=1),
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -274,7 +274,7 @@ def test_forward_loop() -> None:
     # Loops cannot go forwards or land on themselves
     for i in [3, 4]:
         with pytest.raises(ValidationError) as excinfo:
-            Protocol(
+            CyclingProtocol(
                 record=RecordParams(time_s=1),
                 method=[
                     OpenCircuitVoltage(until_time_s=1),
@@ -290,7 +290,7 @@ def test_forward_loop() -> None:
 
     # Loops cannot go back to one index to a tag
     with pytest.raises(ValidationError) as excinfo:
-        Protocol(
+        CyclingProtocol(
             record=RecordParams(time_s=1),
             method=[
                 OpenCircuitVoltage(until_time_s=1),

@@ -1,1 +1,1 @@
-"""Extensions to the Protocol class to add different exporters."""
+"""Extensions to the CyclingProtocol class to add different exporters."""
