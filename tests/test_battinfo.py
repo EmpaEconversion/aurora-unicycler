@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pyld import jsonld
 
 from aurora_unicycler import (
     ConstantCurrent,
@@ -46,14 +47,18 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
             Loop(loop_to="recovery", cycle_count=10),
         ],
     )
-    bij = my_protocol.to_battinfo_jsonld()
+    bij = my_protocol.to_battinfo_jsonld(include_context=True)
     assert isinstance(bij, dict)
     json.dumps(bij)  # should be valid JSON
 
     # Check that every key is valid term from emmo
-    with test_data["emmo_context_path"].open("r") as f:
-        emmo_context = set(json.load(f))
-    emmo_context.add("@type")
+    context = []
+    for key, file in test_data["context_paths"].items():
+        with file.open("r") as f:
+            term_list = json.load(f)
+            context += [key + c.split(".")[-1] for c in term_list]
+    context += ["@type", "@id", "@context"]
+    context = set(context)
 
     def recursive_search(obj: dict | list | str | float, context: set) -> None:
         if isinstance(obj, (int, float)):
@@ -69,14 +74,30 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
                 if k not in context:
                     msg = f"Unknown key: {k}"
                     raise ValueError(msg)
-                recursive_search(v, context)
+                if k == "@type":
+                    if isinstance(v, str) and v not in context:
+                        msg = f"Unknown @type: {v}"
+                        raise ValueError(msg)
+                    if isinstance(v, list):
+                        for el in v:
+                            if el not in context:
+                                msg = f"Unknown @type: {el}"
+                                raise ValueError(msg)
+                if k != "@context":
+                    recursive_search(v, context)
 
-    recursive_search(bij, emmo_context)
+    recursive_search(bij, context)
 
     # This is only a regression test, does not check for correctness
     with test_data["jsonld_path"].open("r") as f:
         expected = json.load(f)
     assert bij == expected
+
+    # Check that it canonizes as expected
+    canon_bij = jsonld.normalize(bij, {"algorithm": "URDNA2015", "format": "application/n-quads"})
+    with test_data["nq_path"].open("r") as f:
+        canon_ref = f.read()
+    assert canon_bij == canon_ref
 
     # Check if capacity overriding works
     bij = my_protocol.to_battinfo_jsonld(capacity_mAh=200)
@@ -92,7 +113,13 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
 
     # Check if adding context works
     bij = my_protocol.to_battinfo_jsonld(include_context=True)
-    assert bij["@context"] == ["https://w3id.org/emmo/domain/battery/context"]
+    assert bij["@context"] == [
+        "https://w3id.org/emmo/domain/battery/context",
+        {
+            "emmo": "https://w3id.org/emmo#",
+            "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+        },
+    ]
 
 
 def test_unknown_step() -> None:

@@ -1,5 +1,12 @@
 {
-    "@type": "Resting",
+    "@context": [
+        "https://w3id.org/emmo/domain/battery/context",
+        {
+            "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+            "emmo": "https://w3id.org/emmo#"
+        }
+    ],
+    "@type": "OpenCircuitHold",
     "hasInput": [
         {
             "@type": "Duration",
@@ -7,7 +14,7 @@
                 "@type": "RealData",
                 "hasNumberValue": 300.0
             },
-            "hasMeasurementUnit": "Second"
+            "hasMeasurementUnit": "emmo:Second"
         }
     ],
     "hasNext": {
@@ -19,11 +26,11 @@
                     "@type": "RealData",
                     "hasNumberValue": 5
                 },
-                "hasMeasurementUnit": "UnitOne"
+                "hasMeasurementUnit": "emmo:UnitOne"
             }
         ],
         "hasTask": {
-            "@type": "Charging",
+            "@type": "ConstantCurrentCharging",
             "hasInput": [
                 {
                     "@type": "ElectricCurrent",
@@ -31,7 +38,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 2.25
                     },
-                    "hasMeasurementUnit": "MilliAmpere"
+                    "hasMeasurementUnit": "emmo:MilliAmpere"
                 },
                 {
                     "@type": "CRate",
@@ -39,7 +46,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 0.05
                     },
-                    "hasMeasurementUnit": "CRateUnit"
+                    "hasMeasurementUnit": "echem:CRateUnit"
                 },
                 {
                     "@type": [
@@ -50,7 +57,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 4.2
                     },
-                    "hasMeasurementUnit": "Volt"
+                    "hasMeasurementUnit": "emmo:Volt"
                 }
             ],
             "hasNext": {
@@ -62,7 +69,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 4.2
                         },
-                        "hasMeasurementUnit": "Volt"
+                        "hasMeasurementUnit": "emmo:Volt"
                     },
                     {
                         "@type": [
@@ -73,7 +80,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.45
                         },
-                        "hasMeasurementUnit": "MilliAmpere"
+                        "hasMeasurementUnit": "emmo:MilliAmpere"
                     },
                     {
                         "@type": [
@@ -84,11 +91,11 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.01
                         },
-                        "hasMeasurementUnit": "CRateUnit"
+                        "hasMeasurementUnit": "echem:CRateUnit"
                     }
                 ],
                 "hasNext": {
-                    "@type": "Discharging",
+                    "@type": "ConstantCurrentDischarging",
                     "hasInput": [
                         {
                             "@type": "ElectricCurrent",
@@ -96,7 +103,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 2.25
                             },
-                            "hasMeasurementUnit": "MilliAmpere"
+                            "hasMeasurementUnit": "emmo:MilliAmpere"
                         },
                         {
                             "@type": "CRate",
@@ -104,7 +111,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.05
                             },
-                            "hasMeasurementUnit": "CRateUnit"
+                            "hasMeasurementUnit": "echem:CRateUnit"
                         },
                         {
                             "@type": [
@@ -115,7 +122,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 3.2
                             },
-                            "hasMeasurementUnit": "Volt"
+                            "hasMeasurementUnit": "emmo:Volt"
                         }
                     ]
                 }
@@ -130,7 +137,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 10
                     },
-                    "hasMeasurementUnit": "UnitOne"
+                    "hasMeasurementUnit": "emmo:UnitOne"
                 }
             ],
             "hasTask": {
@@ -142,11 +149,11 @@
                             "@type": "RealData",
                             "hasNumberValue": 24
                         },
-                        "hasMeasurementUnit": "UnitOne"
+                        "hasMeasurementUnit": "emmo:UnitOne"
                     }
                 ],
                 "hasTask": {
-                    "@type": "Charging",
+                    "@type": "ConstantCurrentCharging",
                     "hasInput": [
                         {
                             "@type": "ElectricCurrent",
@@ -154,7 +161,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 22.5
                             },
-                            "hasMeasurementUnit": "MilliAmpere"
+                            "hasMeasurementUnit": "emmo:MilliAmpere"
                         },
                         {
                             "@type": "CRate",
@@ -162,7 +169,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.5
                             },
-                            "hasMeasurementUnit": "CRateUnit"
+                            "hasMeasurementUnit": "echem:CRateUnit"
                         },
                         {
                             "@type": [
@@ -173,7 +180,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 4.2
                             },
-                            "hasMeasurementUnit": "Volt"
+                            "hasMeasurementUnit": "emmo:Volt"
                         },
                         {
                             "@type": "Duration",
@@ -181,7 +188,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 10800.0
                             },
-                            "hasMeasurementUnit": "Second"
+                            "hasMeasurementUnit": "emmo:Second"
                         }
                     ],
                     "hasNext": {
@@ -193,7 +200,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 4.2
                                 },
-                                "hasMeasurementUnit": "Volt"
+                                "hasMeasurementUnit": "emmo:Volt"
                             },
                             {
                                 "@type": [
@@ -204,7 +211,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 2.25
                                 },
-                                "hasMeasurementUnit": "MilliAmpere"
+                                "hasMeasurementUnit": "emmo:MilliAmpere"
                             },
                             {
                                 "@type": [
@@ -215,7 +222,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 0.05
                                 },
-                                "hasMeasurementUnit": "CRateUnit"
+                                "hasMeasurementUnit": "echem:CRateUnit"
                             },
                             {
                                 "@type": "Duration",
@@ -223,11 +230,11 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 3600.0
                                 },
-                                "hasMeasurementUnit": "Second"
+                                "hasMeasurementUnit": "emmo:Second"
                             }
                         ],
                         "hasNext": {
-                            "@type": "Discharging",
+                            "@type": "ConstantCurrentDischarging",
                             "hasInput": [
                                 {
                                     "@type": "ElectricCurrent",
@@ -235,7 +242,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 22.5
                                     },
-                                    "hasMeasurementUnit": "MilliAmpere"
+                                    "hasMeasurementUnit": "emmo:MilliAmpere"
                                 },
                                 {
                                     "@type": "CRate",
@@ -243,7 +250,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 0.5
                                     },
-                                    "hasMeasurementUnit": "CRateUnit"
+                                    "hasMeasurementUnit": "echem:CRateUnit"
                                 },
                                 {
                                     "@type": [
@@ -254,7 +261,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 3.2
                                     },
-                                    "hasMeasurementUnit": "Volt"
+                                    "hasMeasurementUnit": "emmo:Volt"
                                 },
                                 {
                                     "@type": "Duration",
@@ -262,14 +269,14 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 10800.0
                                     },
-                                    "hasMeasurementUnit": "Second"
+                                    "hasMeasurementUnit": "emmo:Second"
                                 }
                             ]
                         }
                     }
                 },
                 "hasNext": {
-                    "@type": "Charging",
+                    "@type": "ConstantCurrentCharging",
                     "hasInput": [
                         {
                             "@type": "ElectricCurrent",
@@ -277,7 +284,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.1
                             },
-                            "hasMeasurementUnit": "MilliAmpere"
+                            "hasMeasurementUnit": "emmo:MilliAmpere"
                         },
                         {
                             "@type": [
@@ -288,7 +295,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 4.2
                             },
-                            "hasMeasurementUnit": "Volt"
+                            "hasMeasurementUnit": "emmo:Volt"
                         }
                     ],
                     "hasNext": {
@@ -300,7 +307,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 4.2
                                 },
-                                "hasMeasurementUnit": "Volt"
+                                "hasMeasurementUnit": "emmo:Volt"
                             },
                             {
                                 "@type": [
@@ -311,11 +318,11 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 0.01
                                 },
-                                "hasMeasurementUnit": "MilliAmpere"
+                                "hasMeasurementUnit": "emmo:MilliAmpere"
                             }
                         ],
                         "hasNext": {
-                            "@type": "Discharging",
+                            "@type": "ConstantCurrentDischarging",
                             "hasInput": [
                                 {
                                     "@type": "ElectricCurrent",
@@ -323,7 +330,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 0.1
                                     },
-                                    "hasMeasurementUnit": "MilliAmpere"
+                                    "hasMeasurementUnit": "emmo:MilliAmpere"
                                 },
                                 {
                                     "@type": [
@@ -334,7 +341,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 3.2
                                     },
-                                    "hasMeasurementUnit": "Volt"
+                                    "hasMeasurementUnit": "emmo:Volt"
                                 }
                             ]
                         }
