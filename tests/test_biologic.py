@@ -11,10 +11,10 @@ import pytest
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SafetyParams,
     Step,
@@ -24,7 +24,7 @@ from aurora_unicycler import (
 
 def test_to_biologic_mps() -> None:
     """Test conversion to Biologic MPS."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -56,7 +56,7 @@ def test_biologic_units_ranges() -> None:
     """Test that current ranges are given the expected values and units."""
     kw1 = {"until_time_s": 10.0}
     kw2 = {"start_frequency_Hz": 1e3, "end_frequency_Hz": 1}
-    my_protocol = Protocol(
+    my_protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ConstantCurrent(**kw1, current_mA=0.001),
@@ -105,7 +105,7 @@ def test_biologic_units_ranges() -> None:
 
 def test_current_outside_range() -> None:
     """Check large currents not allowed."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ConstantCurrent(current_mA=10000, until_voltage_V=4)],
     )
@@ -116,7 +116,7 @@ def test_current_outside_range() -> None:
 
 def test_no_name() -> None:
     """Check invalid inputs raise expected errors."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[OpenCircuitVoltage(until_time_s=1)],
     )
@@ -131,7 +131,7 @@ def test_no_name() -> None:
 def test_voltage_range() -> None:
     """Check that voltage ranges can be set, warn, and error correctly."""
     # Constant current
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ConstantCurrent(current_mA=1, until_voltage_V=6)],
     )
@@ -143,7 +143,7 @@ def test_voltage_range() -> None:
     protocol.to_biologic_mps(sample_name="test", range_V=(0, 6))
 
     # Constant voltage
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ConstantVoltage(voltage_V=6, until_time_s=1)],
     )
@@ -158,7 +158,7 @@ def test_voltage_range() -> None:
 def test_voltage_range_warnings(caplog: pytest.LogCaptureFixture) -> None:
     """If V range outside +- 10 V, warn."""
     caplog.set_level(logging.WARNING)
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ConstantCurrent(current_mA=1, until_voltage_V=1)],
     )
@@ -178,7 +178,7 @@ def test_voltage_range_warnings(caplog: pytest.LogCaptureFixture) -> None:
 
 def test_current_and_c_rate() -> None:
     """Check that CC-CV sets the right ranges for both current in mA and C-rate."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ConstantCurrent(current_mA=1, until_voltage_V=4),
@@ -190,7 +190,7 @@ def test_current_and_c_rate() -> None:
     res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=1)
     assert "I Range".ljust(20) + 4 * "1 mA".ljust(20) in res
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ConstantCurrent(current_mA=10, until_voltage_V=4),
@@ -202,7 +202,7 @@ def test_current_and_c_rate() -> None:
     res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=10)
     assert "I Range".ljust(20) + 4 * "10 mA".ljust(20) in res
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ConstantCurrent(current_mA=100, until_voltage_V=4),
@@ -214,7 +214,7 @@ def test_current_and_c_rate() -> None:
     res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=100)
     assert "I Range".ljust(20) + 4 * "100 mA".ljust(20) in res
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ConstantCurrent(current_mA=1, until_voltage_V=4),
@@ -230,7 +230,7 @@ def test_current_and_c_rate() -> None:
 def test_impedance_currents() -> None:
     """Check if impedance currents set correct units and ranges."""
     # 1 uA, uses 10 uA range, gives values in uA
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_mA=0.001, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -242,7 +242,7 @@ def test_impedance_currents() -> None:
     assert "ctrl1_val_unit".ljust(20) + "uA".ljust(20) in res
 
     # 0.5 mA, uses 1 mA range, gives values in uA
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_mA=0.5, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -254,7 +254,7 @@ def test_impedance_currents() -> None:
     assert "ctrl1_val_unit".ljust(20) + "uA".ljust(20) in res
 
     # 1 mA, uses 10 mA range, gives values in mA
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ImpedanceSpectroscopy(amplitude_mA=1, start_frequency_Hz=1, end_frequency_Hz=100)],
     )
@@ -264,7 +264,7 @@ def test_impedance_currents() -> None:
     assert "ctrl1_val_unit".ljust(20) + "mA".ljust(20) in res
 
     # 100 mA, uses 1 A range, gives values in mA
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_mA=100, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -276,7 +276,7 @@ def test_impedance_currents() -> None:
     assert "ctrl1_val_unit".ljust(20) + "mA".ljust(20) in res
 
     # I range (>1 A) not supported
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_mA=501, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -290,7 +290,7 @@ def test_impedance_currents() -> None:
 def test_impedance_voltage_units() -> None:
     """Check if impedance voltages set correct units."""
     # 0.5 mV, gives values in uV
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_V=5e-4, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -301,7 +301,7 @@ def test_impedance_voltage_units() -> None:
     assert "ctrl1_val_unit".ljust(20) + "uV".ljust(20) in res
 
     # 5 mV, gives values in mV
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_V=5e-3, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -312,7 +312,7 @@ def test_impedance_voltage_units() -> None:
     assert "ctrl1_val_unit".ljust(20) + "mV".ljust(20) in res
 
     # 999.999 mV, gives values in mV
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_V=0.999999, start_frequency_Hz=1, end_frequency_Hz=100)
@@ -323,7 +323,7 @@ def test_impedance_voltage_units() -> None:
     assert "ctrl1_val_unit".ljust(20) + "mV".ljust(20) in res
 
     # 1 V, gives values in V
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ImpedanceSpectroscopy(amplitude_V=1, start_frequency_Hz=1, end_frequency_Hz=100)],
     )
@@ -334,7 +334,7 @@ def test_impedance_voltage_units() -> None:
 
 def test_impedance_frequency_units() -> None:
     """Check if impedance voltages set correct units."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_V=1e-3, start_frequency_Hz=1e-3, end_frequency_Hz=1)
@@ -346,7 +346,7 @@ def test_impedance_frequency_units() -> None:
     assert "ctrl3_val".ljust(20) + "1.000".ljust(20) in res
     assert "ctrl3_val_unit".ljust(20) + "Hz".ljust(20) in res
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ImpedanceSpectroscopy(amplitude_V=1e-3, start_frequency_Hz=1e3, end_frequency_Hz=1e5)
@@ -361,7 +361,7 @@ def test_impedance_frequency_units() -> None:
 
 def test_save_file(tmpdir: Path) -> None:
     """Check file is written correctly."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             Tag(tag="a"),
@@ -389,7 +389,7 @@ def test_unknown_step() -> None:
     class UnknownStep(Step):
         step: str = "wait, what"
 
-    protocol = Protocol.model_construct(
+    protocol = CyclingProtocol.model_construct(
         record=RecordParams(time_s=1),
         method=[UnknownStep()],
     )
@@ -400,7 +400,7 @@ def test_unknown_step() -> None:
 
 def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
     """Check that safety limits are applied."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
             max_voltage_V=1,
@@ -414,7 +414,7 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
     assert "\tEwe max = 1.00000 V" in res
     assert "\tfor t > 0 ms" in res
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
             max_voltage_V=4,
@@ -431,7 +431,7 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
 
     # Adding currents - should not warn if symmetric
     caplog.clear()
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
             max_voltage_V=4,
@@ -452,7 +452,7 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
 
     # Assymetric currents - should warn and use biggest
     caplog.clear()
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
             max_voltage_V=4,
@@ -473,7 +473,7 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
 
     # Assymetric currents - should warn and use biggest
     caplog.clear()
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
             max_voltage_V=4,

@@ -1,4 +1,4 @@
-"""Larger integration tests for the unicycler Protocol class."""
+"""Larger integration tests for the unicycler CyclingProtocol class."""
 
 from __future__ import annotations
 
@@ -12,9 +12,9 @@ from pydantic import ValidationError
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SafetyParams,
     SampleParams,
@@ -26,9 +26,9 @@ from aurora_unicycler.version import __version__
 
 
 def test_from_json(test_data: dict) -> None:
-    """Test creating a Protocol instance from a JSON file."""
-    protocol = Protocol.from_json(test_data["protocol_paths"][0])
-    assert isinstance(protocol, Protocol)
+    """Test creating a CyclingProtocol instance from a JSON file."""
+    protocol = CyclingProtocol.from_json(test_data["protocol_paths"][0])
+    assert isinstance(protocol, CyclingProtocol)
     assert protocol.sample.name == "test_sample"
     assert protocol.sample.capacity_mAh == Decimal(123)
     assert len(protocol.method) == 15
@@ -42,9 +42,9 @@ def test_from_json(test_data: dict) -> None:
 
 
 def test_from_dict(test_data: dict) -> None:
-    """Test creating a Protocol instance from a dictionary."""
-    protocol_from_dict = Protocol.from_dict(test_data["protocol_dicts"][0])
-    protocol_from_file = Protocol.from_json(test_data["protocol_paths"][0])
+    """Test creating a CyclingProtocol instance from a dictionary."""
+    protocol_from_dict = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
+    protocol_from_file = CyclingProtocol.from_json(test_data["protocol_paths"][0])
     assert protocol_from_dict == protocol_from_file
 
 
@@ -54,30 +54,30 @@ def test_check_sample_details(test_data: dict) -> None:
         "If using blank sample name or $NAME placeholder, "
         "a sample name must be provided in this function."
     )
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][1])
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][1])
     with pytest.raises(ValueError) as context:
         protocol.to_neware_xml()
     assert str(context.value) == missing_name_msg
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][2])
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][2])
     with pytest.raises(ValueError) as context:
         protocol.to_neware_xml()
     assert str(context.value) == missing_name_msg
 
     missing_cap_msg = "Sample capacity must be set if using C-rate steps."
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][1], sample_name="test_sample")
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][1], sample_name="test_sample")
     with pytest.raises(ValueError) as context:
         protocol.to_neware_xml()
     assert str(context.value) == missing_cap_msg
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][2], sample_name="test_sample")
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][2], sample_name="test_sample")
     with pytest.raises(ValueError) as context:
         protocol.to_neware_xml()
     assert str(context.value) == missing_cap_msg
 
     # should not raise error if both are provided
-    protocol1 = Protocol.from_dict(
+    protocol1 = CyclingProtocol.from_dict(
         test_data["protocol_dicts"][1], sample_name="test_sample", sample_capacity_mAh=123
     )
-    protocol2 = Protocol.from_dict(
+    protocol2 = CyclingProtocol.from_dict(
         test_data["protocol_dicts"][2],
         sample_name="test_sample",
         sample_capacity_mAh=123,
@@ -91,7 +91,7 @@ def test_check_sample_details(test_data: dict) -> None:
 
 def test_overwriting_sample_details(test_data: dict) -> None:
     """Test overwriting sample details when creating from a dictionary."""
-    protocol = Protocol.from_dict(
+    protocol = CyclingProtocol.from_dict(
         test_data["protocol_dicts"][0], sample_name="NewName", sample_capacity_mAh=456
     )
     assert protocol.sample.name == "NewName"
@@ -99,9 +99,9 @@ def test_overwriting_sample_details(test_data: dict) -> None:
 
 
 def test_create_protocol(test_data: dict) -> None:
-    """Test creating a Protocol instance from a dictionary."""
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
-    protocol = Protocol(
+    """Test creating a CyclingProtocol instance from a dictionary."""
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
+    protocol = CyclingProtocol(
         sample=SampleParams(
             name="test_sample",
             capacity_mAh=123,
@@ -161,15 +161,15 @@ def test_create_protocol(test_data: dict) -> None:
 
 
 def test_tags() -> None:
-    """Test tags in Protocol."""
+    """Test tags in CyclingProtocol."""
     # Different tags are fine
-    Protocol(
+    CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[Tag(tag="a"), Tag(tag="aa"), Tag(tag="aaa")],
     )
     # Duplicates not allowed
     with pytest.raises(ValueError) as exc_info:
-        Protocol(
+        CyclingProtocol(
             record=RecordParams(time_s=1),
             method=[Tag(tag="a"), Tag(tag="b"), Tag(tag="b")],
         )
@@ -177,8 +177,8 @@ def test_tags() -> None:
 
 
 def test_tags_to_indices() -> None:
-    """Test converting tags to indices in Protocol."""
-    protocol = Protocol(
+    """Test converting tags to indices in CyclingProtocol."""
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -194,7 +194,7 @@ def test_tags_to_indices() -> None:
     assert isinstance(protocol.method[4], Loop)
     assert protocol.method[4].loop_to == 2
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -215,7 +215,7 @@ def test_tags_to_indices() -> None:
     assert isinstance(protocol.method[6], Loop)
     assert protocol.method[6].loop_to == 3
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -253,7 +253,7 @@ def test_tags_to_indices() -> None:
 
 def test_coerce_c_rate_in_protocol(test_data: dict) -> None:
     """Test the coerce_c_rate function in a protocol context."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -285,7 +285,7 @@ def test_coerce_c_rate_in_protocol(test_data: dict) -> None:
 
 def test_build_steps() -> None:
     """User should be able to make steps with Step base class."""
-    Protocol.from_dict(
+    CyclingProtocol.from_dict(
         {
             "record": {"time_s": 1},
             "safety": {},
@@ -309,7 +309,7 @@ def test_build_steps() -> None:
 
 def test_naughty_step_building() -> None:
     """Users can give a dict for methods without from_dict, but type checkers don't like it."""
-    Protocol(
+    CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -330,10 +330,10 @@ def test_naughty_step_building() -> None:
 
 
 def test_empty_steps() -> None:
-    """Protocols with empty steps should give a nice error."""
+    """CyclingProtocols with empty steps should give a nice error."""
     # As a protocol
     with pytest.raises(ValidationError) as exc_info:
-        Protocol(
+        CyclingProtocol(
             record=RecordParams(time_s=1),
             safety=SafetyParams(),
             method=[
@@ -343,7 +343,7 @@ def test_empty_steps() -> None:
     assert "is incomplete" in str(exc_info.value)
     # From a dict
     with pytest.raises(ValidationError) as exc_info:
-        Protocol.from_dict(
+        CyclingProtocol.from_dict(
             {
                 "record": {"time_s": 1},
                 "safety": {},
@@ -357,7 +357,7 @@ def test_empty_steps() -> None:
 
 def test_updating_version() -> None:
     """Reading the file in should update the version to current version."""
-    my_protocol = Protocol.from_dict(
+    my_protocol = CyclingProtocol.from_dict(
         {
             "unicycler": {"version": "x.y.z"},
             "record": {"time_s": 1},
@@ -370,7 +370,7 @@ def test_updating_version() -> None:
 
 def test_mutability() -> None:
     """Conversion functions should not mutate the protocol object."""
-    my_protocol = Protocol.from_dict(
+    my_protocol = CyclingProtocol.from_dict(
         {
             "unicycler": {"version": "x.y.z"},
             "sample": {"name": "test_sample"},
@@ -424,7 +424,7 @@ def test_protocol_export() -> None:
             {"id": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
         ],
     }
-    protocol_dict = Protocol.from_dict(ref_protocol_dict).to_dict()
+    protocol_dict = CyclingProtocol.from_dict(ref_protocol_dict).to_dict()
     ref_protocol_dict["unicycler"] = "don't check this"
     protocol_dict["unicycler"] = "don't check this"
     assert protocol_dict == ref_protocol_dict
@@ -452,9 +452,9 @@ def test_write_json(tmpdir: Path) -> None:
             {"id": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
         ],
     }
-    protocol = Protocol.from_dict(ref_protocol_dict)
+    protocol = CyclingProtocol.from_dict(ref_protocol_dict)
     protocol_str = protocol.to_json(filepath, indent=4)
-    protocol2 = Protocol.from_json(filepath)
-    protocol3 = Protocol.from_dict(json.loads(protocol_str))
+    protocol2 = CyclingProtocol.from_json(filepath)
+    protocol3 = CyclingProtocol.from_dict(json.loads(protocol_str))
     assert protocol == protocol2
     assert protocol == protocol3

@@ -1,6 +1,6 @@
 """A universal cycling protocol which can be converted to different formats.
 
-Create a Protocol object directly, or create from a dict or JSON file.
+Create a CyclingProtocol object directly, or create from a dict or JSON file.
 
 Convert to different formats e.g. `.to_neware_xml()` or `to_biologic_mps()`.
 
@@ -19,6 +19,7 @@ from ._core import (
     Tag,
 )
 from .protocol import (
+    CyclingProtocol,
     Protocol,
 )
 from .version import __version__
@@ -26,6 +27,7 @@ from .version import __version__
 __all__ = [
     "ConstantCurrent",
     "ConstantVoltage",
+    "CyclingProtocol",
     "ImpedanceSpectroscopy",
     "Loop",
     "OpenCircuitVoltage",

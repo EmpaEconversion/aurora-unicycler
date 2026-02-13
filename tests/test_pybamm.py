@@ -7,9 +7,9 @@ import pytest
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SafetyParams,
     SampleParams,
@@ -19,8 +19,8 @@ from aurora_unicycler import (
 
 
 def test_to_pybamm_experiment(test_data: dict) -> None:
-    """Test converting a Protocol instance to PyBaMM experiment format."""
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
+    """Test converting a CyclingProtocol instance to PyBaMM experiment format."""
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
     experiment_list = protocol.to_pybamm_experiment()
     assert isinstance(experiment_list, list)
     assert len(experiment_list) > 0
@@ -36,7 +36,7 @@ def test_to_pybamm_experiment(test_data: dict) -> None:
 
 def test_different_currents() -> None:
     """Test different current and voltage settings."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             ConstantCurrent(current_mA=1, until_time_s=7200),
@@ -70,7 +70,7 @@ def test_different_currents() -> None:
 
 def test_pybamm_loops() -> None:
     """Ensure PyBaMM loops as expected."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         sample=SampleParams(
             name="test_sample",
             capacity_mAh=123,
@@ -86,7 +86,7 @@ def test_pybamm_loops() -> None:
     pybamm_experiment = protocol.to_pybamm_experiment()
     assert len(pybamm_experiment) == 123
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         sample=SampleParams(
             name="test_sample",
             capacity_mAh=123,
@@ -107,7 +107,7 @@ def test_pybamm_loops() -> None:
 
 def test_pybamm_bomb_protection() -> None:
     """Don't allow users to make a recursion bomb."""
-    protocol = Protocol.model_construct(
+    protocol = CyclingProtocol.model_construct(
         sample=SampleParams(name="test"),
         record=RecordParams(time_s=1),
         method=[
@@ -135,7 +135,7 @@ def test_unknown_step() -> None:
     class UnknownStep(Step):
         step: str = "wait, what"
 
-    protocol = Protocol.model_construct(
+    protocol = CyclingProtocol.model_construct(
         sample=SampleParams(name="test"),
         record=RecordParams(time_s=1),
         method=[UnknownStep()],

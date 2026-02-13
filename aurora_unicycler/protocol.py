@@ -1,11 +1,11 @@
-"""A universal cycling Protocol model to convert to different formats.
+"""A universal cycling protocol model to convert to different formats.
 
-A Protocol is a Pydantic model that defines a cycling protocol which can be
-stored/read in JSON format.
+A CyclingProtocol is a Pydantic model that defines a cycling protocol which can
+be stored/read in JSON format.
 
-Build a Protocol using the model objects defined in this module, e.g.:
+Build a CyclingProtocol using the model objects defined in this module, e.g.:
 
-my_protocol = Protocol(
+my_protocol = CyclingProtocol(
     sample=SampleParams(name="My Sample", capacity_mAh=1.0),
     record=RecordParams(time_s=10),
     safety=SafetyParams(max_voltage_V=4.5, delay_s=1),
@@ -21,7 +21,7 @@ my_protocol = Protocol(
 
 Or build from a dictionary:
 
-my_protocol = Protocol.from_dict({
+my_protocol = CyclingProtocol.from_dict({
     "sample": {"name": "My Sample", "capacity_mAh": 1.0},
     "record": {"time_s": 10},
     "safety": {"max_voltage_V": 4.5, "delay_s": 1},
@@ -34,9 +34,9 @@ my_protocol = Protocol.from_dict({
 
 Or read from an existing JSON file:
 
-my_protocol = Protocol.from_json("path/to/protocol.json")
+my_protocol = CyclingProtocol.from_json("path/to/protocol.json")
 
-A unicycler Protocol object can be converted into:
+A unicycler CyclingProtocol object can be converted into:
 - Unicycler JSON file / dict - to_json() / to_dict()
 - Neware XML file  - to_neware_xml()
 - Biologic MPS settings - to_biologic_mps()
@@ -51,7 +51,7 @@ from aurora_unicycler._core import BaseProtocol
 from aurora_unicycler._formats import battinfo, biologic, neware, pybamm, tomato
 
 
-class Protocol(BaseProtocol):
+class CyclingProtocol(BaseProtocol):
     """Unicycler battery cycling protocol.
 
     Defines a battery cycling experiment, which can be converted to different formats for different
@@ -167,3 +167,7 @@ class Protocol(BaseProtocol):
 
         """
         return tomato.to_tomato_mpg2(self, save_path, tomato_output, sample_name, capacity_mAh)
+
+
+# Old name, still supported
+Protocol = CyclingProtocol
