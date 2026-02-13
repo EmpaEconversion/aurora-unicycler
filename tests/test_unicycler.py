@@ -15,6 +15,7 @@ from aurora_unicycler import (
     CyclingProtocol,
     Loop,
     OpenCircuitVoltage,
+    Protocol,
     RecordParams,
     SafetyParams,
     SampleParams,
@@ -458,3 +459,14 @@ def test_write_json(tmpdir: Path) -> None:
     protocol3 = CyclingProtocol.from_dict(json.loads(protocol_str))
     assert protocol == protocol2
     assert protocol == protocol3
+
+
+def test_protocol(test_data: dict) -> None:
+    """Should also work using old 'Protocol' class."""
+    protocol = Protocol.from_json(test_data["protocol_paths"][0])
+    assert isinstance(protocol, CyclingProtocol)
+    assert protocol.sample.name == "test_sample"
+
+    protocol = CyclingProtocol.from_json(test_data["protocol_paths"][0])
+    assert isinstance(protocol, Protocol)
+    assert protocol.sample.name == "test_sample"
