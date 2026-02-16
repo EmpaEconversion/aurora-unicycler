@@ -49,13 +49,13 @@ from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
     Loop,
-    Protocol,
+    CyclingProtocol,
     RecordParams,
     SafetyParams,
     Tag,
 )
 
-my_protocol = Protocol(
+my_protocol = CyclingProtocol(
     record = RecordParams(
         time_s=10,
         voltage_V=0.1,
@@ -95,9 +95,9 @@ my_protocol = Protocol(
 
 You can also create a protocol from a python dictionary or JSON - you will not get type checking in an IDE, but it will still validate at runtime.
 ```python
-my_protocol = Protocol.from_dict({
-    "record": {"time_s": 10, "voltage_V": 0.1}
-    "safety": {"max_voltage_V": 5}
+my_protocol = CyclingProtocol.from_dict({
+    "record": {"time_s": 10, "voltage_V": 0.1},
+    "safety": {"max_voltage_V": 5},
     "method": [
         {"step": "open_circuit_voltage", "until_time_s": 1},
         {"step": "tag", "tag": "tag1"},
@@ -109,7 +109,7 @@ my_protocol = Protocol.from_dict({
 })
 ```
 ```python
-my_protocol = Protocol.from_json("path/to/file.json")
+my_protocol = CyclingProtocol.from_json("path/to/file.json")
 ```
 
 You can then export the protocol to different formats, e.g.
@@ -128,7 +128,6 @@ my_protocol.to_neware_xml(
 
 my_protocol.to_battinfo_jsonld(
     capacity_mAh=45,
-    include_context=True,
     save_path="some/location/protocol.jsonld",
 )
 ```
