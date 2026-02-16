@@ -1,4 +1,4 @@
-With a `Protocol` object, use `to_biologic_mps()`
+With a `CyclingProtocol` object, use `to_biologic_mps()`
 
 ```python
 mps_string = my_protocol.to_biologic_mps(

@@ -11,9 +11,9 @@ from defusedxml import ElementTree
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     Loop,
     OpenCircuitVoltage,
-    Protocol,
     RecordParams,
     SafetyParams,
     SampleParams,
@@ -32,8 +32,8 @@ def _get_value(node: Element, path: str) -> str:
 
 
 def test_to_neware_xml(test_data: dict) -> None:
-    """Test converting a Protocol instance to Neware XML format."""
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
+    """Test converting a CyclingProtocol instance to Neware XML format."""
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
     xml_string = protocol.to_neware_xml()
     assert isinstance(xml_string, str)
     assert xml_string.startswith("<?xml")
@@ -59,7 +59,7 @@ def test_to_neware_xml(test_data: dict) -> None:
 
 def test_tag_neware() -> None:
     """Test tags in Neware XML."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -78,7 +78,7 @@ def test_tag_neware() -> None:
     assert loopstep.get("Step_Type") == "5"
     assert _get_value(loopstep, "Limit/Other/Start_Step") == "3"
 
-    protocol1 = Protocol(
+    protocol1 = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -96,7 +96,7 @@ def test_tag_neware() -> None:
         ],
     )
 
-    protocol2 = Protocol(
+    protocol2 = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -123,7 +123,7 @@ def test_tag_neware() -> None:
 
 def test_cv_neware(test_data: dict) -> None:
     """Test if CV steps get start current from previous steps."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -139,7 +139,7 @@ def test_cv_neware(test_data: dict) -> None:
     assert float(_get_value(step3, "Rate")) == 0.1
     assert float(_get_value(step3, "Curr")) == 0.5
 
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(),
         method=[
@@ -158,7 +158,7 @@ def test_cv_neware(test_data: dict) -> None:
 
 def test_safety() -> None:
     """Ensure safety settings are applied."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         sample=SampleParams(name="test"),
         record=RecordParams(time_s=1),
         safety=SafetyParams(
@@ -189,7 +189,7 @@ def test_unknown_step() -> None:
     class UnknownStep(Step):
         step: str = "wait, what"
 
-    protocol = Protocol.model_construct(
+    protocol = CyclingProtocol.model_construct(
         record=RecordParams(time_s=1),
         method=[UnknownStep()],
     )
@@ -200,7 +200,7 @@ def test_unknown_step() -> None:
 
 def test_save_file(tmpdir: Path) -> None:
     """Check file is written correctly."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[
             Tag(tag="a"),

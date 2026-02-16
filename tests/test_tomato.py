@@ -10,8 +10,8 @@ import pytest
 from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
+    CyclingProtocol,
     Loop,
-    Protocol,
     OpenCircuitVoltage,
     RecordParams,
     SampleParams,
@@ -21,8 +21,8 @@ from aurora_unicycler import (
 
 
 def test_to_tomato_mpg2(test_data: dict) -> None:
-    """Test converting a Protocol instance to Tomato MPG2 format."""
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
+    """Test converting a CyclingProtocol instance to Tomato MPG2 format."""
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
     json_string = protocol.to_tomato_mpg2()
     assert isinstance(json_string, str)
     tomato_dict = json.loads(json_string)
@@ -41,7 +41,7 @@ def test_to_tomato_mpg2(test_data: dict) -> None:
 
 def test_overwriting_name_capacity(test_data: dict) -> None:
     """Allow overwriting name and capacity."""
-    protocol = Protocol.from_dict(test_data["protocol_dicts"][0])
+    protocol = CyclingProtocol.from_dict(test_data["protocol_dicts"][0])
     tomato_json = json.loads(
         protocol.to_tomato_mpg2(sample_name="this has changed", capacity_mAh=99.99),
     )
@@ -51,7 +51,7 @@ def test_overwriting_name_capacity(test_data: dict) -> None:
 
 def test_blank_name() -> None:
     """Converting without sample name fails."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[OpenCircuitVoltage(until_time_s=1)],
     )
@@ -62,7 +62,7 @@ def test_blank_name() -> None:
 
 def test_techniques() -> None:
     """Ensure techniques are created as expected."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         sample=SampleParams(name="test", capacity_mAh=1),
         record=RecordParams(time_s=1),
         method=[
@@ -88,7 +88,7 @@ def test_unknown_step() -> None:
     class UnknownStep(Step):
         step: str = "wait, what"
 
-    protocol = Protocol.model_construct(
+    protocol = CyclingProtocol.model_construct(
         sample=SampleParams(name="test"),
         record=RecordParams(time_s=1),
         method=[UnknownStep()],
@@ -100,7 +100,7 @@ def test_unknown_step() -> None:
 
 def test_save_file(tmpdir: Path) -> None:
     """Check file is written correctly."""
-    protocol = Protocol(
+    protocol = CyclingProtocol(
         sample=SampleParams(name="test"),
         record=RecordParams(time_s=1),
         method=[

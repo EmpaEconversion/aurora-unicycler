@@ -1,4 +1,4 @@
-With a `Protocol` object, use `to_neware_xml()`
+With a `CyclingProtocol` object, use `to_neware_xml()`
 
 ```python
 xml_string = my_protocol.to_neware_xml(

@@ -7,13 +7,13 @@ from aurora_unicycler import (
     ConstantCurrent,
     ConstantVoltage,
     Loop,
-    Protocol,
+    CyclingProtocol,
     RecordParams,
     SafetyParams,
     Tag,
 )
 
-my_protocol = Protocol(
+my_protocol = CyclingProtocol(
     record = RecordParams(
         time_s=10,
         voltage_V=0.1,
@@ -56,9 +56,9 @@ my_protocol = Protocol(
 You can also create a protocol from a python dictionary - you will not get type
 checking in an IDE, but it will still validate at runtime.
 ```python
-from aurora_unicycler import Protocol
+from aurora_unicycler import CyclingProtocol
 
-my_protocol = Protocol.from_dict({
+my_protocol = CyclingProtocol.from_dict({
     "record": {"time_s": 10, "voltage_V": 0.1},
     "safety": {"max_voltage_V": 5},
     "method": [
@@ -76,7 +76,7 @@ my_protocol = Protocol.from_dict({
 
 It is also possible to load a protocol from a JSON file.
 ```python
-from aurora_unicycler import Protocol
+from aurora_unicycler import CyclingProtocol
 
-my_protocol = Protocol.from_json("path/to/file.json")
+my_protocol = CyclingProtocol.from_json("path/to/file.json")
 ```
