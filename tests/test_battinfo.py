@@ -47,7 +47,7 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
             Loop(loop_to="recovery", cycle_count=10),
         ],
     )
-    bij = my_protocol.to_battinfo_jsonld(include_context=True)
+    bij = my_protocol.to_battinfo_jsonld()
     assert isinstance(bij, dict)
     json.dumps(bij)  # should be valid JSON
 
@@ -112,7 +112,7 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
     assert bij["hasNext"]["hasTask"]["hasInput"][0]["hasNumericalPart"]["hasNumberValue"] == 5
 
     # Check if adding context works
-    bij = my_protocol.to_battinfo_jsonld(include_context=True)
+    bij = my_protocol.to_battinfo_jsonld()
     assert bij["@context"] == [
         "https://w3id.org/emmo/domain/battery/context",
         {
@@ -120,6 +120,9 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
             "echem": "https://w3id.org/emmo/domain/electrochemistry#",
         },
     ]
+
+    bij = my_protocol.to_battinfo_jsonld(include_context=False)
+    assert "@context" not in bij
 
 
 def test_unknown_step() -> None:

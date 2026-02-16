@@ -233,7 +233,7 @@ def to_battinfo_jsonld(
     save_path: Path | str | None = None,
     capacity_mAh: float | None = None,
     *,
-    include_context: bool = False,
+    include_context: bool = True,
 ) -> dict:
     """Convert protocol to BattInfo JSON-LD format."""
     # Create and operate on a copy of the original object
@@ -257,13 +257,16 @@ def to_battinfo_jsonld(
 
     # Include context at this level, if requested
     if include_context:
-        battinfo_dict["@context"] = [
-            "https://w3id.org/emmo/domain/battery/context",
-            {
-                "emmo": "https://w3id.org/emmo#",
-                "echem": "https://w3id.org/emmo/domain/electrochemistry#",
-            },
-        ]
+        battinfo_dict = {
+            "@context": [
+                "https://w3id.org/emmo/domain/battery/context",
+                {
+                    "emmo": "https://w3id.org/emmo#",
+                    "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+                },
+            ],
+            **battinfo_dict,
+        }
 
     # Optionally save
     if save_path:

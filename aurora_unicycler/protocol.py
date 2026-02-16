@@ -64,7 +64,7 @@ class CyclingProtocol(BaseProtocol):
         save_path: Path | str | None = None,
         capacity_mAh: float | None = None,
         *,
-        include_context: bool = False,
+        include_context: bool = True,
     ) -> dict:
         """Convert protocol to BattInfo JSON-LD format.
 
