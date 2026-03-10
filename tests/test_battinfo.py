@@ -176,7 +176,3 @@ def test_save_file(tmpdir: Path) -> None:
     with (tmpdir / "test.jsonld").open("r") as f:
         file_res = json.loads(f.read())
     assert res == file_res
-
-
-def test_impedance() -> None:
-    """Check tests with impedance."""
