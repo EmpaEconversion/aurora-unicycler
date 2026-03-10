@@ -2,8 +2,8 @@
     "@context": [
         "https://w3id.org/emmo/domain/battery/context",
         {
-            "echem": "https://w3id.org/emmo/domain/electrochemistry#",
-            "emmo": "https://w3id.org/emmo#"
+            "emmo": "https://w3id.org/emmo#",
+            "echem": "https://w3id.org/emmo/domain/electrochemistry#"
         }
     ],
     "@type": "OpenCircuitHold",
@@ -141,209 +141,307 @@
                 }
             ],
             "hasTask": {
-                "@type": "IterativeWorkflow",
+                "@type": "ElectrochemicalImpedanceSpectroscopy",
                 "hasInput": [
                     {
-                        "@type": "NumberOfIterations",
+                        "@type": "AmplitudeOfAlternatingCurrent",
                         "hasNumericalPart": {
                             "@type": "RealData",
-                            "hasNumberValue": 24
+                            "hasNumberValue": 0.01
                         },
-                        "hasMeasurementUnit": "emmo:UnitOne"
+                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                    },
+                    {
+                        "@type": "LowerFrequencyLimit",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 10.0
+                        },
+                        "hasMeasurementUnit": "emmo:Hertz"
+                    },
+                    {
+                        "@type": "UpperFrequencyLimit",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 10000.0
+                        },
+                        "hasMeasurementUnit": "emmo:Hertz"
                     }
                 ],
-                "hasTask": {
-                    "@type": "ConstantCurrentCharging",
+                "hasNext": {
+                    "@type": "ElectrochemicalImpedanceSpectroscopy",
                     "hasInput": [
                         {
-                            "@type": "ElectricCurrent",
+                            "@type": "AmplitudeOfAlternatingVoltage",
                             "hasNumericalPart": {
                                 "@type": "RealData",
-                                "hasNumberValue": 22.5
-                            },
-                            "hasMeasurementUnit": "emmo:MilliAmpere"
-                        },
-                        {
-                            "@type": "CRate",
-                            "hasNumericalPart": {
-                                "@type": "RealData",
-                                "hasNumberValue": 0.5
-                            },
-                            "hasMeasurementUnit": "echem:CRateUnit"
-                        },
-                        {
-                            "@type": [
-                                "UpperVoltageLimit",
-                                "TerminationQuantity"
-                            ],
-                            "hasNumericalPart": {
-                                "@type": "RealData",
-                                "hasNumberValue": 4.2
+                                "hasNumberValue": 0.01
                             },
                             "hasMeasurementUnit": "emmo:Volt"
                         },
                         {
-                            "@type": "Duration",
+                            "@type": "LowerFrequencyLimit",
                             "hasNumericalPart": {
                                 "@type": "RealData",
-                                "hasNumberValue": 10800.0
+                                "hasNumberValue": 10.0
                             },
-                            "hasMeasurementUnit": "emmo:Second"
+                            "hasMeasurementUnit": "emmo:Hertz"
+                        },
+                        {
+                            "@type": "UpperFrequencyLimit",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 10000.0
+                            },
+                            "hasMeasurementUnit": "emmo:Hertz"
                         }
                     ],
                     "hasNext": {
-                        "@type": "VoltageHold",
+                        "@type": "ConstantCurrentDischarging",
                         "hasInput": [
                             {
-                                "@type": "Voltage",
+                                "@type": "ElectricCurrent",
                                 "hasNumericalPart": {
                                     "@type": "RealData",
-                                    "hasNumberValue": 4.2
-                                },
-                                "hasMeasurementUnit": "emmo:Volt"
-                            },
-                            {
-                                "@type": [
-                                    "LowerCurrentLimit",
-                                    "TerminationQuantity"
-                                ],
-                                "hasNumericalPart": {
-                                    "@type": "RealData",
-                                    "hasNumberValue": 2.25
+                                    "hasNumberValue": 22.5
                                 },
                                 "hasMeasurementUnit": "emmo:MilliAmpere"
                             },
                             {
+                                "@type": "CRate",
+                                "hasNumericalPart": {
+                                    "@type": "RealData",
+                                    "hasNumberValue": 0.5
+                                },
+                                "hasMeasurementUnit": "echem:CRateUnit"
+                            },
+                            {
                                 "@type": [
-                                    "LowerCRateLimit",
+                                    "LowerVoltageLimit",
                                     "TerminationQuantity"
                                 ],
                                 "hasNumericalPart": {
                                     "@type": "RealData",
-                                    "hasNumberValue": 0.05
+                                    "hasNumberValue": 3.2
                                 },
-                                "hasMeasurementUnit": "echem:CRateUnit"
+                                "hasMeasurementUnit": "emmo:Volt"
                             },
                             {
                                 "@type": "Duration",
                                 "hasNumericalPart": {
                                     "@type": "RealData",
-                                    "hasNumberValue": 3600.0
+                                    "hasNumberValue": 10800.0
                                 },
                                 "hasMeasurementUnit": "emmo:Second"
                             }
                         ],
                         "hasNext": {
-                            "@type": "ConstantCurrentDischarging",
+                            "@type": "IterativeWorkflow",
                             "hasInput": [
                                 {
-                                    "@type": "ElectricCurrent",
+                                    "@type": "NumberOfIterations",
                                     "hasNumericalPart": {
                                         "@type": "RealData",
-                                        "hasNumberValue": 22.5
+                                        "hasNumberValue": 24
                                     },
-                                    "hasMeasurementUnit": "emmo:MilliAmpere"
-                                },
-                                {
-                                    "@type": "CRate",
-                                    "hasNumericalPart": {
-                                        "@type": "RealData",
-                                        "hasNumberValue": 0.5
-                                    },
-                                    "hasMeasurementUnit": "echem:CRateUnit"
-                                },
-                                {
-                                    "@type": [
-                                        "LowerVoltageLimit",
-                                        "TerminationQuantity"
-                                    ],
-                                    "hasNumericalPart": {
-                                        "@type": "RealData",
-                                        "hasNumberValue": 3.2
-                                    },
-                                    "hasMeasurementUnit": "emmo:Volt"
-                                },
-                                {
-                                    "@type": "Duration",
-                                    "hasNumericalPart": {
-                                        "@type": "RealData",
-                                        "hasNumberValue": 10800.0
-                                    },
-                                    "hasMeasurementUnit": "emmo:Second"
+                                    "hasMeasurementUnit": "emmo:UnitOne"
                                 }
-                            ]
-                        }
-                    }
-                },
-                "hasNext": {
-                    "@type": "ConstantCurrentCharging",
-                    "hasInput": [
-                        {
-                            "@type": "ElectricCurrent",
-                            "hasNumericalPart": {
-                                "@type": "RealData",
-                                "hasNumberValue": 0.1
-                            },
-                            "hasMeasurementUnit": "emmo:MilliAmpere"
-                        },
-                        {
-                            "@type": [
-                                "UpperVoltageLimit",
-                                "TerminationQuantity"
                             ],
-                            "hasNumericalPart": {
-                                "@type": "RealData",
-                                "hasNumberValue": 4.2
-                            },
-                            "hasMeasurementUnit": "emmo:Volt"
-                        }
-                    ],
-                    "hasNext": {
-                        "@type": "VoltageHold",
-                        "hasInput": [
-                            {
-                                "@type": "Voltage",
-                                "hasNumericalPart": {
-                                    "@type": "RealData",
-                                    "hasNumberValue": 4.2
-                                },
-                                "hasMeasurementUnit": "emmo:Volt"
-                            },
-                            {
-                                "@type": [
-                                    "LowerCurrentLimit",
-                                    "TerminationQuantity"
+                            "hasTask": {
+                                "@type": "ConstantCurrentCharging",
+                                "hasInput": [
+                                    {
+                                        "@type": "ElectricCurrent",
+                                        "hasNumericalPart": {
+                                            "@type": "RealData",
+                                            "hasNumberValue": 22.5
+                                        },
+                                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                                    },
+                                    {
+                                        "@type": "CRate",
+                                        "hasNumericalPart": {
+                                            "@type": "RealData",
+                                            "hasNumberValue": 0.5
+                                        },
+                                        "hasMeasurementUnit": "echem:CRateUnit"
+                                    },
+                                    {
+                                        "@type": [
+                                            "UpperVoltageLimit",
+                                            "TerminationQuantity"
+                                        ],
+                                        "hasNumericalPart": {
+                                            "@type": "RealData",
+                                            "hasNumberValue": 4.2
+                                        },
+                                        "hasMeasurementUnit": "emmo:Volt"
+                                    },
+                                    {
+                                        "@type": "Duration",
+                                        "hasNumericalPart": {
+                                            "@type": "RealData",
+                                            "hasNumberValue": 10800.0
+                                        },
+                                        "hasMeasurementUnit": "emmo:Second"
+                                    }
                                 ],
-                                "hasNumericalPart": {
-                                    "@type": "RealData",
-                                    "hasNumberValue": 0.01
-                                },
-                                "hasMeasurementUnit": "emmo:MilliAmpere"
-                            }
-                        ],
-                        "hasNext": {
-                            "@type": "ConstantCurrentDischarging",
-                            "hasInput": [
-                                {
-                                    "@type": "ElectricCurrent",
-                                    "hasNumericalPart": {
-                                        "@type": "RealData",
-                                        "hasNumberValue": 0.1
-                                    },
-                                    "hasMeasurementUnit": "emmo:MilliAmpere"
-                                },
-                                {
-                                    "@type": [
-                                        "LowerVoltageLimit",
-                                        "TerminationQuantity"
+                                "hasNext": {
+                                    "@type": "VoltageHold",
+                                    "hasInput": [
+                                        {
+                                            "@type": "Voltage",
+                                            "hasNumericalPart": {
+                                                "@type": "RealData",
+                                                "hasNumberValue": 4.2
+                                            },
+                                            "hasMeasurementUnit": "emmo:Volt"
+                                        },
+                                        {
+                                            "@type": [
+                                                "LowerCurrentLimit",
+                                                "TerminationQuantity"
+                                            ],
+                                            "hasNumericalPart": {
+                                                "@type": "RealData",
+                                                "hasNumberValue": 2.25
+                                            },
+                                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                                        },
+                                        {
+                                            "@type": [
+                                                "LowerCRateLimit",
+                                                "TerminationQuantity"
+                                            ],
+                                            "hasNumericalPart": {
+                                                "@type": "RealData",
+                                                "hasNumberValue": 0.05
+                                            },
+                                            "hasMeasurementUnit": "echem:CRateUnit"
+                                        },
+                                        {
+                                            "@type": "Duration",
+                                            "hasNumericalPart": {
+                                                "@type": "RealData",
+                                                "hasNumberValue": 3600.0
+                                            },
+                                            "hasMeasurementUnit": "emmo:Second"
+                                        }
                                     ],
-                                    "hasNumericalPart": {
-                                        "@type": "RealData",
-                                        "hasNumberValue": 3.2
-                                    },
-                                    "hasMeasurementUnit": "emmo:Volt"
+                                    "hasNext": {
+                                        "@type": "ConstantCurrentDischarging",
+                                        "hasInput": [
+                                            {
+                                                "@type": "ElectricCurrent",
+                                                "hasNumericalPart": {
+                                                    "@type": "RealData",
+                                                    "hasNumberValue": 22.5
+                                                },
+                                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                            },
+                                            {
+                                                "@type": "CRate",
+                                                "hasNumericalPart": {
+                                                    "@type": "RealData",
+                                                    "hasNumberValue": 0.5
+                                                },
+                                                "hasMeasurementUnit": "echem:CRateUnit"
+                                            },
+                                            {
+                                                "@type": [
+                                                    "LowerVoltageLimit",
+                                                    "TerminationQuantity"
+                                                ],
+                                                "hasNumericalPart": {
+                                                    "@type": "RealData",
+                                                    "hasNumberValue": 3.2
+                                                },
+                                                "hasMeasurementUnit": "emmo:Volt"
+                                            },
+                                            {
+                                                "@type": "Duration",
+                                                "hasNumericalPart": {
+                                                    "@type": "RealData",
+                                                    "hasNumberValue": 10800.0
+                                                },
+                                                "hasMeasurementUnit": "emmo:Second"
+                                            }
+                                        ]
+                                    }
                                 }
-                            ]
+                            },
+                            "hasNext": {
+                                "@type": "ConstantCurrentCharging",
+                                "hasInput": [
+                                    {
+                                        "@type": "ElectricCurrent",
+                                        "hasNumericalPart": {
+                                            "@type": "RealData",
+                                            "hasNumberValue": 0.1
+                                        },
+                                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                                    },
+                                    {
+                                        "@type": [
+                                            "UpperVoltageLimit",
+                                            "TerminationQuantity"
+                                        ],
+                                        "hasNumericalPart": {
+                                            "@type": "RealData",
+                                            "hasNumberValue": 4.2
+                                        },
+                                        "hasMeasurementUnit": "emmo:Volt"
+                                    }
+                                ],
+                                "hasNext": {
+                                    "@type": "VoltageHold",
+                                    "hasInput": [
+                                        {
+                                            "@type": "Voltage",
+                                            "hasNumericalPart": {
+                                                "@type": "RealData",
+                                                "hasNumberValue": 4.2
+                                            },
+                                            "hasMeasurementUnit": "emmo:Volt"
+                                        },
+                                        {
+                                            "@type": [
+                                                "LowerCurrentLimit",
+                                                "TerminationQuantity"
+                                            ],
+                                            "hasNumericalPart": {
+                                                "@type": "RealData",
+                                                "hasNumberValue": 0.01
+                                            },
+                                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                                        }
+                                    ],
+                                    "hasNext": {
+                                        "@type": "ConstantCurrentDischarging",
+                                        "hasInput": [
+                                            {
+                                                "@type": "ElectricCurrent",
+                                                "hasNumericalPart": {
+                                                    "@type": "RealData",
+                                                    "hasNumberValue": 0.1
+                                                },
+                                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                            },
+                                            {
+                                                "@type": [
+                                                    "LowerVoltageLimit",
+                                                    "TerminationQuantity"
+                                                ],
+                                                "hasNumericalPart": {
+                                                    "@type": "RealData",
+                                                    "hasNumberValue": 3.2
+                                                },
+                                                "hasMeasurementUnit": "emmo:Volt"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
                         }
                     }
                 }

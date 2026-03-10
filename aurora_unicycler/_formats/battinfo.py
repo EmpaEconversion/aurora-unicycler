@@ -189,6 +189,56 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                 "@type": "VoltageHold",
                 "hasInput": inputs,
             }
+        case _core.ImpedanceSpectroscopy():
+            inputs = []
+            if step.amplitude_V:
+                inputs.append(
+                    {
+                        "@type": "AmplitudeOfAlternatingVoltage",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": step.amplitude_V,
+                        },
+                        "hasMeasurementUnit": "emmo:Volt",
+                    }
+                )
+            if step.amplitude_mA:
+                inputs.append(
+                    {
+                        "@type": "AmplitudeOfAlternatingCurrent",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": step.amplitude_mA,
+                        },
+                        "hasMeasurementUnit": "emmo:MilliAmpere",
+                    }
+                )
+            lower_limit = min(step.start_frequency_Hz, step.end_frequency_Hz)
+            upper_limit = max(step.start_frequency_Hz, step.end_frequency_Hz)
+            inputs.append(
+                {
+                    "@type": "LowerFrequencyLimit",
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": lower_limit,
+                    },
+                    "hasMeasurementUnit": "emmo:Hertz",
+                }
+            )
+            inputs.append(
+                {
+                    "@type": "UpperFrequencyLimit",
+                    "hasNumericalPart": {
+                        "@type": "RealData",
+                        "hasNumberValue": upper_limit,
+                    },
+                    "hasMeasurementUnit": "emmo:Hertz",
+                }
+            )
+            tech_dict = {
+                "@type": "ElectrochemicalImpedanceSpectroscopy",
+                "hasInput": inputs,
+            }
         case _:
             msg = f"to_battinfo_jsonld() does not support step type: {step.step}"
             raise NotImplementedError(msg)
