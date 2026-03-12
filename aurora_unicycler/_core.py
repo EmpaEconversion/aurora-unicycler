@@ -345,6 +345,14 @@ class VoltageScan(Step):
     scan_rate_mV_per_s: float = Field(description="Voltage scan rate in mV/s", gt=0)
     model_config = ConfigDict(extra="forbid")
 
+    @model_validator(mode="after")
+    def _cant_be_equal(self) -> Self:
+        """Ensure at least one of until_rate_C or until_current_mA is set."""
+        if self.start_voltage_V == self.end_voltage_V:
+            msg = "Start and end voltage must be different"
+            raise ValueError(msg)
+        return self
+
 
 class Loop(Step):
     """Loop step.
