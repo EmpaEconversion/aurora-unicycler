@@ -21,6 +21,7 @@ from aurora_unicycler import (
     SampleParams,
     Step,
     Tag,
+    VoltageScan,
 )
 from aurora_unicycler._utils import tag_to_indices
 from aurora_unicycler.version import __version__
@@ -470,3 +471,53 @@ def test_protocol(test_data: dict) -> None:
     protocol = CyclingProtocol.from_json(test_data["protocol_paths"][0])
     assert isinstance(protocol, Protocol)
     assert protocol.sample.name == "test_sample"
+
+
+def test_lsv() -> None:
+    """Test linear-sweep voltammetry."""
+    # Try building from dict
+    protocol = Protocol.from_dict(
+        {
+            "record": {"time_s": 1.0},
+            "sample": {"name": "test"},
+            "method": [
+                {
+                    "step": "voltage_scan",
+                    "start_voltage_V": 3,
+                    "end_voltage_V": 4,
+                    "scan_rate_mV_per_s": 10,
+                },
+            ],
+        }
+    )
+    assert isinstance(protocol.method[0], VoltageScan)
+
+    # Missing parameters not allowed
+    with pytest.raises(ValidationError):
+        VoltageScan(
+            start_voltage_V=4,
+            scan_rate_mV_per_s=5,
+        )
+
+    # High to low is allowed
+    VoltageScan(
+        start_voltage_V=4,
+        end_voltage_V=3,
+        scan_rate_mV_per_s=5,
+    )
+
+    # Same start and end is not allowed
+    with pytest.raises(ValidationError):
+        VoltageScan(
+            start_voltage_V=3,
+            end_voltage_V=3,
+            scan_rate_mV_per_s=5,
+        )
+
+    # Negative scan rate is not allowed
+    with pytest.raises(ValidationError):
+        VoltageScan(
+            start_voltage_V=3,
+            end_voltage_V=4,
+            scan_rate_mV_per_s=-5,
+        )
