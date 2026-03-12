@@ -239,6 +239,45 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                 "@type": "ElectrochemicalImpedanceSpectroscopy",
                 "hasInput": inputs,
             }
+        case _core.VoltageScan():
+            if step.start_voltage_V < step.end_voltage_V:
+                lower_limit = step.start_voltage_V
+                upper_limit = step.end_voltage_V
+                scan_rate = step.scan_rate_mV_per_s / 1000
+            else:
+                lower_limit = step.end_voltage_V
+                upper_limit = step.start_voltage_V
+                scan_rate = -step.scan_rate_mV_per_s / 1000
+            tech_dict = {
+                "@type": "LinearScanVoltammetry",
+                "hasInput": [
+                    {
+                        "@type": "LowerVoltageLimit",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": lower_limit,
+                        },
+                        "hasMeasurementUnit": "emmo:Volt",
+                    },
+                    {
+                        "@type": "UpperVoltageLimit",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": upper_limit,
+                        },
+                        "hasMeasurementUnit": "emmo:Volt",
+                    },
+                    {
+                        "@type": "PotentialScanRate",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": scan_rate,
+                        },
+                        "hasMeasurementUnit": "emmo:VoltPerSecond",
+                    },
+                ],
+            }
+
         case _:
             msg = f"to_battinfo_jsonld() does not support step type: {step.step}"
             raise NotImplementedError(msg)
