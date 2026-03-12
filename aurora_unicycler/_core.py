@@ -325,6 +325,27 @@ class ImpedanceSpectroscopy(Step):
         return self
 
 
+class VoltageScan(Step):
+    """Voltage scan step.
+
+    Sweeps the voltage linearly from start to end.
+    The scan rate is an absolute value. To sweep in a negative direction, set
+    the start voltage higher than the end voltage.
+
+    Attributes:
+        start_voltage_V: Start voltage in V.
+        end_voltage_V: End voltage in V.
+        scan_rate_mV_per_s: Voltage scan rate in mV/s, must be positive.
+
+    """
+
+    step: Literal["voltage_scan"] = Field(default="voltage_scan", frozen=True)
+    start_voltage_V: float = Field(description="Start voltage in V")
+    end_voltage_V: float = Field(description="End voltage in V")
+    scan_rate_mV_per_s: float = Field(description="Voltage scan rate in mV/s", gt=0)
+    model_config = ConfigDict(extra="forbid")
+
+
 class Loop(Step):
     """Loop step.
 
@@ -401,7 +422,13 @@ class Tag(Step):
 
 
 AnyTechnique = Annotated[
-    OpenCircuitVoltage | ConstantCurrent | ConstantVoltage | ImpedanceSpectroscopy | Loop | Tag,
+    OpenCircuitVoltage
+    | ConstantCurrent
+    | ConstantVoltage
+    | ImpedanceSpectroscopy
+    | Loop
+    | Tag
+    | VoltageScan,
     Field(discriminator="step"),
 ]
 

@@ -17,6 +17,7 @@ from ._core import (
     SampleParams,
     Step,
     Tag,
+    VoltageScan,
 )
 from .protocol import (
     CyclingProtocol,
@@ -37,5 +38,6 @@ __all__ = [
     "SampleParams",
     "Step",
     "Tag",
+    "VoltageScan",
     "__version__",
 ]
