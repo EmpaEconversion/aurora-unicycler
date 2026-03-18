@@ -445,6 +445,64 @@
                         }
                     }
                 }
+            },
+            "hasNext": {
+                "@type": "LinearScanVoltammetry",
+                "hasInput": [
+                    {
+                        "@type": "LowerVoltageLimit",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 3.0
+                        },
+                        "hasMeasurementUnit": "emmo:Volt"
+                    },
+                    {
+                        "@type": "UpperVoltageLimit",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 4.0
+                        },
+                        "hasMeasurementUnit": "emmo:Volt"
+                    },
+                    {
+                        "@type": "PotentialScanRate",
+                        "hasNumericalPart": {
+                            "@type": "RealData",
+                            "hasNumberValue": 0.01
+                        },
+                        "hasMeasurementUnit": "emmo:VoltPerSecond"
+                    }
+                ],
+                "hasNext": {
+                    "@type": "LinearScanVoltammetry",
+                    "hasInput": [
+                        {
+                            "@type": "LowerVoltageLimit",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 3.0
+                            },
+                            "hasMeasurementUnit": "emmo:Volt"
+                        },
+                        {
+                            "@type": "UpperVoltageLimit",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": 4.0
+                            },
+                            "hasMeasurementUnit": "emmo:Volt"
+                        },
+                        {
+                            "@type": "PotentialScanRate",
+                            "hasNumericalPart": {
+                                "@type": "RealData",
+                                "hasNumberValue": -0.01
+                            },
+                            "hasMeasurementUnit": "emmo:VoltPerSecond"
+                        }
+                    ]
+                }
             }
         }
     }

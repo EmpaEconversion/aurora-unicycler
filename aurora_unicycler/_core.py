@@ -300,8 +300,8 @@ class ImpedanceSpectroscopy(Step):
     step: Literal["impedance_spectroscopy"] = Field(default="impedance_spectroscopy", frozen=True)
     amplitude_V: float | None = None
     amplitude_mA: float | None = None
-    start_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="Start frequency in Hz")
-    end_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="End frequency in Hz")
+    start_frequency_Hz: float = Field(ge=1e-5, le=1e7, description="Start frequency in Hz")
+    end_frequency_Hz: float = Field(ge=1e-5, le=1e7, description="End frequency in Hz")
     points_per_decade: int = Field(gt=0, default=10)
     measures_per_point: int = Field(gt=0, default=1)
     drift_correction: bool | None = Field(default=False, description="Apply drift correction")
@@ -321,6 +321,35 @@ class ImpedanceSpectroscopy(Step):
             raise ValueError(msg)
         if self.amplitude_V is None and self.amplitude_mA is None:
             msg = "Either amplitude_V or amplitude_mA must be set."
+            raise ValueError(msg)
+        return self
+
+
+class VoltageScan(Step):
+    """Voltage scan step.
+
+    Sweeps the voltage linearly from start to end.
+    The scan rate is an absolute value. To sweep in a negative direction, set
+    the start voltage higher than the end voltage.
+
+    Attributes:
+        start_voltage_V: Start voltage in V.
+        end_voltage_V: End voltage in V.
+        scan_rate_mV_per_s: Voltage scan rate in mV/s, must be positive.
+
+    """
+
+    step: Literal["voltage_scan"] = Field(default="voltage_scan", frozen=True)
+    start_voltage_V: float = Field(description="Start voltage in V")
+    end_voltage_V: float = Field(description="End voltage in V")
+    scan_rate_mV_per_s: float = Field(description="Voltage scan rate in mV/s", gt=0)
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _cant_be_equal(self) -> Self:
+        """Ensure at least one of until_rate_C or until_current_mA is set."""
+        if self.start_voltage_V == self.end_voltage_V:
+            msg = "Start and end voltage must be different"
             raise ValueError(msg)
         return self
 
@@ -401,7 +430,13 @@ class Tag(Step):
 
 
 AnyTechnique = Annotated[
-    OpenCircuitVoltage | ConstantCurrent | ConstantVoltage | ImpedanceSpectroscopy | Loop | Tag,
+    OpenCircuitVoltage
+    | ConstantCurrent
+    | ConstantVoltage
+    | ImpedanceSpectroscopy
+    | Loop
+    | Tag
+    | VoltageScan,
     Field(discriminator="step"),
 ]
 

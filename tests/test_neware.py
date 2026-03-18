@@ -19,14 +19,15 @@ from aurora_unicycler import (
     SampleParams,
     Step,
     Tag,
+    VoltageScan,
 )
 
 
-def _get_value(node: Element, path: str) -> str:
+def _get_value(node: Element, path: str, key: str = "Value") -> str:
     """Get "Value" attributes from xml, asserting values exist."""
     new_node = node.find(path)
     assert new_node is not None
-    val = new_node.get("Value")
+    val = new_node.get(key)
     assert val is not None
     return val
 
@@ -216,3 +217,31 @@ def test_save_file(tmpdir: Path) -> None:
     with (tmpdir / "test.xml").open("r") as f:
         text = f.read()
     assert res == text
+
+
+def test_lsv() -> None:
+    """Test voltage scan."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(),
+        method=[
+            VoltageScan(start_voltage_V=3, end_voltage_V=4, scan_rate_mV_per_s=1),
+            VoltageScan(start_voltage_V=4, end_voltage_V=3, scan_rate_mV_per_s=1),
+            VoltageScan(start_voltage_V=3, end_voltage_V=4, scan_rate_mV_per_s=5),
+            VoltageScan(start_voltage_V=4, end_voltage_V=3, scan_rate_mV_per_s=5),
+        ],
+    )
+    xml = protocol.to_neware_xml(sample_name="test", capacity_mAh=5)
+    step1 = ElementTree.fromstring(xml).find("config/Step_Info/Step1")
+    assert isinstance(step1, Element)
+    assert step1.get("Step_Type") == "25"
+    step1slope = ElementTree.fromstring(xml).find("config/Step_Info/Step1/Slope")
+    assert isinstance(step1slope, Element)
+    assert float(_get_value(step1slope, "Slope1")) == 1
+    assert float(_get_value(step1slope, "Slope1", key="StartValue")) == 30000
+    assert float(_get_value(step1slope, "Slope1", key="EndValue")) == 40000
+    step4slope = ElementTree.fromstring(xml).find("config/Step_Info/Step4/Slope")
+    assert isinstance(step4slope, Element)
+    assert float(_get_value(step4slope, "Slope1")) == 5
+    assert float(_get_value(step4slope, "Slope1", key="StartValue")) == 40000
+    assert float(_get_value(step4slope, "Slope1", key="EndValue")) == 30000

@@ -18,6 +18,7 @@ from aurora_unicycler import (
     RecordParams,
     SafetyParams,
     Step,
+    VoltageScan,
     Tag,
 )
 
@@ -490,3 +491,35 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
     assert "\t|I| = 2.50000 mA" in res
     assert "\tfor t > 123.0 ms" in res
     assert "Using 2.5 mA as the absolute limit." in caplog.text
+
+
+def test_lsv() -> None:
+    """Test linear sweep voltammetry."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[
+            OpenCircuitVoltage(until_time_s=1000),
+            Tag(tag="a"),
+            VoltageScan(start_voltage_V=2, end_voltage_V=3, scan_rate_mV_per_s=10),
+            VoltageScan(start_voltage_V=2, end_voltage_V=3, scan_rate_mV_per_s=10),
+            Loop(loop_to="a", cycle_count=10),
+        ],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "VS                  VS                  " in res
+
+
+def test_capacity() -> None:
+    """Test adding capacity."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Battery capacity" not in res
+    res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=0.123456789)
+    assert "Battery capacity : 123.457 µA.h" in res
+    res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=123.456789)
+    assert "Battery capacity : 123.457 mA.h" in res
+    res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=1234.56789)
+    assert "Battery capacity : 1.235 A.h" in res

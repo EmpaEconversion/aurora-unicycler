@@ -101,6 +101,20 @@ def _neware_ocv(step: _core.OpenCircuitVoltage, step_num: int) -> ET.Element:
     return step_element
 
 
+def _neware_lsv(step: _core.VoltageScan, step_num: int) -> ET.Element:
+    """Create VoltageScan step XML element."""
+    step_element = ET.Element(f"Step{step_num}", Step_ID=str(step_num), Step_Type="25")
+    slope = ET.SubElement(step_element, "Slope", SlopeType="1", Cycle_Count="1", ItemCount="1")
+    ET.SubElement(
+        slope,
+        "Slope1",
+        StartValue=str(step.start_voltage_V * 10000),
+        EndValue=str(step.end_voltage_V * 10000),
+        Value=str(step.scan_rate_mV_per_s),
+    )
+    return step_element
+
+
 def _neware_loop(step: _core.Loop, step_num: int) -> ET.Element:
     """Create Loop step XML element."""
     step_element = ET.Element(f"Step{step_num}", Step_ID=str(step_num), Step_Type="5")
@@ -127,6 +141,9 @@ def _step_to_element(
 
         case _core.OpenCircuitVoltage():
             return _neware_ocv(step, step_num)
+
+        case _core.VoltageScan():
+            return _neware_lsv(step, step_num)
 
         case _core.Loop():
             return _neware_loop(step, step_num)

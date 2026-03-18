@@ -19,6 +19,7 @@ from aurora_unicycler import (
     SampleParams,
     Step,
     Tag,
+    VoltageScan,
 )
 
 
@@ -63,6 +64,8 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
             ConstantVoltage(voltage_V=4.2, until_current_mA=0.01),
             ConstantCurrent(current_mA=-0.1, until_voltage_V=3.2),
             Loop(loop_to="recovery", cycle_count=10),
+            VoltageScan(start_voltage_V=3, end_voltage_V=4, scan_rate_mV_per_s=10),
+            VoltageScan(start_voltage_V=4, end_voltage_V=3, scan_rate_mV_per_s=10),
         ],
     )
     bij = my_protocol.to_battinfo_jsonld()
