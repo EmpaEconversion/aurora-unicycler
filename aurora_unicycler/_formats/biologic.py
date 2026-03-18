@@ -344,6 +344,7 @@ def _generate_cc(step: _core.ConstantCurrent, protocol: _core.BaseProtocol) -> d
                 f"lim{lim_num}_value_unit": "V",
             },
         )
+    step_dict.update({"lim_nb": str(lim_num)})
     return step_dict
 
 
