@@ -507,3 +507,19 @@ def test_lsv() -> None:
     )
     res = protocol.to_biologic_mps(sample_name="test")
     assert "VS                  VS                  " in res
+
+
+def test_capacity() -> None:
+    """Test adding capacity."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "Battery capacity" not in res
+    res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=0.123456789)
+    assert "Battery capacity : 123.457 µA.h" in res
+    res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=123.456789)
+    assert "Battery capacity : 123.457 mA.h" in res
+    res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=1234.56789)
+    assert "Battery capacity : 1.235 A.h" in res

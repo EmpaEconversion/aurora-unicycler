@@ -35,6 +35,15 @@ def to_biologic_mps(
     if capacity_mAh:
         protocol.sample.capacity_mAh = capacity_mAh
 
+    capacity_header = []
+    if cap := protocol.sample.capacity_mAh:
+        if cap < 1:
+            capacity_header = [f"Battery capacity : {cap * 1000:.3f} µA.h"]
+        elif cap < 1000:
+            capacity_header = [f"Battery capacity : {cap:.3f} mA.h"]
+        else:
+            capacity_header = [f"Battery capacity : {cap / 1000:.3f} A.h"]
+
     # Make sure sample name is set
     if not protocol.sample.name or protocol.sample.name == "$NAME":
         msg = (
@@ -57,6 +66,7 @@ def to_biologic_mps(
         f"Ewe ctrl range : min = {min(range_V):.2f} V, max = {max(range_V):.2f} V",
         *_generate_safety(protocol, range_V),
         f"Comments : {protocol.sample.name}",
+        *capacity_header,
         "Cycle Definition : Charge/Discharge alternance",
         "",
         "Technique : 1",
