@@ -300,8 +300,8 @@ class ImpedanceSpectroscopy(Step):
     step: Literal["impedance_spectroscopy"] = Field(default="impedance_spectroscopy", frozen=True)
     amplitude_V: float | None = None
     amplitude_mA: float | None = None
-    start_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="Start frequency in Hz")
-    end_frequency_Hz: float = Field(ge=1e-5, le=1e5, description="End frequency in Hz")
+    start_frequency_Hz: float = Field(ge=1e-5, le=1e7, description="Start frequency in Hz")
+    end_frequency_Hz: float = Field(ge=1e-5, le=1e7, description="End frequency in Hz")
     points_per_decade: int = Field(gt=0, default=10)
     measures_per_point: int = Field(gt=0, default=1)
     drift_correction: bool | None = Field(default=False, description="Apply drift correction")
