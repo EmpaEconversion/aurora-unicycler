@@ -104,7 +104,7 @@ def _neware_ocv(step: _core.OpenCircuitVoltage, step_num: int) -> ET.Element:
 def _neware_lsv(step: _core.VoltageScan, step_num: int) -> ET.Element:
     """Create VoltageScan step XML element."""
     step_element = ET.Element(f"Step{step_num}", Step_ID=str(step_num), Step_Type="25")
-    slope = ET.SubElement(step_element, "Slope", SlopeType="1", Cycle_Count="1", Item_Count="1")
+    slope = ET.SubElement(step_element, "Slope", SlopeType="1", Cycle_Count="1", ItemCount="1")
     ET.SubElement(
         slope,
         "Slope1",
