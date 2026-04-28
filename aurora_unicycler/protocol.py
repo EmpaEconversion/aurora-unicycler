@@ -47,11 +47,13 @@ A unicycler CyclingProtocol object can be converted into:
 
 from pathlib import Path
 
-from aurora_unicycler._core import BaseProtocol
-from aurora_unicycler._formats import battinfo, biologic, neware, pybamm, tomato
+from typing_extensions import Self
+
+from aurora_unicycler import _core
+from aurora_unicycler._formats import battinfo, biologic, neware, pybamm, read_biologic, tomato
 
 
-class CyclingProtocol(BaseProtocol):
+class CyclingProtocol(_core.BaseProtocol):
     """Unicycler battery cycling protocol.
 
     Defines a battery cycling experiment, which can be converted to different formats for different
@@ -167,6 +169,25 @@ class CyclingProtocol(BaseProtocol):
 
         """
         return tomato.to_tomato_mpg2(self, save_path, tomato_output, sample_name, capacity_mAh)
+
+    @classmethod
+    def from_biologic(
+        cls,
+        mps: str | Path,
+        sample_name: str | None = None,
+        sample_capacity_mAh: float | None = None,
+    ) -> Self:
+        if isinstance(mps, str) and mps.startswith("EC-LAB"):
+            mps_string = mps
+        else:
+            mps_string = Path(mps).read_text(encoding="cp1252")
+        technqiues = read_biologic.parse_techniques(mps_string)
+        unicycled_techniques = read_biologic.unicycle_techniques(technqiues)
+        return cls(
+            sample=_core.SampleParams(name=sample_name or "", capacity_mAh=sample_capacity_mAh),
+            record=_core.RecordParams(time_s=10.0),
+            method=unicycled_techniques,
+        )
 
 
 # Old name, still supported
