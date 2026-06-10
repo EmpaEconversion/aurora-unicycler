@@ -177,6 +177,7 @@ class CyclingProtocol(_core.BaseProtocol):
         sample_name: str | None = None,
         sample_capacity_mAh: float | None = None,
     ) -> Self:
+        """EXPERIMENTAL: Create unicycler CyclingProtocol from an mps file."""
         if isinstance(mps, str) and mps.startswith("EC-LAB"):
             mps_string = mps
         else:
