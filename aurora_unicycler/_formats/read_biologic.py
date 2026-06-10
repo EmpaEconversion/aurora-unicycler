@@ -3,11 +3,28 @@
 The scope of .mps is much larger than unicycler - so the conversion will always be lossy.
 """
 
+import logging
 import re
 from typing import Any
 from uuid import uuid4
 
 from aurora_unicycler import _core
+
+logger = logging.getLogger(__name__)
+
+CURR_MULT = {
+    "A": 1e3,
+    "mA": 1,
+    "uA": 1e-3,
+    "μA": 1e-3,
+    "nA": 1e-6,
+    "pA": 1e-9,
+}
+RATE_MULT = {
+    "V/s": 1e3,
+    "mV/s": 1,
+    "mV/mn": 1 / 60,
+}
 
 
 def parse_techniques(text: str) -> list[dict[str, list[str | float]]]:
@@ -35,7 +52,13 @@ def parse_techniques(text: str) -> list[dict[str, list[str | float]]]:
             values = [rest[i : i + 20].strip() for i in range(0, len(rest), 20)]
             values = [v for v in values if v]  # drop empty trailing cells
             if values:
-                result[key] = values
+                if key in result:
+                    i = 1
+                    while f"{key}_{i}" in result:
+                        i += 1
+                    result[f"{key}_{i}"] = values
+                else:
+                    result[key] = values
         techniques.append(result)
 
     return techniques
@@ -55,8 +78,9 @@ def unicycle_gcpl(tech: dict) -> list[_core.AnyTechnique]:
     for i in range(n_subtechs):
         method_with_pos[i] = []
 
+        # CC step
         mult = -1 if i == n_subtechs - 1 else 1  # Discharge or charge
-        if tech["Set I/C"][i] == "C / N" and tech["N"][i]:
+        if tech["Set I/C"][i] == "C / N" and float(tech["N"][i]):  # CC with C/x c-rate
             method_with_pos[i].append(
                 _core.ConstantCurrent(
                     rate_C=mult / float(tech["N"][i]),
@@ -64,16 +88,52 @@ def unicycle_gcpl(tech: dict) -> list[_core.AnyTechnique]:
                     until_time_s=parse_time(tech["t1 (h:m:s)"][i]),
                 )
             )
+        elif tech["Set I/C"][i] == "C x N" and float(tech["N"][i]):  # CC with xC c-rate
+            method_with_pos[i].append(
+                _core.ConstantCurrent(
+                    rate_C=mult * float(tech["N"][i]),
+                    until_voltage_V=tech["EM (V)"][i],
+                    until_time_s=parse_time(tech["t1 (h:m:s)"][i]),
+                )
+            )
+        elif tech["Set I/C"][i] == "I" and float(tech["Is"][i]):  # CC with current
+            method_with_pos[i].append(
+                _core.ConstantCurrent(
+                    current_mA=CURR_MULT[tech["unit Is"][i]] * float(tech["Is"][i]),
+                    until_voltage_V=tech["EM (V)"][i],
+                    until_time_s=parse_time(tech["t1 (h:m:s)"][i]),
+                )
+            )
+
+        # CV step
+        hold_time = parse_time(tech["tR (h:m:s)"][i])
+        if hold_time > 0:
+            if float(tech["dI/dt"][i]):
+                logger.warning("GCPL CV step - Unicycler doesn't support dI/dt termination")
+            if float(tech["dQM"][i]):
+                logger.warning("GCPL CV step - Unicycler doesn't support Q termination")
+            method_with_pos[i].append(
+                _core.ConstantVoltage(
+                    voltage_V=tech["EM (V)"][i],
+                    until_current_mA=float(tech["Im"][i]) * CURR_MULT[tech["unit Im"][i]],
+                    until_time_s=hold_time,
+                )
+            )
+
+        # OCV step
         rest_time = parse_time(tech["tR (h:m:s)"][i])
         if rest_time > 0:
+            if float(tech["dER/dt (mV/h)"][i]):
+                logger.warning("GCPL rest step - Unicycler doesn't support dV/dt termination")
             method_with_pos[i].append(_core.OpenCircuitVoltage(until_time_s=rest_time))
 
     # Loop on the last one
     if int(tech["nc cycles"][-1]):
         index = int(tech["goto Ns'"][-1])
         cycle_count = int(tech["nc cycles"][-1]) + 1
-        method_with_pos[index - 0.5] = [_core.Tag(tag=uuid)]
-        method_with_pos[999] = [_core.Loop(loop_to=uuid, cycle_count=cycle_count)]
+        if cycle_count > 1:
+            method_with_pos[index - 0.5] = [_core.Tag(tag=uuid)]
+            method_with_pos[999] = [_core.Loop(loop_to=uuid, cycle_count=cycle_count)]
 
     # Sort and flatten the list of techniques
     return [item for k in sorted(method_with_pos) for item in method_with_pos[k]]
@@ -88,9 +148,10 @@ def unicycle_cp(tech: dict) -> list[_core.AnyTechnique]:
     }
     return [
         _core.ConstantCurrent(
-            current_mA=float(tech["Is"][0]) * mult[tech["unit Is"][0]],
-            until_time_s=parse_time(tech["ts (h:m:s)"][0]),
+            current_mA=float(tech["Is"][i]) * mult[tech["unit Is"][i]],
+            until_time_s=parse_time(tech["ts (h:m:s)"][i]),
         )
+        for i in range(len(tech["Is"]))
     ]
 
 
@@ -105,26 +166,23 @@ def unicycle_ca(tech: dict) -> list[_core.AnyTechnique]:
     }
     return [
         _core.ConstantVoltage(
-            voltage_V=float(tech["Ei (V)"][0]),
-            until_time_s=parse_time(tech["ti (h:m:s)"][0]),
-            until_current_mA=tech["Imin"][0] * mult[tech["unit Imin"][0]],
+            voltage_V=float(tech["Ei (V)"][i]),
+            until_time_s=parse_time(tech["ti (h:m:s)"][i]),
+            until_current_mA=tech["Imin"][i] * mult[tech["unit Imin"][i]],
         )
+        for i in range(len(tech["Ei (V)"]))
     ]
 
 
 def unicycle_lsv(tech: dict) -> list[_core.AnyTechnique]:
     """Convert LSV to unicycler technique list."""
-    mult = {
-        "mV/s": 1,
-        "V/s": 1e3,
-        "mV/mn": 1 / 60,
-    }
     return [
         _core.VoltageScan(
-            start_voltage_V=tech["Ei (V)"][0],
-            end_voltage_V=tech["EL (V)"][0],
-            scan_rate_mV_per_s=tech["dE/dt"][0] * mult[tech["dE/dt unit"][0]],
+            start_voltage_V=tech["Ei (V)"][i],
+            end_voltage_V=tech["EL (V)"][i],
+            scan_rate_mV_per_s=tech["dE/dt"][i] * RATE_MULT[tech["dE/dt unit"][i]],
         )
+        for i in range(len(tech["Ei (V)"]))
     ]
 
 
@@ -137,12 +195,124 @@ def unicycle_eis(tech: dict) -> list[_core.AnyTechnique]:
     }
     return [
         _core.ImpedanceSpectroscopy(
-            amplitude_V=float(tech["Va (mV)"][0]) * 1e-3,
-            start_frequency_Hz=float(tech["fi"][0]) * mult[tech["unit fi"][0]],
-            end_frequency_Hz=float(tech["ff"][0]) * mult[tech["unit ff"][0]],
-            drift_correction=tech["Mode"][0] == "Multi sine",
+            amplitude_V=float(tech["Va (mV)"][i]) * 1e-3,
+            start_frequency_Hz=float(tech["fi"][i]) * mult[tech["unit fi"][i]],
+            end_frequency_Hz=float(tech["ff"][i]) * mult[tech["unit ff"][i]],
+            drift_correction=tech["Mode"][i] == "Multi sine",
         )
+        for i in range(len(tech["Va (mV)"]))
     ]
+
+
+def unicycle_ocv(tech: dict) -> list[_core.AnyTechnique]:
+    """Convert OCV to unicycler technique list."""
+    return [
+        _core.OpenCircuitVoltage(
+            until_time_s=parse_time(tech["tR (h:m:s)"][i]),
+        )
+        for i in range(len(tech["tR (h:m:s)"]))
+    ]
+
+
+def unicycle_cva(tech: dict) -> list[_core.AnyTechnique]:
+    """Convert CV or CVA to unicycler technique list."""
+    all_methods = []
+    n_subtechs = len(tech["Ns"])
+
+    for i in range(n_subtechs):
+        submethod = []
+        scan_rate = float(tech["dE/dt"][i]) * RATE_MULT[tech["dE/dt unit"][i]]
+        start_hold = parse_time(tech["ti (h:m:s)"][i]) if "ti (h:m:s)" in tech else 0
+        start_V = float(tech["Ei (V)"][i])
+        start_V_vs = tech["vs."][i] if "vs." in tech else "Ref"
+        top_hold = parse_time(tech["t1 (h:m:s)"][i]) if "t1 (h:m:s)" in tech else 0
+        top_V = float(tech["E1 (V)"][i])
+        top_V_vs = tech["vs._1"][i] if "t1 (h:m:s)" in tech else "Ref"
+        bottom_hold = parse_time(tech["t2 (h:m:s)"][i]) if "t2 (h:m:s)" in tech else 0
+        bottom_V = float(tech["E2 (V)"][i])
+        bottom_V_vs = tech["vs._2"][i] if "t2 (h:m:s)" in tech else "Ref"
+        final_hold = parse_time(tech["tf (h:m:s)"][i]) if "tf (h:m:s)" in tech else 0
+        final_V = float(tech["Ef (V)"][i])
+        final_V_vs = tech["vs._3"][i] if "tf (h:m:s)" in tech else "Ref"
+        n_cycles = int(tech["nc cycles"][i]) + 1
+
+        # CV start
+        if start_hold > 0:
+            if start_V_vs == "Ref":
+                submethod.append(
+                    _core.ConstantVoltage(
+                        voltage_V=start_V,
+                        until_time_s=start_hold,
+                    )
+                )
+            else:
+                logger.warning(
+                    "Unicycler only supports voltage hold vs ref, not vs '%s' in CV start hold.",
+                    start_V_vs,
+                )
+        # Skip from here if no rate
+        if not scan_rate:
+            continue
+        # LSV up
+        submethod.append(
+            _core.VoltageScan(
+                start_voltage_V=start_V,
+                end_voltage_V=top_V,
+                scan_rate_mV_per_s=scan_rate,
+            )
+        )
+        # CV top
+        if top_hold > 0:
+            if top_V_vs == "Ref":
+                submethod.append(
+                    _core.ConstantVoltage(
+                        voltage_V=top_V,
+                        until_time_s=top_hold,
+                    )
+                )
+            else:
+                logger.warning(
+                    "Unicycler only supports voltage hold vs ref, not vs '%s' in CV top hold.",
+                    top_V_vs,
+                )
+        # LSV down
+        submethod.append(
+            _core.VoltageScan(
+                start_voltage_V=top_V,
+                end_voltage_V=bottom_V,
+                scan_rate_mV_per_s=scan_rate,
+            )
+        )
+        # CV bottom
+        if bottom_hold > 0:
+            if bottom_V_vs == "Ref":
+                submethod.append(
+                    _core.ConstantVoltage(voltage_V=bottom_V, until_time_s=bottom_hold)
+                )
+            else:
+                logger.warning(
+                    "Unicycler only supports voltage hold vs ref, not vs '%s' in CV bottom hold.",
+                    bottom_V_vs,
+                )
+        # Loop
+        if n_cycles > 1:
+            uuid = uuid4().hex[:8]
+            submethod.append(_core.Loop(loop_to=uuid, cycle_count=n_cycles))
+            submethod.insert(0, _core.Tag(tag=uuid))
+
+        # Final hold
+        if final_hold > 0:
+            if final_V_vs == "Ref":
+                submethod.append(_core.ConstantVoltage(voltage_V=final_V, until_time_s=final_hold))
+            else:
+                logger.warning(
+                    "Unicycler only supports voltage hold vs ref, not vs '%s' in CV final hold.",
+                    bottom_V_vs,
+                )
+
+        all_methods.extend(submethod)
+
+    return all_methods
 
 
 def unicycle_techniques(techniques: list[dict]) -> list[_core.AnyTechnique]:
@@ -160,6 +330,10 @@ def unicycle_techniques(techniques: list[dict]) -> list[_core.AnyTechnique]:
             method_with_pos[i] = unicycle_cp(tech)
         elif tech_name == "Linear Sweep Voltammetry":
             method_with_pos[i] = unicycle_lsv(tech)
+        elif tech_name == "Open Circuit Voltage":
+            method_with_pos[i] = unicycle_ocv(tech)
+        elif tech_name in {"Cyclic Voltammetry", "Cyclic Voltammetry Advanced"}:
+            method_with_pos[i] = unicycle_cva(tech)
         elif tech_name == "Loop":
             uuid = uuid4().hex[:8]
             index = int(tech["goto Ne"][0]) - 1
