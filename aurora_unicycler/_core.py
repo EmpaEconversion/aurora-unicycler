@@ -4,6 +4,7 @@ import json
 import warnings
 from collections.abc import Sequence
 from copy import deepcopy
+from itertools import pairwise
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -521,16 +522,28 @@ class BaseProtocol(BaseModel):
 
     @model_validator(mode="after")
     def _validate_cccv(self) -> Self:
-        for i in range(len(self.method) - 1):
+        """Warn on potential voltage mismatches between CC and CV steps."""
+        steps = [(i, step) for i, step in enumerate(self.method) if not isinstance(step, Tag)]
+        for (cc_i, cc), (cv_i, cv) in pairwise(steps):
             if (
-                isinstance(cc := self.method[i], ConstantCurrent)
-                and isinstance(cv := self.method[i + 1], ConstantVoltage)
+                isinstance(cc, ConstantCurrent)
+                and isinstance(cv, ConstantVoltage)
                 and cc.until_voltage_V != cv.voltage_V
             ):
+                if cc.until_voltage_V is not None:
+                    msg = (
+                        "Voltage mismatch: "
+                        f"step {cc_i + 1} constant-current ends at {cc.until_voltage_V} V, "
+                        f"step {cv_i + 1} constant-voltage is at {cv.voltage_V} V."
+                    )
+                else:
+                    msg = (
+                        "Voltage mismatch: "
+                        f"step {cc_i + 1} constant-current has no voltage cut-off, "
+                        f"step {cv_i + 1} constant-voltage is at {cv.voltage_V} V."
+                    )
                 warnings.warn(
-                    "Voltage mismatch: "
-                    f"step {i + 1} constant-current ends at {cc.until_voltage_V} V, "
-                    f"step {i + 2} constant-voltage is at {cv.voltage_V} V.",
+                    msg,
                     ProtocolMethodWarning,
                     stacklevel=3,
                 )
