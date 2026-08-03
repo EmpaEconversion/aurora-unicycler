@@ -15,11 +15,12 @@ from aurora_unicycler import (
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
+    ProtocolMethodWarning,
     RecordParams,
     SafetyParams,
     Tag,
 )
-from aurora_unicycler._core import _coerce_c_rate, ProtocolMethodWarning
+from aurora_unicycler._core import _coerce_c_rate
 from aurora_unicycler._utils import check_for_intersecting_loops, tag_to_indices
 
 
