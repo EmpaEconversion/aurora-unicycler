@@ -73,7 +73,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_time_s,
                         },
-                        "hasMeasurementUnit": "emmo:Second",
+                        "hasMeasurementUnit": "Second",
                     }
                 ],
             }
@@ -93,7 +93,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(current_mA),
                         },
-                        "hasMeasurementUnit": "emmo:MilliAmpere",
+                        "hasMeasurementUnit": "MilliAmpere",
                     },
                 )
             if step.rate_C:
@@ -104,7 +104,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(step.rate_C),
                         },
-                        "hasMeasurementUnit": "echem:CRateUnit",
+                        "hasMeasurementUnit": "CRateUnit",
                     },
                 )
             if step.until_voltage_V:
@@ -118,7 +118,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_voltage_V,
                         },
-                        "hasMeasurementUnit": "emmo:Volt",
+                        "hasMeasurementUnit": "Volt",
                     }
                 )
             if step.until_time_s:
@@ -129,7 +129,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_time_s,
                         },
-                        "hasMeasurementUnit": "emmo:Second",
+                        "hasMeasurementUnit": "Second",
                     }
                 )
             tech_dict = {
@@ -144,7 +144,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                         "@type": "RealData",
                         "hasNumberValue": step.voltage_V,
                     },
-                    "hasMeasurementUnit": "emmo:Volt",
+                    "hasMeasurementUnit": "Volt",
                 }
             ]
             until_current_mA: None | float = None
@@ -160,7 +160,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(until_current_mA),
                         },
-                        "hasMeasurementUnit": "emmo:MilliAmpere",
+                        "hasMeasurementUnit": "MilliAmpere",
                     }
                 )
             if step.until_rate_C:
@@ -171,7 +171,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": abs(step.until_rate_C),
                         },
-                        "hasMeasurementUnit": "echem:CRateUnit",
+                        "hasMeasurementUnit": "CRateUnit",
                     },
                 )
             if step.until_time_s:
@@ -182,7 +182,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.until_time_s,
                         },
-                        "hasMeasurementUnit": "emmo:Second",
+                        "hasMeasurementUnit": "Second",
                     }
                 )
             tech_dict = {
@@ -199,7 +199,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.amplitude_V,
                         },
-                        "hasMeasurementUnit": "emmo:Volt",
+                        "hasMeasurementUnit": "Volt",
                     }
                 )
             if step.amplitude_mA:
@@ -210,7 +210,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": step.amplitude_mA,
                         },
-                        "hasMeasurementUnit": "emmo:MilliAmpere",
+                        "hasMeasurementUnit": "MilliAmpere",
                     }
                 )
             lower_limit = min(step.start_frequency_Hz, step.end_frequency_Hz)
@@ -222,7 +222,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                         "@type": "RealData",
                         "hasNumberValue": lower_limit,
                     },
-                    "hasMeasurementUnit": "emmo:Hertz",
+                    "hasMeasurementUnit": "Hertz",
                 }
             )
             inputs.append(
@@ -232,7 +232,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                         "@type": "RealData",
                         "hasNumberValue": upper_limit,
                     },
-                    "hasMeasurementUnit": "emmo:Hertz",
+                    "hasMeasurementUnit": "Hertz",
                 }
             )
             tech_dict = {
@@ -257,7 +257,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": lower_limit,
                         },
-                        "hasMeasurementUnit": "emmo:Volt",
+                        "hasMeasurementUnit": "Volt",
                     },
                     {
                         "@type": "UpperVoltageLimit",
@@ -265,7 +265,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": upper_limit,
                         },
-                        "hasMeasurementUnit": "emmo:Volt",
+                        "hasMeasurementUnit": "Volt",
                     },
                     {
                         "@type": "PotentialScanRate",
@@ -273,7 +273,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                             "@type": "RealData",
                             "hasNumberValue": scan_rate,
                         },
-                        "hasMeasurementUnit": "emmo:VoltPerSecond",
+                        "hasMeasurementUnit": "VoltPerSecond",
                     },
                 ],
             }
@@ -305,7 +305,7 @@ def _recursive_battinfo_build(
                         "@type": "RealData",
                         "hasNumberValue": order[0][0],
                     },
-                    "hasMeasurementUnit": "emmo:UnitOne",
+                    "hasMeasurementUnit": "UnitOne",
                 }
             ],
             "hasTask": _recursive_battinfo_build(order[0][1], methods, capacity_mAh),
@@ -350,8 +350,10 @@ def to_battinfo_jsonld(
             "@context": [
                 "https://w3id.org/emmo/domain/battery/context",
                 {
-                    "emmo": "https://w3id.org/emmo#",
-                    "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+                    "hasMeasurementUnit": {
+                        "@id": "https://w3id.org/emmo#EMMO_bed1d005_b04e_4a90_94cf_02bc678a8569",
+                        "@type": "@vocab",
+                    },
                 },
             ],
             **battinfo_dict,

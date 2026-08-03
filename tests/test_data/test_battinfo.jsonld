@@ -2,8 +2,10 @@
     "@context": [
         "https://w3id.org/emmo/domain/battery/context",
         {
-            "emmo": "https://w3id.org/emmo#",
-            "echem": "https://w3id.org/emmo/domain/electrochemistry#"
+            "hasMeasurementUnit": {
+                "@id": "https://w3id.org/emmo#EMMO_bed1d005_b04e_4a90_94cf_02bc678a8569",
+                "@type": "@vocab"
+            }
         }
     ],
     "@type": "OpenCircuitHold",
@@ -14,7 +16,7 @@
                 "@type": "RealData",
                 "hasNumberValue": 300.0
             },
-            "hasMeasurementUnit": "emmo:Second"
+            "hasMeasurementUnit": "Second"
         }
     ],
     "hasNext": {
@@ -26,7 +28,7 @@
                     "@type": "RealData",
                     "hasNumberValue": 5
                 },
-                "hasMeasurementUnit": "emmo:UnitOne"
+                "hasMeasurementUnit": "UnitOne"
             }
         ],
         "hasTask": {
@@ -38,7 +40,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 2.25
                     },
-                    "hasMeasurementUnit": "emmo:MilliAmpere"
+                    "hasMeasurementUnit": "MilliAmpere"
                 },
                 {
                     "@type": "CRate",
@@ -46,7 +48,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 0.05
                     },
-                    "hasMeasurementUnit": "echem:CRateUnit"
+                    "hasMeasurementUnit": "CRateUnit"
                 },
                 {
                     "@type": [
@@ -57,7 +59,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 4.2
                     },
-                    "hasMeasurementUnit": "emmo:Volt"
+                    "hasMeasurementUnit": "Volt"
                 }
             ],
             "hasNext": {
@@ -69,7 +71,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 4.2
                         },
-                        "hasMeasurementUnit": "emmo:Volt"
+                        "hasMeasurementUnit": "Volt"
                     },
                     {
                         "@type": [
@@ -80,7 +82,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.45
                         },
-                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                        "hasMeasurementUnit": "MilliAmpere"
                     },
                     {
                         "@type": [
@@ -91,7 +93,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.01
                         },
-                        "hasMeasurementUnit": "echem:CRateUnit"
+                        "hasMeasurementUnit": "CRateUnit"
                     }
                 ],
                 "hasNext": {
@@ -103,7 +105,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 2.25
                             },
-                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                            "hasMeasurementUnit": "MilliAmpere"
                         },
                         {
                             "@type": "CRate",
@@ -111,7 +113,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.05
                             },
-                            "hasMeasurementUnit": "echem:CRateUnit"
+                            "hasMeasurementUnit": "CRateUnit"
                         },
                         {
                             "@type": [
@@ -122,7 +124,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 3.2
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         }
                     ]
                 }
@@ -137,7 +139,7 @@
                         "@type": "RealData",
                         "hasNumberValue": 10
                     },
-                    "hasMeasurementUnit": "emmo:UnitOne"
+                    "hasMeasurementUnit": "UnitOne"
                 }
             ],
             "hasTask": {
@@ -149,7 +151,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.01
                         },
-                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                        "hasMeasurementUnit": "MilliAmpere"
                     },
                     {
                         "@type": "LowerFrequencyLimit",
@@ -157,7 +159,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 10.0
                         },
-                        "hasMeasurementUnit": "emmo:Hertz"
+                        "hasMeasurementUnit": "Hertz"
                     },
                     {
                         "@type": "UpperFrequencyLimit",
@@ -165,7 +167,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 10000.0
                         },
-                        "hasMeasurementUnit": "emmo:Hertz"
+                        "hasMeasurementUnit": "Hertz"
                     }
                 ],
                 "hasNext": {
@@ -177,7 +179,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 0.01
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         },
                         {
                             "@type": "LowerFrequencyLimit",
@@ -185,7 +187,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 10.0
                             },
-                            "hasMeasurementUnit": "emmo:Hertz"
+                            "hasMeasurementUnit": "Hertz"
                         },
                         {
                             "@type": "UpperFrequencyLimit",
@@ -193,7 +195,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 10000.0
                             },
-                            "hasMeasurementUnit": "emmo:Hertz"
+                            "hasMeasurementUnit": "Hertz"
                         }
                     ],
                     "hasNext": {
@@ -205,7 +207,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 22.5
                                 },
-                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                "hasMeasurementUnit": "MilliAmpere"
                             },
                             {
                                 "@type": "CRate",
@@ -213,7 +215,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 0.5
                                 },
-                                "hasMeasurementUnit": "echem:CRateUnit"
+                                "hasMeasurementUnit": "CRateUnit"
                             },
                             {
                                 "@type": [
@@ -224,7 +226,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 3.2
                                 },
-                                "hasMeasurementUnit": "emmo:Volt"
+                                "hasMeasurementUnit": "Volt"
                             },
                             {
                                 "@type": "Duration",
@@ -232,7 +234,7 @@
                                     "@type": "RealData",
                                     "hasNumberValue": 10800.0
                                 },
-                                "hasMeasurementUnit": "emmo:Second"
+                                "hasMeasurementUnit": "Second"
                             }
                         ],
                         "hasNext": {
@@ -244,7 +246,7 @@
                                         "@type": "RealData",
                                         "hasNumberValue": 24
                                     },
-                                    "hasMeasurementUnit": "emmo:UnitOne"
+                                    "hasMeasurementUnit": "UnitOne"
                                 }
                             ],
                             "hasTask": {
@@ -256,7 +258,7 @@
                                             "@type": "RealData",
                                             "hasNumberValue": 22.5
                                         },
-                                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                                        "hasMeasurementUnit": "MilliAmpere"
                                     },
                                     {
                                         "@type": "CRate",
@@ -264,7 +266,7 @@
                                             "@type": "RealData",
                                             "hasNumberValue": 0.5
                                         },
-                                        "hasMeasurementUnit": "echem:CRateUnit"
+                                        "hasMeasurementUnit": "CRateUnit"
                                     },
                                     {
                                         "@type": [
@@ -275,7 +277,7 @@
                                             "@type": "RealData",
                                             "hasNumberValue": 4.2
                                         },
-                                        "hasMeasurementUnit": "emmo:Volt"
+                                        "hasMeasurementUnit": "Volt"
                                     },
                                     {
                                         "@type": "Duration",
@@ -283,7 +285,7 @@
                                             "@type": "RealData",
                                             "hasNumberValue": 10800.0
                                         },
-                                        "hasMeasurementUnit": "emmo:Second"
+                                        "hasMeasurementUnit": "Second"
                                     }
                                 ],
                                 "hasNext": {
@@ -295,7 +297,7 @@
                                                 "@type": "RealData",
                                                 "hasNumberValue": 4.2
                                             },
-                                            "hasMeasurementUnit": "emmo:Volt"
+                                            "hasMeasurementUnit": "Volt"
                                         },
                                         {
                                             "@type": [
@@ -306,7 +308,7 @@
                                                 "@type": "RealData",
                                                 "hasNumberValue": 2.25
                                             },
-                                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                                            "hasMeasurementUnit": "MilliAmpere"
                                         },
                                         {
                                             "@type": [
@@ -317,7 +319,7 @@
                                                 "@type": "RealData",
                                                 "hasNumberValue": 0.05
                                             },
-                                            "hasMeasurementUnit": "echem:CRateUnit"
+                                            "hasMeasurementUnit": "CRateUnit"
                                         },
                                         {
                                             "@type": "Duration",
@@ -325,7 +327,7 @@
                                                 "@type": "RealData",
                                                 "hasNumberValue": 3600.0
                                             },
-                                            "hasMeasurementUnit": "emmo:Second"
+                                            "hasMeasurementUnit": "Second"
                                         }
                                     ],
                                     "hasNext": {
@@ -337,7 +339,7 @@
                                                     "@type": "RealData",
                                                     "hasNumberValue": 22.5
                                                 },
-                                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                                "hasMeasurementUnit": "MilliAmpere"
                                             },
                                             {
                                                 "@type": "CRate",
@@ -345,7 +347,7 @@
                                                     "@type": "RealData",
                                                     "hasNumberValue": 0.5
                                                 },
-                                                "hasMeasurementUnit": "echem:CRateUnit"
+                                                "hasMeasurementUnit": "CRateUnit"
                                             },
                                             {
                                                 "@type": [
@@ -356,7 +358,7 @@
                                                     "@type": "RealData",
                                                     "hasNumberValue": 3.2
                                                 },
-                                                "hasMeasurementUnit": "emmo:Volt"
+                                                "hasMeasurementUnit": "Volt"
                                             },
                                             {
                                                 "@type": "Duration",
@@ -364,7 +366,7 @@
                                                     "@type": "RealData",
                                                     "hasNumberValue": 10800.0
                                                 },
-                                                "hasMeasurementUnit": "emmo:Second"
+                                                "hasMeasurementUnit": "Second"
                                             }
                                         ]
                                     }
@@ -379,7 +381,7 @@
                                             "@type": "RealData",
                                             "hasNumberValue": 0.1
                                         },
-                                        "hasMeasurementUnit": "emmo:MilliAmpere"
+                                        "hasMeasurementUnit": "MilliAmpere"
                                     },
                                     {
                                         "@type": [
@@ -390,7 +392,7 @@
                                             "@type": "RealData",
                                             "hasNumberValue": 4.2
                                         },
-                                        "hasMeasurementUnit": "emmo:Volt"
+                                        "hasMeasurementUnit": "Volt"
                                     }
                                 ],
                                 "hasNext": {
@@ -402,7 +404,7 @@
                                                 "@type": "RealData",
                                                 "hasNumberValue": 4.2
                                             },
-                                            "hasMeasurementUnit": "emmo:Volt"
+                                            "hasMeasurementUnit": "Volt"
                                         },
                                         {
                                             "@type": [
@@ -413,7 +415,7 @@
                                                 "@type": "RealData",
                                                 "hasNumberValue": 0.01
                                             },
-                                            "hasMeasurementUnit": "emmo:MilliAmpere"
+                                            "hasMeasurementUnit": "MilliAmpere"
                                         }
                                     ],
                                     "hasNext": {
@@ -425,7 +427,7 @@
                                                     "@type": "RealData",
                                                     "hasNumberValue": 0.1
                                                 },
-                                                "hasMeasurementUnit": "emmo:MilliAmpere"
+                                                "hasMeasurementUnit": "MilliAmpere"
                                             },
                                             {
                                                 "@type": [
@@ -436,7 +438,7 @@
                                                     "@type": "RealData",
                                                     "hasNumberValue": 3.2
                                                 },
-                                                "hasMeasurementUnit": "emmo:Volt"
+                                                "hasMeasurementUnit": "Volt"
                                             }
                                         ]
                                     }
@@ -455,7 +457,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 3.0
                         },
-                        "hasMeasurementUnit": "emmo:Volt"
+                        "hasMeasurementUnit": "Volt"
                     },
                     {
                         "@type": "UpperVoltageLimit",
@@ -463,7 +465,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 4.0
                         },
-                        "hasMeasurementUnit": "emmo:Volt"
+                        "hasMeasurementUnit": "Volt"
                     },
                     {
                         "@type": "PotentialScanRate",
@@ -471,7 +473,7 @@
                             "@type": "RealData",
                             "hasNumberValue": 0.01
                         },
-                        "hasMeasurementUnit": "emmo:VoltPerSecond"
+                        "hasMeasurementUnit": "VoltPerSecond"
                     }
                 ],
                 "hasNext": {
@@ -483,7 +485,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 3.0
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         },
                         {
                             "@type": "UpperVoltageLimit",
@@ -491,7 +493,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": 4.0
                             },
-                            "hasMeasurementUnit": "emmo:Volt"
+                            "hasMeasurementUnit": "Volt"
                         },
                         {
                             "@type": "PotentialScanRate",
@@ -499,7 +501,7 @@
                                 "@type": "RealData",
                                 "hasNumberValue": -0.01
                             },
-                            "hasMeasurementUnit": "emmo:VoltPerSecond"
+                            "hasMeasurementUnit": "VoltPerSecond"
                         }
                     ]
                 }
