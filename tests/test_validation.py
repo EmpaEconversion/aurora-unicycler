@@ -18,7 +18,7 @@ from aurora_unicycler import (
     SafetyParams,
     Tag,
 )
-from aurora_unicycler._core import _coerce_c_rate
+from aurora_unicycler._core import _coerce_c_rate, ProtocolMethodWarning
 from aurora_unicycler._utils import check_for_intersecting_loops, tag_to_indices
 
 
@@ -351,3 +351,15 @@ def test_invalid_record_params() -> None:
     with pytest.raises(ValueError) as excinfo:
         RecordParams(time_s=1, voltage_V=-1)
     assert "Input should be greater than 0" in str(excinfo.value)
+
+
+def test_bad_cccv_warn() -> None:
+    """Mismatched CC-CV voltage should warn."""
+    with pytest.warns(ProtocolMethodWarning, match="Voltage mismatch"):
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(rate_C=1, until_voltage_V=4),
+                ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )

@@ -1,6 +1,7 @@
 """Core unicycler classes for protocol attributes and different experimental steps."""
 
 import json
+import warnings
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
@@ -10,6 +11,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from typing_extensions import Self
 
 from aurora_unicycler.version import __version__
+
+
+class ProtocolMethodWarning(UserWarning):
+    """Possible issues with a CyclingProtocol.method."""
 
 
 def _coerce_c_rate(v: float | str | None) -> float | None:
@@ -512,6 +517,23 @@ class BaseProtocol(BaseModel):
             if i == tag_i + 1:
                 msg = f"Loop '{loop_tag}' cannot start immediately after its tag."
                 raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_cccv(self) -> Self:
+        for i in range(len(self.method) - 1):
+            if (
+                isinstance(cc := self.method[i], ConstantCurrent)
+                and isinstance(cv := self.method[i + 1], ConstantVoltage)
+                and cc.until_voltage_V != cv.voltage_V
+            ):
+                warnings.warn(
+                    "Voltage mismatch: "
+                    f"step {i + 1} constant-current ends at {cc.until_voltage_V} V, "
+                    f"step {i + 2} constant-voltage is at {cv.voltage_V} V.",
+                    ProtocolMethodWarning,
+                    stacklevel=3,
+                )
         return self
 
     @classmethod
