@@ -266,6 +266,7 @@ def test_coerce_c_rate_in_protocol(test_data: dict) -> None:
             ConstantCurrent(until_time_s=1, rate_C=1 / 5),
             ConstantCurrent(until_time_s=1, rate_C="-0.2"),
             ConstantCurrent(until_time_s=1, rate_C="D/5"),
+            OpenCircuitVoltage(until_time_s=1),  # to aovid warn
             ConstantVoltage(voltage_V=4.2, until_rate_C="C/5"),
             ConstantVoltage(voltage_V=4.2, until_rate_C="0.2"),
             ConstantVoltage(voltage_V=4.2, until_rate_C=1 / 5),
@@ -279,10 +280,10 @@ def test_coerce_c_rate_in_protocol(test_data: dict) -> None:
     assert protocol.method[4].rate_C == 0.2
     assert protocol.method[5].rate_C == -0.2
     assert protocol.method[6].rate_C == -0.2
-    assert protocol.method[7].until_rate_C == 0.2
     assert protocol.method[8].until_rate_C == 0.2
     assert protocol.method[9].until_rate_C == 0.2
     assert protocol.method[10].until_rate_C == 0.2
+    assert protocol.method[11].until_rate_C == 0.2
 
 
 def test_build_steps() -> None:

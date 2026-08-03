@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from decimal import Decimal
 
 import pytest
@@ -14,6 +15,7 @@ from aurora_unicycler import (
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
+    ProtocolMethodWarning,
     RecordParams,
     SafetyParams,
     Tag,
@@ -351,3 +353,62 @@ def test_invalid_record_params() -> None:
     with pytest.raises(ValueError) as excinfo:
         RecordParams(time_s=1, voltage_V=-1)
     assert "Input should be greater than 0" in str(excinfo.value)
+
+
+def test_bad_cccv_warn() -> None:
+    """Mismatched CC-CV voltage should warn."""
+    # CC with mismatched voltage
+    with pytest.warns(ProtocolMethodWarning, match="Voltage mismatch"):
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(rate_C=1, until_voltage_V=4),
+                ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )
+
+    # CC without a voltage
+    with pytest.warns(ProtocolMethodWarning, match="Voltage mismatch"):
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(rate_C=1, until_time_s=100),
+                ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )
+
+    # Tags separating cc-cv are ignored, and still warns about mismatch
+    with pytest.warns(ProtocolMethodWarning, match=r"step 1 .*step 4"):
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(rate_C=1, until_voltage_V=4),
+                Tag(tag="foo"),
+                Tag(tag="bar"),
+                ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )
+
+
+def test_good_cccv_no_warn() -> None:
+    """Matching CC-CV voltages should not warn, with or without a tag between."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolMethodWarning)
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(rate_C=1, until_voltage_V=4.1),
+                ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolMethodWarning)
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[
+                ConstantCurrent(rate_C=1, until_voltage_V=4.1),
+                Tag(tag="foo"),
+                Tag(tag="bar"),
+                ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )
