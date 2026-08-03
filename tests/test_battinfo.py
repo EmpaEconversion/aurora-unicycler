@@ -74,10 +74,9 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
 
     # Check that every key is valid term from emmo
     context = []
-    for key, file in test_data["context_paths"].items():
-        with file.open("r") as f:
-            term_list = json.load(f)
-            context += [key + c.split(".")[-1] for c in term_list]
+    file = test_data["context_path"]
+    with file.open("r") as f:
+        context = json.load(f)
     context += ["@type", "@id", "@context"]
     context = set(context)
 
@@ -137,8 +136,10 @@ def test_to_battinfo_jsonld(test_data: dict) -> None:
     assert bij["@context"] == [
         "https://w3id.org/emmo/domain/battery/context",
         {
-            "emmo": "https://w3id.org/emmo#",
-            "echem": "https://w3id.org/emmo/domain/electrochemistry#",
+            "hasMeasurementUnit": {
+                "@id": "https://w3id.org/emmo#EMMO_bed1d005_b04e_4a90_94cf_02bc678a8569",
+                "@type": "@vocab",
+            },
         },
     ]
 
