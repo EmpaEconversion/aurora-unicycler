@@ -34,6 +34,9 @@ def to_tomato_mpg2(
     # Make sure capacity is set if using C-rate steps
     _utils.validate_capacity_c_rates(protocol)
 
+    # Warn again for missing record params on export
+    _core.check_record_params(protocol, strict=True)
+
     # Remove tags and convert to indices
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)

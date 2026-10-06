@@ -18,6 +18,7 @@ from aurora_unicycler import (
     ProtocolMethodWarning,
     RecordParams,
     SafetyParams,
+    SampleParams,
     Tag,
 )
 from aurora_unicycler._core import _coerce_c_rate
@@ -447,3 +448,134 @@ def test_step_record_params() -> None:
         with pytest.raises(ValidationError) as excinfo:
             type(step)(**step.model_dump(exclude={"step"}), record=RecordParams(time_s=1))
         assert "Extra inputs are not permitted" in str(excinfo.value)
+
+
+def test_missing_step_record_warns() -> None:
+    """Steps with no recording parameters should warn."""
+    with pytest.warns(ProtocolMethodWarning, match=r"Steps 1, 3 have no recording parameters"):
+        CyclingProtocol(
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=1)),
+                OpenCircuitVoltage(until_time_s=1),
+            ],
+        )
+
+    # A single step is named in the singular
+    with pytest.warns(ProtocolMethodWarning, match=r"Step 2 has no recording parameters"):
+        CyclingProtocol(
+            method=[
+                OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=1)),
+                OpenCircuitVoltage(until_time_s=1),
+            ],
+        )
+
+
+def test_record_params_no_warn() -> None:
+    """Steps covered by the protocol or their own record params should not warn."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        # Protocol record applies to every step
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[OpenCircuitVoltage(until_time_s=1), OpenCircuitVoltage(until_time_s=1)],
+        )
+        # Every step sets its own, and only one parameter is needed
+        CyclingProtocol(
+            method=[
+                OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=1)),
+                OpenCircuitVoltage(until_time_s=1, record=RecordParams(voltage_V=0.1)),
+            ],
+        )
+        # Steps which do not record data do not need record params
+        CyclingProtocol(
+            method=[
+                ImpedanceSpectroscopy(amplitude_mA=1, start_frequency_Hz=1000, end_frequency_Hz=1),
+            ],
+        )
+
+
+def test_no_record_params_anywhere() -> None:
+    """A protocol with no recording parameters at all should warn, not error."""
+    with pytest.warns(ProtocolMethodWarning, match="No recording parameters set"):
+        CyclingProtocol(method=[OpenCircuitVoltage(until_time_s=1)])
+
+    # An empty RecordParams does not count as set
+    with pytest.warns(ProtocolMethodWarning, match="No recording parameters set"):
+        CyclingProtocol(
+            record=RecordParams(),
+            method=[OpenCircuitVoltage(until_time_s=1, record=RecordParams())],
+        )
+
+
+def test_no_record_params_export() -> None:
+    """Formats which need a recording condition should error, others should not."""
+    with pytest.warns(ProtocolMethodWarning, match="No recording parameters set"):
+        protocol = CyclingProtocol(
+            sample=SampleParams(name="test", capacity_mAh=1),
+            method=[
+                ConstantCurrent(rate_C=0.5, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.05),
+            ],
+        )
+
+    # BattINFO and PyBaMM do not need record params
+    assert protocol.to_pybamm_experiment()
+    assert protocol.to_battinfo_jsonld()
+
+    for export in (
+        protocol.to_neware_xml,
+        protocol.to_biologic_mps,
+        protocol.to_tomato_mpg2,
+    ):
+        with pytest.raises(ValueError, match="No recording parameters set"):
+            export()
+
+
+def test_record_params_is_set() -> None:
+    """Any single recording parameter counts as set."""
+    assert not RecordParams().is_set()
+    assert RecordParams(time_s=1).is_set()
+    assert RecordParams(voltage_V=0.1).is_set()
+    assert RecordParams(current_mA=0.1).is_set()
+
+
+def test_missing_record_warns_again_on_export() -> None:
+    """Exporting to a cycler format should warn about missing record params again."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        protocol = CyclingProtocol(
+            sample=SampleParams(name="test"),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=1)),
+            ],
+        )
+
+    match = "Step 1 has no recording parameters"
+    with pytest.warns(ProtocolMethodWarning, match=match):
+        protocol.to_neware_xml()
+    with pytest.warns(ProtocolMethodWarning, match=match):
+        protocol.to_biologic_mps()
+    with pytest.warns(ProtocolMethodWarning, match=match):
+        protocol.to_tomato_mpg2()
+
+    # PyBaMM and BattINFO have no recording rate, so they do not warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolMethodWarning)
+        protocol.to_pybamm_experiment()
+        protocol.to_battinfo_jsonld()
+
+
+def test_no_record_params_on_export() -> None:
+    """Removing record params after creation should still error on export."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        protocol = CyclingProtocol(
+            sample=SampleParams(name="test"),
+            record=RecordParams(time_s=1),
+            method=[OpenCircuitVoltage(until_time_s=1)],
+        )
+    protocol.record = RecordParams()
+    with pytest.raises(ValueError, match="No recording parameters set"):
+        protocol.to_neware_xml()
