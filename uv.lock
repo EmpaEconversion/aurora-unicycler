@@ -26,7 +26,7 @@ dev = [
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
     { name = "pre-commit" },
-    { name = "pyld" },
+    { name = "pyld", extra = ["requests"] },
     { name = "pymdown-extensions" },
     { name = "pytest" },
     { name = "ruff" },
@@ -41,7 +41,7 @@ requires-dist = [
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'", specifier = ">=0.30.1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.2.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pyld", marker = "extra == 'dev'", specifier = ">=3.2.0" },
+    { name = "pyld", extras = ["requests"], marker = "extra == 'dev'", specifier = ">=3.2.0" },
     { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=10.17.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.3" },
@@ -934,6 +934,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fe/fa/6a6484248a3ad6bbd9f07ad0e1efa15385747dc2dc61d95f94ebe31924c1/pyld-3.3.0.tar.gz", hash = "sha256:cf5353786582056e76cb1698db32d8fc796250703311d0e5e33dd3e86f23e031", size = 125628, upload-time = "2026-09-02T06:55:18.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/96/d4671916dc981b486cd8e919bf9b3be0463faab3d612e5815efaba63c62b/pyld-3.3.0-py3-none-any.whl", hash = "sha256:58aa63542a5989431426bdfef932db0d1b974e2928e179f74d5a903804de9692", size = 109432, upload-time = "2026-09-02T06:55:16.123Z" },
+]
+
+[package.optional-dependencies]
+requests = [
+    { name = "requests" },
 ]
 
 [[package]]
