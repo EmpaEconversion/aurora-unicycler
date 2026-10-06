@@ -137,7 +137,7 @@ def test_step_record_tomato() -> None:
     assert method[0]["measure_every_dE"] == 0.5
     assert "measure_every_dI" not in method[0]
 
-    # The step record fully replaces the protocol record, it does not merge
+    # Step values take priority, protocol values it does not set are kept
     assert method[1]["measure_every_dt"] == 0.5
     assert method[1]["measure_every_dI"] == 0.1
-    assert "measure_every_dE" not in method[1]
+    assert method[1]["measure_every_dE"] == 0.5

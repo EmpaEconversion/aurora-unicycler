@@ -65,5 +65,13 @@ def validate_capacity_c_rates(protocol: BaseProtocol) -> None:
 
 
 def step_record(protocol: BaseProtocol, step: Step) -> RecordParams:
-    """Get the recording parameters of a step, falling back to the protocol default."""
-    return getattr(step, "record", None) or protocol.record
+    """Merge a step's recording parameters onto the protocol's, step takes priority."""
+    record = getattr(step, "record", None)
+    if record is None:
+        return protocol.record
+    return protocol.record.model_copy(update=record.model_dump(exclude_none=True))
+
+
+def has_step_records(protocol: BaseProtocol) -> bool:
+    """Check whether any step sets its own recording parameters."""
+    return any(getattr(step, "record", None) is not None for step in protocol.method)
