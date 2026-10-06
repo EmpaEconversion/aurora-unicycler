@@ -424,7 +424,7 @@ def test_protocol_export() -> None:
             "max_capacity_mAh": None,
         },
         "method": [
-            {"id": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
+            {"id": None, "record": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
         ],
     }
     protocol_dict = CyclingProtocol.from_dict(ref_protocol_dict).to_dict()
@@ -452,7 +452,7 @@ def test_write_json(tmpdir: Path) -> None:
             "max_capacity_mAh": None,
         },
         "method": [
-            {"id": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
+            {"id": None, "record": None, "step": "open_circuit_voltage", "until_time_s": 100.0},
         ],
     }
     protocol = CyclingProtocol.from_dict(ref_protocol_dict)

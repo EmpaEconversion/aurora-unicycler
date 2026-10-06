@@ -412,3 +412,38 @@ def test_good_cccv_no_warn() -> None:
                 ConstantVoltage(voltage_V=4.1, until_time_s=100),
             ],
         )
+
+
+def test_step_record_params() -> None:
+    """Steps which record data accept their own record params."""
+    protocol = CyclingProtocol.from_dict(
+        {
+            "record": {"time_s": 10},
+            "method": [
+                {"step": "open_circuit_voltage", "until_time_s": 1},
+                {
+                    "step": "open_circuit_voltage",
+                    "until_time_s": 1,
+                    "record": {"time_s": 0.5, "voltage_V": 0.01},
+                },
+            ],
+        },
+    )
+    assert protocol.method[0].record is None
+    assert protocol.method[1].record == RecordParams(time_s=0.5, voltage_V=0.01)
+
+    # Step record params get the same validation as the protocol record params
+    with pytest.raises(ValidationError) as excinfo:
+        OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=1, voltage_V=-1))
+    assert "Input should be greater than 0" in str(excinfo.value)
+
+    # Steps with no recording rate to set have no record params
+    no_record = (
+        Loop(loop_to=1, cycle_count=2),
+        Tag(tag="a"),
+        ImpedanceSpectroscopy(amplitude_mA=1, start_frequency_Hz=1e3, end_frequency_Hz=1),
+    )
+    for step in no_record:
+        with pytest.raises(ValidationError) as excinfo:
+            type(step)(**step.model_dump(exclude={"step"}), record=RecordParams(time_s=1))
+        assert "Extra inputs are not permitted" in str(excinfo.value)

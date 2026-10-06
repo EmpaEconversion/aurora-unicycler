@@ -245,3 +245,34 @@ def test_lsv() -> None:
     assert float(_get_value(step4slope, "Slope1")) == 5
     assert float(_get_value(step4slope, "Slope1", key="StartValue")) == 40000
     assert float(_get_value(step4slope, "Slope1", key="EndValue")) == 30000
+
+
+def test_step_record_neware() -> None:
+    """Steps with their own record params get a Record element."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=10),
+        method=[
+            OpenCircuitVoltage(until_time_s=1),
+            OpenCircuitVoltage(
+                until_time_s=1,
+                record=RecordParams(time_s=0.5, voltage_V=0.01, current_mA=0.2),
+            ),
+        ],
+    )
+    config = ElementTree.fromstring(protocol.to_neware_xml(sample_name="test")).find("config")
+    assert config is not None
+
+    # Global record is still written as the default for steps without an override
+    assert float(_get_value(config, "Whole_Prt/Record/Main/Time")) == 10 * 1000
+
+    step1 = config.find("Step_Info/Step1")
+    assert step1 is not None
+    assert step1.find("Record") is None
+
+    step2 = config.find("Step_Info/Step2")
+    assert step2 is not None
+    assert float(_get_value(step2, "Record/Main/Time")) == 0.5 * 1000
+    assert float(_get_value(step2, "Record/Main/Volt")) == 0.01 * 10000
+    assert float(_get_value(step2, "Record/Main/Curr")) == 0.2
+    # Neware writes Record before Limit
+    assert [child.tag for child in step2] == ["Record", "Limit"]

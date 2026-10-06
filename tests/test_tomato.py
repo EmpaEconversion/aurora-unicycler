@@ -117,3 +117,27 @@ def test_save_file(tmpdir: Path) -> None:
     with (tmpdir / "test.json").open("r") as f:
         file_res = json.loads(f.read())
     assert res == file_res
+
+
+def test_step_record_tomato() -> None:
+    """Steps with their own record params get their own measure_every values."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=10, voltage_V=0.5),
+        method=[
+            OpenCircuitVoltage(until_time_s=1),
+            OpenCircuitVoltage(
+                until_time_s=1,
+                record=RecordParams(time_s=0.5, current_mA=0.1),
+            ),
+        ],
+    )
+    method = json.loads(protocol.to_tomato_mpg2(sample_name="test"))["method"]
+
+    assert method[0]["measure_every_dt"] == 10
+    assert method[0]["measure_every_dE"] == 0.5
+    assert "measure_every_dI" not in method[0]
+
+    # The step record fully replaces the protocol record, it does not merge
+    assert method[1]["measure_every_dt"] == 0.5
+    assert method[1]["measure_every_dI"] == 0.1
+    assert "measure_every_dE" not in method[1]
