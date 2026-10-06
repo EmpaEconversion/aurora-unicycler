@@ -165,8 +165,8 @@ class OpenCircuitVoltage(Step):
 
     Attributes:
         until_time_s: Duration of step in seconds.
-        record: (optional) Recording parameters for this step, replacing the
-            protocol-level `record`.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
@@ -196,8 +196,8 @@ class ConstantCurrent(Step):
         current_mA: (optional) The current applied in mA.
         until_time_s: Duration of step in seconds.
         until_voltage_V: End step when this voltage in V is reached.
-        record: (optional) Recording parameters for this step, replacing the
-            protocol-level `record`.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
@@ -256,8 +256,8 @@ class ConstantVoltage(Step):
         until_time_s: Duration of step in seconds.
         until_rate_C: End step when this C-rate (i.e. mA per mAh) is reached.
         until_current_mA: End step when this current in mA is reached.
-        record: (optional) Recording parameters for this step, replacing the
-            protocol-level `record`.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
@@ -351,8 +351,8 @@ class VoltageScan(Step):
         start_voltage_V: Start voltage in V.
         end_voltage_V: End voltage in V.
         scan_rate_mV_per_s: Voltage scan rate in mV/s, must be positive.
-        record: (optional) Recording parameters for this step, replacing the
-            protocol-level `record`.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
