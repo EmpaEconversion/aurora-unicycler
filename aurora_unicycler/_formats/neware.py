@@ -134,23 +134,29 @@ def _step_to_element(
     """Create step XML element."""
     match step:
         case _core.ConstantCurrent():
-            return _neware_cc(step, step_num, capacity_mAh)
+            step_element = _neware_cc(step, step_num, capacity_mAh)
 
         case _core.ConstantVoltage():
-            return _neware_cv(step, prev_step, step_num, capacity_mAh)
+            step_element = _neware_cv(step, prev_step, step_num, capacity_mAh)
 
         case _core.OpenCircuitVoltage():
-            return _neware_ocv(step, step_num)
+            step_element = _neware_ocv(step, step_num)
 
         case _core.VoltageScan():
-            return _neware_lsv(step, step_num)
+            step_element = _neware_lsv(step, step_num)
 
         case _core.Loop():
-            return _neware_loop(step, step_num)
+            step_element = _neware_loop(step, step_num)
 
         case _:
             msg = f"to_neware_xml() does not support step type: {step.step}"
             raise NotImplementedError(msg)
+
+    # Per-step recording overrides the Whole_Prt record, and goes before Limit
+    record = getattr(step, "record", None)
+    if record is not None:
+        step_element.insert(0, _neware_record_params(record))
+    return step_element
 
 
 def _neware_record_params(record_params: _core.RecordParams) -> ET.Element:

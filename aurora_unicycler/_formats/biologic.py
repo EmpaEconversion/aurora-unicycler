@@ -159,25 +159,26 @@ def to_biologic_mps(
                 "lim3_seq": str(i + 1),
             },
         )
+        record = _utils.step_record(protocol, step)
         match step:
             case _core.OpenCircuitVoltage():
                 step_dict.update(_generate_ocv(step))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "voltage"}))
+                step_dict.update(_generate_rec(record, rec_modes={"time", "voltage"}))
 
             case _core.ConstantCurrent():
                 step_dict.update(_generate_cc(step, protocol))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "voltage"}))
+                step_dict.update(_generate_rec(record, rec_modes={"time", "voltage"}))
 
             case _core.ConstantVoltage():
                 step_dict.update(_generate_cv(step, protocol, step_number=i))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "current"}))
+                step_dict.update(_generate_rec(record, rec_modes={"time", "current"}))
 
             case _core.ImpedanceSpectroscopy():
                 step_dict.update(_generate_eis(step))
 
             case _core.VoltageScan():
                 step_dict.update(_generate_vs(step))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "voltage", "current"}))
+                step_dict.update(_generate_rec(record, rec_modes={"time", "voltage", "current"}))
 
             case _core.Loop():
                 step_dict.update(_generate_loop(step))
@@ -256,34 +257,34 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
     return safety
 
 
-def _generate_rec(protocol: _core.BaseProtocol, rec_modes: set) -> dict[str, str]:
+def _generate_rec(record: _core.RecordParams, rec_modes: set) -> dict[str, str]:
     """Generate recording dictionary."""
     rec_num = 0
     rec_dict = {}
-    if "time" in rec_modes and protocol.record.time_s:
+    if "time" in rec_modes and record.time_s:
         rec_num += 1
         rec_dict.update(
             {
                 f"rec{rec_num}_type": "Time",
-                f"rec{rec_num}_value": f"{protocol.record.time_s:.3f}",
+                f"rec{rec_num}_value": f"{record.time_s:.3f}",
                 f"rec{rec_num}_value_unit": "s",
             },
         )
-    if "voltage" in rec_modes and protocol.record.voltage_V:
+    if "voltage" in rec_modes and record.voltage_V:
         rec_num += 1
         rec_dict.update(
             {
                 f"rec{rec_num}_type": "Ewe",
-                f"rec{rec_num}_value": f"{protocol.record.voltage_V:.3f}",
+                f"rec{rec_num}_value": f"{record.voltage_V:.3f}",
                 f"rec{rec_num}_value_unit": "V",
             },
         )
-    if "current" in rec_modes and protocol.record.current_mA:
+    if "current" in rec_modes and record.current_mA:
         rec_num += 1
         rec_dict.update(
             {
                 f"rec{rec_num}_type": "I",
-                f"rec{rec_num}_value": f"{protocol.record.current_mA:.3f}",
+                f"rec{rec_num}_value": f"{record.current_mA:.3f}",
                 f"rec{rec_num}_value_unit": "mA",
             },
         )
