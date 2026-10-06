@@ -192,11 +192,14 @@ class OpenCircuitVoltage(Step):
 
     Attributes:
         until_time_s: Duration of step in seconds.
+        record: (optional) Recording parameters for this step, replacing the
+            protocol-level `record`.
 
     """
 
     step: Literal["open_circuit_voltage"] = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: float = Field(gt=0)
+    record: RecordParams | None = None
 
     @field_validator("until_time_s", mode="before")
     @classmethod
@@ -220,6 +223,8 @@ class ConstantCurrent(Step):
         current_mA: (optional) The current applied in mA.
         until_time_s: Duration of step in seconds.
         until_voltage_V: End step when this voltage in V is reached.
+        record: (optional) Recording parameters for this step, replacing the
+            protocol-level `record`.
 
     """
 
@@ -228,6 +233,7 @@ class ConstantCurrent(Step):
     current_mA: float | None = None
     until_time_s: float | None = None
     until_voltage_V: float | None = None
+    record: RecordParams | None = None
 
     @field_validator("rate_C", mode="before")
     @classmethod
@@ -279,6 +285,8 @@ class ConstantVoltage(Step):
         until_time_s: Duration of step in seconds.
         until_rate_C: End step when this C-rate (i.e. mA per mAh) is reached.
         until_current_mA: End step when this current in mA is reached.
+        record: (optional) Recording parameters for this step, replacing the
+            protocol-level `record`.
 
     """
 
@@ -287,6 +295,7 @@ class ConstantVoltage(Step):
     until_time_s: float | None = None
     until_rate_C: float | None = None
     until_current_mA: float | None = None
+    record: RecordParams | None = None
 
     @field_validator("until_rate_C", mode="before")
     @classmethod
@@ -374,6 +383,8 @@ class VoltageScan(Step):
         start_voltage_V: Start voltage in V.
         end_voltage_V: End voltage in V.
         scan_rate_mV_per_s: Voltage scan rate in mV/s, must be positive.
+        record: (optional) Recording parameters for this step, replacing the
+            protocol-level `record`.
 
     """
 
@@ -381,6 +392,7 @@ class VoltageScan(Step):
     start_voltage_V: float = Field(description="Start voltage in V")
     end_voltage_V: float = Field(description="End voltage in V")
     scan_rate_mV_per_s: float = Field(description="Voltage scan rate in mV/s", gt=0)
+    record: RecordParams | None = None
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
