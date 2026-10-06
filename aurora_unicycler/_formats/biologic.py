@@ -57,6 +57,9 @@ def to_biologic_mps(
     # Make sure voltage is inside limits
     _check_voltage_range(protocol, range_V)
 
+    # Warn again for missing record params on export
+    _core.check_record_params(protocol, strict=True)
+
     # Remove tags and convert to indices
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
