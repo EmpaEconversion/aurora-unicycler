@@ -35,8 +35,8 @@ jobs:
     
       - name: Install
         run: |
-          uv pip install ruff pytest pytest-cov
-          uv pip install -e .[dev]
+          uv sync --all-extras
+          uv pip install pytest-cov
       - name: Lint with ruff
         run: |
           ruff check --select=F,E9,B
