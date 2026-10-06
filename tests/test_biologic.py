@@ -18,8 +18,8 @@ from aurora_unicycler import (
     RecordParams,
     SafetyParams,
     Step,
-    VoltageScan,
     Tag,
+    VoltageScan,
 )
 
 
@@ -523,3 +523,50 @@ def test_capacity() -> None:
     assert "Battery capacity : 123.457 mA.h" in res
     res = protocol.to_biologic_mps(sample_name="test", capacity_mAh=1234.56789)
     assert "Battery capacity : 1.235 A.h" in res
+
+
+def test_three_record_conditions() -> None:
+    """Voltage scans can record on time, voltage and current."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1, voltage_V=0.01, current_mA=0.1),
+        method=[
+            VoltageScan(start_voltage_V=3, end_voltage_V=4, scan_rate_mV_per_s=1),
+            OpenCircuitVoltage(until_time_s=10),
+        ],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+
+    # The voltage scan uses all three, the OCV has no current to record on
+    assert "rec_nb".ljust(20) + "3".ljust(20) + "2".ljust(20) in res
+    assert "rec1_type".ljust(20) + "Time".ljust(20) + "Time".ljust(20) in res
+    assert "rec2_type".ljust(20) + "Ewe".ljust(20) + "Ewe".ljust(20) in res
+    assert "rec3_type".ljust(20) + "I".ljust(20) + "".ljust(20) in res
+    assert "rec3_value".ljust(20) + "0.100".ljust(20) + "".ljust(20) in res
+    assert "rec3_value_unit".ljust(20) + "mA".ljust(20) + "".ljust(20) in res
+
+
+def test_limit_and_record_rows() -> None:
+    """All three limit and record slots get a row."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[OpenCircuitVoltage(until_time_s=10)],
+    )
+    lines = protocol.to_biologic_mps(sample_name="test").splitlines()
+    step_rows = lines[lines.index("Modulo Bat") + 1 :]
+    lim_rec_rows = [
+        row[:20].strip() for row in step_rows if row[:20].strip().startswith(("lim", "rec"))
+    ]
+
+    lim_fields = ("type", "comp", "Q", "value", "value_unit", "action", "seq")
+    rec_fields = ("type", "value", "value_unit")
+
+    assert lim_rec_rows == [
+        "lim_nb",
+        *[f"lim{n}_{f}" for n in (1, 2, 3) for f in lim_fields],
+        "rec_nb",
+        *[f"rec{n}_{f}" for n in (1, 2, 3) for f in rec_fields],
+    ]
+
+    # Unused limit slots still point at the next sequence
+    for n in (1, 2, 3):
+        assert f"lim{n}_seq".ljust(20) + "1".ljust(20) in "\n".join(lines)
