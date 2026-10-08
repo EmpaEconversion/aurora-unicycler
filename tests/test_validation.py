@@ -322,6 +322,24 @@ def test_impedance_ampliudes() -> None:
         )
     assert "must be set" in str(excinfo)
 
+    ImpedanceSpectroscopy(
+        amplitude_V=1.23,
+        start_frequency_Hz=1.0,
+        end_frequency_Hz=2.0,
+    )
+    with pytest.raises(ValueError, match="Input should be greater than 0"):
+        ImpedanceSpectroscopy(
+            amplitude_V=-1.23,
+            start_frequency_Hz=1.0,
+            end_frequency_Hz=2.0,
+        )
+    with pytest.raises(ValueError, match="Input should be greater than 0"):
+        ImpedanceSpectroscopy(
+            amplitude_V=0.0,
+            start_frequency_Hz=1.0,
+            end_frequency_Hz=2.0,
+        )
+
 
 def test_invalid_safety_limits() -> None:
     """Check min > max not allowed."""
