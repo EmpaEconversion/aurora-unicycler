@@ -180,3 +180,19 @@ def test_save_file(tmpdir: Path) -> None:
     with (tmpdir / "test.jsonld").open("r") as f:
         file_res = json.loads(f.read())
     assert res == file_res
+
+
+def test_loop_to_first_step() -> None:
+    """Loop back to step 1 must not repeat the looped steps outside the loop."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[
+            Tag(tag="a"),
+            OpenCircuitVoltage(until_time_s=1),
+            OpenCircuitVoltage(until_time_s=2),
+            Loop(loop_to="a", cycle_count=3),
+        ],
+    )
+    res = protocol.to_battinfo_jsonld(include_context=False)
+    assert res["@type"] == "IterativeWorkflow"
+    assert "hasNext" not in res

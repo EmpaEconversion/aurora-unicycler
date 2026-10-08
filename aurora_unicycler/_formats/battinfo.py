@@ -29,7 +29,7 @@ def _group_iterative_tasks(
 
     for i, step_number in zip(reversed(list_indices), reversed(step_numbers), strict=True):
         # If the techniques are already included in a loop at a higher depth, skip
-        if skip_above and step_numbers[i] >= skip_above:
+        if skip_above is not None and step_numbers[i] >= skip_above:
             continue
 
         # If the technique is a loop, the whole loop goes inside a tuple
