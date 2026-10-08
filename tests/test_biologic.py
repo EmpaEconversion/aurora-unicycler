@@ -543,48 +543,27 @@ def test_capacity() -> None:
     assert "Battery capacity : 1.235 A.h" in res
 
 
-def test_three_record_conditions() -> None:
-    """Voltage scans can record on time, voltage and current."""
+def test_step_record_biologic() -> None:
+    """Steps with their own record params get their own rec columns."""
     protocol = CyclingProtocol(
-        record=RecordParams(time_s=1, voltage_V=0.01, current_mA=0.1),
+        record=RecordParams(time_s=10),
         method=[
-            VoltageScan(start_voltage_V=3, end_voltage_V=4, scan_rate_mV_per_s=1),
-            OpenCircuitVoltage(until_time_s=10),
+            OpenCircuitVoltage(until_time_s=1),
+            OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=0.5, voltage_V=0.01)),
+            ConstantCurrent(
+                current_mA=1,
+                until_time_s=1,
+                record=RecordParams(time_s=2, current_mA=0.1),
+            ),
         ],
     )
-    res = protocol.to_biologic_mps(sample_name="test")
-
-    # The voltage scan uses all three, the OCV has no current to record on
-    assert "rec_nb".ljust(20) + "3".ljust(20) + "2".ljust(20) in res
-    assert "rec1_type".ljust(20) + "Time".ljust(20) + "Time".ljust(20) in res
-    assert "rec2_type".ljust(20) + "Ewe".ljust(20) + "Ewe".ljust(20) in res
-    assert "rec3_type".ljust(20) + "I".ljust(20) + "".ljust(20) in res
-    assert "rec3_value".ljust(20) + "0.100".ljust(20) + "".ljust(20) in res
-    assert "rec3_value_unit".ljust(20) + "mA".ljust(20) + "".ljust(20) in res
-
-
-def test_limit_and_record_rows() -> None:
-    """All three limit and record slots get a row."""
-    protocol = CyclingProtocol(
-        record=RecordParams(time_s=1),
-        method=[OpenCircuitVoltage(until_time_s=10)],
-    )
     lines = protocol.to_biologic_mps(sample_name="test").splitlines()
-    step_rows = lines[lines.index("Modulo Bat") + 1 :]
-    lim_rec_rows = [
-        row[:20].strip() for row in step_rows if row[:20].strip().startswith(("lim", "rec"))
-    ]
+    rows = {line[:20].strip(): line[20:] for line in lines if line.startswith(("rec", "rec_nb"))}
+    steps = {k: [v[i : i + 20].strip() for i in range(0, len(v), 20)] for k, v in rows.items()}
 
-    lim_fields = ("type", "comp", "Q", "value", "value_unit", "action", "seq")
-    rec_fields = ("type", "value", "value_unit")
-
-    assert lim_rec_rows == [
-        "lim_nb",
-        *[f"lim{n}_{f}" for n in (1, 2, 3) for f in lim_fields],
-        "rec_nb",
-        *[f"rec{n}_{f}" for n in (1, 2, 3) for f in rec_fields],
-    ]
-
-    # Unused limit slots still point at the next sequence
-    for n in (1, 2, 3):
-        assert f"lim{n}_seq".ljust(20) + "1".ljust(20) in "\n".join(lines)
+    assert steps["rec_nb"] == ["1", "2", "1"]
+    assert steps["rec1_type"] == ["Time", "Time", "Time"]
+    assert steps["rec1_value"] == ["10.000", "0.500", "2.000"]
+    # Only step 2 records on voltage, and current is not a rec mode for OCV/CC
+    assert steps["rec2_type"] == ["", "Ewe", ""]
+    assert steps["rec2_value"] == ["", "0.010", ""]

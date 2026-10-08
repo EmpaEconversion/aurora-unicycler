@@ -130,27 +130,33 @@ def _step_to_element(
     step_num: int,
     prev_step: _core.AnyTechnique | None = None,
     capacity_mAh: float | None = None,
+    record: _core.RecordParams | None = None,
 ) -> ET.Element:
     """Create step XML element."""
     match step:
         case _core.ConstantCurrent():
-            return _neware_cc(step, step_num, capacity_mAh)
+            step_element = _neware_cc(step, step_num, capacity_mAh)
 
         case _core.ConstantVoltage():
-            return _neware_cv(step, prev_step, step_num, capacity_mAh)
+            step_element = _neware_cv(step, prev_step, step_num, capacity_mAh)
 
         case _core.OpenCircuitVoltage():
-            return _neware_ocv(step, step_num)
+            step_element = _neware_ocv(step, step_num)
 
         case _core.VoltageScan():
-            return _neware_lsv(step, step_num)
+            step_element = _neware_lsv(step, step_num)
 
         case _core.Loop():
-            return _neware_loop(step, step_num)
+            step_element = _neware_loop(step, step_num)
 
         case _:
             msg = f"to_neware_xml() does not support step type: {step.step}"
             raise NotImplementedError(msg)
+
+    # Neware puts Record before Limit
+    if record is not None:
+        step_element.insert(0, _neware_record_params(record))
+    return step_element
 
 
 def _neware_record_params(record_params: _core.RecordParams) -> ET.Element:
@@ -215,6 +221,9 @@ def to_neware_xml(
     # Make sure capacity is set if using C-rate steps
     _utils.validate_capacity_c_rates(protocol)
 
+    # Warn again for missing record params on export
+    _core.check_record_params(protocol, strict=True)
+
     # Remove tags and convert to indices
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
@@ -243,7 +252,13 @@ def to_neware_xml(
 
     whole_prt = ET.SubElement(config, "Whole_Prt")
     whole_prt.append(_neware_safety_params(protocol.safety))
-    whole_prt.append(_neware_record_params(protocol.record))
+
+    # If no step has its own record params, just write the record params to global
+    # If any step has record params, leave global empty and put merged record params in each step
+    # Otherwise Neware executes both, e.g. global 3 s, step 5 s -> 0, 3, 5, 6 etc.
+    per_step_record = _utils.has_step_records(protocol)
+    if not per_step_record:
+        whole_prt.append(_neware_record_params(protocol.record))
 
     step_info = ET.SubElement(
         config, "Step_Info", Num=str(len(protocol.method) + 1)
@@ -252,8 +267,18 @@ def to_neware_xml(
     for i, technique in enumerate(protocol.method):
         step_num = i + 1
         prev_step = protocol.method[i - 1] if i >= 1 else None
+        # Only steps which can set a record, i.e. not loops, get a Record element
+        record = None
+        if per_step_record and hasattr(technique, "record"):
+            record = _utils.step_record(protocol, technique)
         step_info.append(
-            _step_to_element(technique, step_num, prev_step, protocol.sample.capacity_mAh),
+            _step_to_element(
+                technique,
+                step_num,
+                prev_step,
+                protocol.sample.capacity_mAh,
+                record,
+            ),
         )
 
     # Add an end step

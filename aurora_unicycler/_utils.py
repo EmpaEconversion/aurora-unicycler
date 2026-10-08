@@ -1,6 +1,6 @@
 """Additional protocol validation functions used by exporters in _formats."""
 
-from aurora_unicycler._core import BaseProtocol, Loop, Tag
+from aurora_unicycler._core import BaseProtocol, Loop, RecordParams, Step, Tag
 
 
 def tag_to_indices(protocol: BaseProtocol) -> None:
@@ -62,3 +62,16 @@ def validate_capacity_c_rates(protocol: BaseProtocol) -> None:
     ):
         msg = "Sample capacity must be set if using C-rate steps."
         raise ValueError(msg)
+
+
+def step_record(protocol: BaseProtocol, step: Step) -> RecordParams:
+    """Merge a step's recording parameters onto the protocol's, step takes priority."""
+    record = getattr(step, "record", None)
+    if record is None:
+        return protocol.record
+    return protocol.record.model_copy(update=record.model_dump(exclude_none=True))
+
+
+def has_step_records(protocol: BaseProtocol) -> bool:
+    """Check whether any step sets its own recording parameters."""
+    return any(getattr(step, "record", None) is not None for step in protocol.method)

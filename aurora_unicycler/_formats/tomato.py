@@ -34,6 +34,9 @@ def to_tomato_mpg2(
     # Make sure capacity is set if using C-rate steps
     _utils.validate_capacity_c_rates(protocol)
 
+    # Warn again for missing record params on export
+    _core.check_record_params(protocol, strict=True)
+
     # Remove tags and convert to indices
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
@@ -62,12 +65,13 @@ def to_tomato_mpg2(
         if isinstance(
             step, (_core.ConstantCurrent, _core.ConstantVoltage, _core.OpenCircuitVoltage)
         ):
-            if protocol.record.time_s:
-                tomato_step["measure_every_dt"] = protocol.record.time_s
-            if protocol.record.current_mA:
-                tomato_step["measure_every_dI"] = protocol.record.current_mA
-            if protocol.record.voltage_V:
-                tomato_step["measure_every_dE"] = protocol.record.voltage_V
+            record = _utils.step_record(protocol, step)
+            if record.time_s:
+                tomato_step["measure_every_dt"] = record.time_s
+            if record.current_mA:
+                tomato_step["measure_every_dI"] = record.current_mA
+            if record.voltage_V:
+                tomato_step["measure_every_dE"] = record.voltage_V
             tomato_step["I_range"] = "10 mA"
             tomato_step["E_range"] = "+-5.0 V"
 
