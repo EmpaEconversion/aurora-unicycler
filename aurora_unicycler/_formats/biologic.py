@@ -478,6 +478,12 @@ def _generate_eis(step: _core.ImpedanceSpectroscopy) -> dict[str, str]:
         elif freq >= 1e-3:
             step_dict.update({f"ctrl{ctrl}_val": f"{freq * 1e3:.3f}"})
             step_dict.update({f"ctrl{ctrl}_val_unit": "mHz"})
+        elif freq >= 1e-6:
+            step_dict.update({f"ctrl{ctrl}_val": f"{freq * 1e6:.3f}"})
+            step_dict.update({f"ctrl{ctrl}_val_unit": "µHz"})
+        else:
+            msg = f"Frequency {freq} too low for EIS."
+            raise ValueError(msg)
     step_dict.update(
         {
             "ctrl_Nd": f"{step.points_per_decade}",
