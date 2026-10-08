@@ -359,6 +359,24 @@ def test_impedance_frequency_units() -> None:
     assert "ctrl3_val".ljust(20) + "100.000".ljust(20) in res
     assert "ctrl3_val_unit".ljust(20) + "kHz".ljust(20) in res
 
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[
+            ImpedanceSpectroscopy(amplitude_V=1e-3, start_frequency_Hz=1e-5, end_frequency_Hz=1e-4)
+        ],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "ctrl2_val".ljust(20) + "10.000".ljust(20) in res
+    assert "ctrl2_val_unit".ljust(20) + "µHz".ljust(20) in res
+    assert "ctrl3_val".ljust(20) + "100.000".ljust(20) in res
+    assert "ctrl3_val_unit".ljust(20) + "µHz".ljust(20) in res
+
+    eis = ImpedanceSpectroscopy(amplitude_V=1e-5, start_frequency_Hz=1e-5, end_frequency_Hz=1e5)
+    eis.start_frequency_Hz = 1e-7  # Bypass validation
+    protocol = CyclingProtocol(record=RecordParams(time_s=1), method=[eis])
+    with pytest.raises(ValueError, match="too low for EIS"):
+        res = protocol.to_biologic_mps(sample_name="test")
+
 
 def test_save_file(tmpdir: Path) -> None:
     """Check file is written correctly."""
