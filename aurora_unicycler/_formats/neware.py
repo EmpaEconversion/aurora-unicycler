@@ -179,7 +179,7 @@ def _neware_safety_params(safety: _core.SafetyParams) -> ET.Element:
         ET.SubElement(curr, "Upper", Value=f"{safety.max_current_mA:f}")
     if safety.min_current_mA is not None:
         ET.SubElement(curr, "Lower", Value=f"{safety.min_current_mA:f}")
-    if safety.delay_s:
+    if safety.delay_s is not None:
         ET.SubElement(main_protect, "Delay_Time", Value=f"{safety.delay_s * 1000:f}")
     cap = ET.SubElement(main_protect, "Cap")
     if safety.max_capacity_mAh:
