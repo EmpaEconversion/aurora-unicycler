@@ -1,6 +1,7 @@
 """Extension for Biologic mps settings."""
 
 import logging
+from decimal import ROUND_CEILING, Decimal
 from pathlib import Path
 
 from aurora_unicycler import _core, _utils
@@ -234,6 +235,20 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
                 )
             max_abs_current_mA = max(curr_lim1, curr_lim2)
             safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
+    if (orig_max_cap_mAh := protocol.safety.max_capacity_mAh) is not None:
+        # Biologic stores 2 d.p., round up so the limit is never tighter than requested
+        # Decimal quantize as ceil rounds up some floats wrong, e.g. 0.07->0.08
+        max_cap_mAh = Decimal(str(orig_max_cap_mAh)).quantize(
+            Decimal("0.01"), rounding=ROUND_CEILING
+        )
+        if float(max_cap_mAh) / orig_max_cap_mAh > 1.05:
+            logger.warning(
+                "Biologic stores max capacity in mAh to 2 decimal places. "
+                "Your value %s mAh was rounded up to %s mAh.",
+                orig_max_cap_mAh,
+                max_cap_mAh,
+            )
+        safety += [f"\t|Q-Qo| = {max_cap_mAh} mA.h"]
     delay_ms = (protocol.safety.delay_s or 0) * 1000
     if delay_ms > 1000:
         logger.warning(
