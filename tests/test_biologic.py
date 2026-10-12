@@ -511,6 +511,59 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
     assert "Using 2.5 mA as the absolute limit." in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("capacity_mAh", "expected", "warns"),
+    [
+        (1e-11, "0.01", True),
+        (0.005, "0.01", True),
+        (0.01, "0.01", False),
+        (0.07, "0.07", False),
+        (1.1, "1.10", False),
+        (0.191, "0.20", False),
+        (0.1901, "0.20", True),
+        (0.123, "0.13", True),
+        (123.451, "123.46", False),
+    ],
+)
+def test_safety_capacity(
+    caplog: pytest.LogCaptureFixture,
+    capacity_mAh: float,
+    expected: str,
+    *,
+    warns: bool,
+) -> None:
+    """Capacity limit rounds up to 2 d.p., warning if it increases by over 5%."""
+    caplog.set_level(logging.WARNING)
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(max_capacity_mAh=capacity_mAh),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert f"\t|Q-Qo| = {expected} mA.h\n" in res
+    assert ("rounded up" in caplog.text) == warns
+
+
+def test_zero_safety_current_warns(caplog: pytest.LogCaptureFixture) -> None:
+    """Current safety limits at zero warns and ignores."""
+    caplog.set_level(logging.WARNING)
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(max_current_mA=1),
+        method=[OpenCircuitVoltage(until_time_s=1000)],
+    )
+    # Normal current safety setting works
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "\t|I| = 1.00000 mA" in res
+    assert "Ignoring current limits in this protocol" not in caplog.text
+
+    # Safety setting at 0 ignored and warns
+    protocol.safety = SafetyParams(max_current_mA=0)
+    res = protocol.to_biologic_mps(sample_name="test")
+    assert "\t|I| =" not in res
+    assert "Ignoring current limits in this protocol" in caplog.text
+
+
 def test_lsv() -> None:
     """Test linear sweep voltammetry."""
     protocol = CyclingProtocol(
