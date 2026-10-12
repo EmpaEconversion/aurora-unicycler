@@ -65,10 +65,10 @@ def _empty_string_is_none(v: float | str | None) -> float | None:
     return float(v)
 
 
-def _zero_is_none(v: float | None, step: str, field: str) -> float | None:
+def _zero_is_none(v: float | None, model: str, field: str) -> float | None:
     """Zero means unset for this field, warn and return None."""
     if v == 0:
-        msg = f"{step} {field}=0 is ignored and treated as unset."
+        msg = f"{model} {field}=0 is ignored and treated as unset."
         warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
         return None
     return v
@@ -147,6 +147,12 @@ class SafetyParams(BaseModel):
     delay_s: float | None = Field(ge=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("max_capacity_mAh", mode="after")
+    @classmethod
+    def _ignore_zero(cls, v: float | None, info: ValidationInfo) -> float | None:
+        """Zero capacity limit is treated as unset."""
+        return _zero_is_none(v, cls.__name__, str(info.field_name))
 
     @model_validator(mode="after")
     def _validate_limits(self) -> Self:
