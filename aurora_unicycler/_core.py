@@ -8,7 +8,14 @@ from itertools import pairwise
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from typing_extensions import Self
 
 from aurora_unicycler.version import __version__
@@ -56,6 +63,15 @@ def _empty_string_is_none(v: float | str | None) -> float | None:
     if v is None or (isinstance(v, str) and v.strip() == ""):
         return None
     return float(v)
+
+
+def _zero_is_none(v: float | None, model: str, field: str) -> float | None:
+    """Zero means unset for this field, warn and return None."""
+    if v == 0:
+        msg = f"{model} {field}=0 is ignored and treated as unset."
+        warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
+        return None
+    return v
 
 
 class UnicyclerParams(BaseModel):
@@ -131,6 +147,12 @@ class SafetyParams(BaseModel):
     delay_s: float | None = Field(ge=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("max_capacity_mAh", mode="after")
+    @classmethod
+    def _ignore_zero(cls, v: float | None, info: ValidationInfo) -> float | None:
+        """Zero capacity limit is treated as unset."""
+        return _zero_is_none(v, cls.__name__, str(info.field_name))
 
     @model_validator(mode="after")
     def _validate_limits(self) -> Self:
@@ -214,12 +236,16 @@ class ConstantCurrent(Step):
         """Empty string is interpreted as None."""
         return _empty_string_is_none(v)
 
+    @field_validator("rate_C", "current_mA", "until_time_s", mode="after")
+    @classmethod
+    def _ignore_zero(cls, v: float | None, info: ValidationInfo) -> float | None:
+        """Zero current or time is treated as unset."""
+        return _zero_is_none(v, cls.__name__, str(info.field_name))
+
     @model_validator(mode="after")
     def _ensure_rate_or_current(self) -> Self:
         """Ensure at least one of rate_C or current_mA is set."""
-        has_rate_C = self.rate_C is not None and self.rate_C != 0
-        has_current_mA = self.current_mA is not None and self.current_mA != 0
-        if not (has_rate_C or has_current_mA):
+        if self.rate_C is None and self.current_mA is None:
             msg = "Either rate_C or current_mA must be set and non-zero."
             raise ValueError(msg)
         return self
@@ -227,10 +253,8 @@ class ConstantCurrent(Step):
     @model_validator(mode="after")
     def _ensure_stop_condition(self) -> Self:
         """Ensure at least one stop condition is set."""
-        has_time_s = self.until_time_s is not None and self.until_time_s != 0
-        has_voltage_V = self.until_voltage_V is not None and self.until_voltage_V != 0
-        if not (has_time_s or has_voltage_V):
-            msg = "Either until_time_s or until_voltage_V must be set and non-zero."
+        if self.until_time_s is None and self.until_voltage_V is None:
+            msg = "Either until_time_s must be set and non-zero, or until_voltage_V must be set."
             raise ValueError(msg)
         return self
 
@@ -271,13 +295,16 @@ class ConstantVoltage(Step):
         """Empty string is interpreted as None."""
         return _empty_string_is_none(v)
 
+    @field_validator("until_time_s", "until_rate_C", "until_current_mA", mode="after")
+    @classmethod
+    def _ignore_zero(cls, v: float | None, info: ValidationInfo) -> float | None:
+        """Zero current or time is treated as unset."""
+        return _zero_is_none(v, cls.__name__, str(info.field_name))
+
     @model_validator(mode="after")
     def _check_stop_condition(self) -> Self:
         """Ensure at least one of until_rate_C or until_current_mA is set."""
-        has_time_s = self.until_time_s is not None and self.until_time_s != 0
-        has_rate_C = self.until_rate_C is not None and self.until_rate_C != 0
-        has_current_mA = self.until_current_mA is not None and self.until_current_mA != 0
-        if not (has_time_s or has_rate_C or has_current_mA):
+        if all(v is None for v in (self.until_time_s, self.until_rate_C, self.until_current_mA)):
             msg = "Either until_time_s, until_rate_C, or until_current_mA must be set and non-zero."
             raise ValueError(msg)
         return self
@@ -304,8 +331,8 @@ class ImpedanceSpectroscopy(Step):
     """
 
     step: Literal["impedance_spectroscopy"] = Field(default="impedance_spectroscopy", frozen=True)
-    amplitude_V: float | None = None
-    amplitude_mA: float | None = None
+    amplitude_V: Annotated[float, Field(gt=0)] | None = None
+    amplitude_mA: Annotated[float, Field(gt=0)] | None = None
     start_frequency_Hz: float = Field(ge=1e-5, le=1e7, description="Start frequency in Hz")
     end_frequency_Hz: float = Field(ge=1e-5, le=1e7, description="End frequency in Hz")
     points_per_decade: int = Field(gt=0, default=10)

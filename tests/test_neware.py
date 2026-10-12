@@ -14,6 +14,7 @@ from aurora_unicycler import (
     CyclingProtocol,
     Loop,
     OpenCircuitVoltage,
+    ProtocolMethodWarning,
     RecordParams,
     SafetyParams,
     SampleParams,
@@ -182,6 +183,32 @@ def test_safety() -> None:
     assert float(_get_value(safety, "Curr/Upper")) == 10.0
     assert float(_get_value(safety, "Curr/Lower")) == -10.0
     assert float(_get_value(safety, "Cap/Upper")) == 5.0 * 3600
+
+
+def test_safety_zeros() -> None:
+    """Zero delay and current limits are written, zero capacity limit is not."""
+    with pytest.warns(ProtocolMethodWarning, match="max_capacity_mAh=0 is ignored"):
+        safety_params = SafetyParams(
+            max_current_mA=1.0,
+            min_current_mA=0.0,
+            max_capacity_mAh=0.0,
+            delay_s=0.0,
+        )
+    protocol = CyclingProtocol(
+        sample=SampleParams(name="test"),
+        record=RecordParams(time_s=1),
+        safety=safety_params,
+        method=[
+            OpenCircuitVoltage(until_time_s=1),
+        ],
+    )
+
+    safety = ElementTree.fromstring(protocol.to_neware_xml()).find("config/Whole_Prt/Protect/Main")
+    assert safety is not None
+
+    assert float(_get_value(safety, "Curr/Lower")) == 0.0
+    assert float(_get_value(safety, "Delay_Time")) == 0.0
+    assert safety.find("Cap/Upper") is None
 
 
 def test_unknown_step() -> None:

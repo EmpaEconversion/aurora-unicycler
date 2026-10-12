@@ -32,7 +32,7 @@ def _stringify_constant_current(step: _core.ConstantCurrent) -> str:
     conditions = []
     if step.until_time_s:
         conditions.append(_make_time_condition(step.until_time_s))
-    if step.until_voltage_V:
+    if step.until_voltage_V is not None:
         conditions.append(f"until {step.until_voltage_V} V")
     if conditions:
         step_str += " " + " or ".join(conditions)

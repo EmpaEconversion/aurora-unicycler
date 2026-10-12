@@ -217,16 +217,22 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
     if protocol.safety.max_current_mA is not None or protocol.safety.min_current_mA is not None:
         curr_lim1 = abs(protocol.safety.min_current_mA or 0)
         curr_lim2 = abs(protocol.safety.max_current_mA or 0)
-        if curr_lim1 != curr_lim2:
+        if curr_lim1 == 0 and curr_lim2 == 0:
             logger.warning(
-                "Biologic only sets one absolute current limit. You set limits to %s - %s mA. "
-                "Using %s mA as the absolute limit.",
-                protocol.safety.min_current_mA,
-                protocol.safety.max_current_mA,
-                max(curr_lim1, curr_lim2),
+                "Biologic only sets one absolute current limit. You set a limit to 0 mA. "
+                "Ignoring current limits in this protocol.",
             )
-        max_abs_current_mA = max(curr_lim1, curr_lim2)
-        safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
+        else:
+            if curr_lim1 != curr_lim2:
+                logger.warning(
+                    "Biologic only sets one absolute current limit. You set limits to %s - %s mA. "
+                    "Using %s mA as the absolute limit.",
+                    protocol.safety.min_current_mA,
+                    protocol.safety.max_current_mA,
+                    max(curr_lim1, curr_lim2),
+                )
+            max_abs_current_mA = max(curr_lim1, curr_lim2)
+            safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
     delay_ms = (protocol.safety.delay_s or 0) * 1000
     if delay_ms > 1000:
         logger.warning(
@@ -244,11 +250,11 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
     for step in protocol.method:
         if (
             isinstance(step, _core.ConstantCurrent)
-            and step.until_voltage_V
+            and step.until_voltage_V is not None
             and (step.until_voltage_V > high_range_V or step.until_voltage_V < low_range_V)
         ) or (
             isinstance(step, _core.ConstantVoltage)
-            and step.voltage_V
+            and step.voltage_V is not None
             and (step.voltage_V > high_range_V or step.voltage_V < low_range_V)
         ):
             msg = f"Method contains step with voltage outside of range ({range_V} V)"
@@ -354,7 +360,7 @@ def _generate_cc(step: _core.ConstantCurrent, protocol: _core.BaseProtocol) -> d
                 f"lim{lim_num}_value_unit": "s",
             },
         )
-    if step.until_voltage_V:
+    if step.until_voltage_V is not None:
         lim_num += 1
         comp = ">" if current_mA > 0 else "<"
         step_dict.update(

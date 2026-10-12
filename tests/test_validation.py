@@ -29,17 +29,34 @@ def test_constant_current_validation() -> None:
     with pytest.raises(ValueError):
         # Missing rate_C and current_mA
         ConstantCurrent()
-    with pytest.raises(ValueError):
+    with (
+        pytest.raises(ValueError),
+        pytest.warns(ProtocolMethodWarning, match="rate_C=0 is ignored"),
+        pytest.warns(ProtocolMethodWarning, match="current_mA=0 is ignored"),
+    ):
         # rate_C and current_mA are zero
         ConstantCurrent(rate_C=0, current_mA=0)
     with pytest.raises(ValueError):
         # Missing stop condition
         ConstantCurrent(rate_C=0.1)
-    with pytest.raises(ValueError):
-        # stop conditions are zero
-        ConstantCurrent(rate_C=0.1, until_time_s=0, until_voltage_V=0)
+    with (
+        pytest.raises(ValueError),
+        pytest.warns(ProtocolMethodWarning, match="until_time_s=0 is ignored"),
+    ):
+        # zero time is not a stop condition
+        ConstantCurrent(rate_C=0.1, until_time_s=0)
     cc = ConstantCurrent(rate_C=0.1, until_voltage_V=4.2)
     assert isinstance(cc, ConstantCurrent)
+    # 0 V is a valid cut-off, zero time is ignored
+    with pytest.warns(ProtocolMethodWarning, match="until_time_s=0 is ignored"):
+        cc = ConstantCurrent(rate_C=-0.1, until_time_s=0, until_voltage_V=0)
+    assert cc.until_voltage_V == 0
+    assert cc.until_time_s is None
+    # zero current is ignored, the other is used
+    with pytest.warns(ProtocolMethodWarning, match="rate_C=0 is ignored"):
+        cc = ConstantCurrent(rate_C=0, current_mA=5, until_voltage_V=4)
+    assert cc.rate_C is None
+    assert cc.current_mA == 5
 
 
 def test_constant_voltage_validation() -> None:
@@ -47,7 +64,12 @@ def test_constant_voltage_validation() -> None:
     with pytest.raises(ValueError):
         # Missing stop condition
         ConstantVoltage(voltage_V=4.2)
-    with pytest.raises(ValueError):
+    with (
+        pytest.raises(ValueError),
+        pytest.warns(ProtocolMethodWarning, match="until_time_s=0 is ignored"),
+        pytest.warns(ProtocolMethodWarning, match="until_rate_C=0 is ignored"),
+        pytest.warns(ProtocolMethodWarning, match="until_current_mA=0 is ignored"),
+    ):
         # stop conditions are zero
         ConstantVoltage(
             voltage_V=4.2,
@@ -57,6 +79,11 @@ def test_constant_voltage_validation() -> None:
         )
     cv = ConstantVoltage(voltage_V=4.2, until_rate_C=0.05)
     assert isinstance(cv, ConstantVoltage)
+    # 0 V is a valid voltage
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolMethodWarning)
+        cv = ConstantVoltage(voltage_V=0, until_time_s=10)
+    assert cv.voltage_V == 0
 
 
 def test_protocol_c_rate_validation(test_data: dict) -> None:
@@ -321,6 +348,24 @@ def test_impedance_ampliudes() -> None:
             end_frequency_Hz=100,
         )
     assert "must be set" in str(excinfo)
+
+    ImpedanceSpectroscopy(
+        amplitude_V=1.23,
+        start_frequency_Hz=1.0,
+        end_frequency_Hz=2.0,
+    )
+    with pytest.raises(ValueError, match="Input should be greater than 0"):
+        ImpedanceSpectroscopy(
+            amplitude_V=-1.23,
+            start_frequency_Hz=1.0,
+            end_frequency_Hz=2.0,
+        )
+    with pytest.raises(ValueError, match="Input should be greater than 0"):
+        ImpedanceSpectroscopy(
+            amplitude_V=0.0,
+            start_frequency_Hz=1.0,
+            end_frequency_Hz=2.0,
+        )
 
 
 def test_invalid_safety_limits() -> None:
