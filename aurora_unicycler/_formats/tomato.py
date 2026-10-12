@@ -22,6 +22,7 @@ def to_tomato_mpg2(
         protocol.sample.name = sample_name
     if capacity_mAh:
         protocol.sample.capacity_mAh = capacity_mAh
+        _core.check_rate_current(protocol)
 
     # Make sure sample name is set
     if not protocol.sample.name or protocol.sample.name == "$NAME":

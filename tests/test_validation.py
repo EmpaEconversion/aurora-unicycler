@@ -18,6 +18,7 @@ from aurora_unicycler import (
     ProtocolMethodWarning,
     RecordParams,
     SafetyParams,
+    SampleParams,
     Tag,
 )
 from aurora_unicycler._core import _coerce_c_rate
@@ -455,5 +456,49 @@ def test_good_cccv_no_warn() -> None:
                 Tag(tag="foo"),
                 Tag(tag="bar"),
                 ConstantVoltage(voltage_V=4.1, until_time_s=100),
+            ],
+        )
+
+
+def test_rate_current_mismatch_warn() -> None:
+    """Warn when C-rate and current are both set and disagree for the capacity."""
+    method = [
+        ConstantCurrent(rate_C=0.5, current_mA=4, until_voltage_V=4.2),
+        ConstantVoltage(voltage_V=4.2, until_rate_C=0.05, until_current_mA=0.4),
+    ]
+    with (
+        pytest.warns(ProtocolMethodWarning, match=r"Step 1: rate_C=0.5 .* is 5 mA"),
+        pytest.warns(ProtocolMethodWarning, match=r"Step 2: until_rate_C=0.05 .* is 0.5 mA"),
+    ):
+        CyclingProtocol(
+            record=RecordParams(time_s=1), sample=SampleParams(capacity_mAh=10), method=method
+        )
+
+    # Without a capacity there is nothing to compare, until it is given on export
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolMethodWarning)
+        protocol = CyclingProtocol(record=RecordParams(time_s=1), method=method)
+    with pytest.warns(ProtocolMethodWarning, match="rate_C takes priority"):
+        protocol.to_neware_xml(sample_name="test", capacity_mAh=10)
+
+    # Sign counts as a mismatch
+    with pytest.warns(ProtocolMethodWarning, match=r"is -5 mA, but current_mA=5"):
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            sample=SampleParams(capacity_mAh=10),
+            method=[ConstantCurrent(rate_C=-0.5, current_mA=5, until_voltage_V=3)],
+        )
+
+
+def test_rate_current_match_no_warn() -> None:
+    """Matching C-rate and current, within rounding, should not warn."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolMethodWarning)
+        CyclingProtocol(
+            record=RecordParams(time_s=1),
+            sample=SampleParams(capacity_mAh=10),
+            method=[
+                ConstantCurrent(rate_C="C/3", current_mA=3.333, until_voltage_V=4.2),
+                ConstantVoltage(voltage_V=4.2, until_rate_C=0.05, until_current_mA=0.5),
             ],
         )
