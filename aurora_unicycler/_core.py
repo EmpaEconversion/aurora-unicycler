@@ -228,9 +228,9 @@ class ConstantCurrent(Step):
     def _ensure_stop_condition(self) -> Self:
         """Ensure at least one stop condition is set."""
         has_time_s = self.until_time_s is not None and self.until_time_s != 0
-        has_voltage_V = self.until_voltage_V is not None and self.until_voltage_V != 0
+        has_voltage_V = self.until_voltage_V is not None
         if not (has_time_s or has_voltage_V):
-            msg = "Either until_time_s or until_voltage_V must be set and non-zero."
+            msg = "Either until_time_s must be set and non-zero, or until_voltage_V must be set."
             raise ValueError(msg)
         return self
 

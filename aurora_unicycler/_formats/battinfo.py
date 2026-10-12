@@ -107,7 +107,7 @@ def _battinfoify_technique(step: _core.AnyTechnique, capacity_mAh: float | None)
                         "hasMeasurementUnit": "CRateUnit",
                     },
                 )
-            if step.until_voltage_V:
+            if step.until_voltage_V is not None:
                 inputs.append(
                     {
                         "@type": [

@@ -36,10 +36,13 @@ def test_constant_current_validation() -> None:
         # Missing stop condition
         ConstantCurrent(rate_C=0.1)
     with pytest.raises(ValueError):
-        # stop conditions are zero
-        ConstantCurrent(rate_C=0.1, until_time_s=0, until_voltage_V=0)
+        # zero time is not a stop condition
+        ConstantCurrent(rate_C=0.1, until_time_s=0)
     cc = ConstantCurrent(rate_C=0.1, until_voltage_V=4.2)
     assert isinstance(cc, ConstantCurrent)
+    # 0 V is a valid cut-off
+    cc = ConstantCurrent(rate_C=-0.1, until_time_s=0, until_voltage_V=0)
+    assert cc.until_voltage_V == 0
 
 
 def test_constant_voltage_validation() -> None:

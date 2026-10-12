@@ -93,7 +93,7 @@ def to_tomato_mpg2(
                         tomato_step["current"] = step.current_mA / 1000
                 if step.until_time_s:
                     tomato_step["time"] = step.until_time_s
-                if step.until_voltage_V:
+                if step.until_voltage_V is not None:
                     if charging:
                         tomato_step["limit_voltage_max"] = step.until_voltage_V
                     else:

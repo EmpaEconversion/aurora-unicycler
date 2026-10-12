@@ -13,29 +13,28 @@ def _neware_cc(
     step: _core.ConstantCurrent, step_num: int, capacity_mAh: float | None
 ) -> ET.Element:
     """Create ConstantCurrent step XML element."""
-    if step.rate_C is not None and step.rate_C != 0:
+    if step.rate_C:
         step_type = "1" if step.rate_C > 0 else "2"
     else:
-        assert step.current_mA is not None  # noqa: S101  ensured by Pydantic
-        assert step.current_mA != 0  # noqa: S101  ensured by Pydantic
+        assert step.current_mA  # noqa: S101  ensured by Pydantic
         step_type = "1" if step.current_mA > 0 else "2"
 
     step_element = ET.Element(f"Step{step_num}", Step_ID=str(step_num), Step_Type=step_type)
     limit = ET.SubElement(step_element, "Limit")
     main = ET.SubElement(limit, "Main")
-    if step.rate_C is not None:
-        assert capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
+    if step.rate_C:
+        assert capacity_mAh  # noqa: S101, from _validate_capacity_c_rates()
         ET.SubElement(main, "Rate", Value=f"{abs(step.rate_C):f}")
         ET.SubElement(
             main,
             "Curr",
             Value=f"{abs(step.rate_C) * capacity_mAh:f}",
         )
-    elif step.current_mA is not None:
+    elif step.current_mA:
         ET.SubElement(main, "Curr", Value=f"{abs(step.current_mA):f}")
-    if step.until_time_s is not None:
+    if step.until_time_s:
         ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
-    if step.until_voltage_V is not None:
+    if step.until_voltage_V is not None:  # 0 V is allowed as a condition
         ET.SubElement(main, "Stop_Volt", Value=f"{step.until_voltage_V * 10000:f}")
     return step_element
 
@@ -51,15 +50,15 @@ def _neware_cv(
     prev_rate_C = None
     prev_current_mA = None
     if isinstance(prev_step, _core.ConstantCurrent) and prev_step.until_voltage_V == step.voltage_V:
-        if prev_step.rate_C is not None:
-            assert capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
+        if prev_step.rate_C:
+            assert capacity_mAh  # noqa: S101, from _validate_capacity_c_rates()
             prev_rate_C = abs(prev_step.rate_C)
             prev_current_mA = abs(prev_step.rate_C) * capacity_mAh
-        elif prev_step.current_mA is not None:
+        elif prev_step.current_mA:
             prev_current_mA = abs(prev_step.current_mA)
-    if step.until_rate_C is not None and step.until_rate_C != 0:
+    if step.until_rate_C:
         step_type = "3" if step.until_rate_C > 0 else "19"
-    elif step.until_current_mA is not None and step.until_current_mA != 0:
+    elif step.until_current_mA:
         step_type = "3" if step.until_current_mA > 0 else "19"
     else:
         step_type = "3"  # If it can't be figured out, default to charge
@@ -67,27 +66,27 @@ def _neware_cv(
     limit = ET.SubElement(step_element, "Limit")
     main = ET.SubElement(limit, "Main")
     ET.SubElement(main, "Volt", Value=f"{step.voltage_V * 10000:f}")
-    if step.until_time_s is not None:
+    if step.until_time_s:
         ET.SubElement(main, "Time", Value=f"{step.until_time_s * 1000:f}")
-    if step.until_rate_C is not None:
-        assert capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
+    if step.until_rate_C:
+        assert capacity_mAh  # noqa: S101, from _validate_capacity_c_rates()
         ET.SubElement(main, "Stop_Rate", Value=f"{abs(step.until_rate_C):f}")
         ET.SubElement(
             main,
             "Stop_Curr",
             Value=f"{abs(step.until_rate_C) * capacity_mAh:f}",
         )
-    elif step.until_current_mA is not None:
+    elif step.until_current_mA:
         ET.SubElement(main, "Stop_Curr", Value=f"{abs(step.until_current_mA):f}")
-    if prev_rate_C is not None:
-        assert capacity_mAh is not None  # noqa: S101, from _validate_capacity_c_rates()
+    if prev_rate_C:
+        assert capacity_mAh  # noqa: S101, from _validate_capacity_c_rates()
         ET.SubElement(main, "Rate", Value=f"{abs(prev_rate_C):f}")
         ET.SubElement(
             main,
             "Curr",
             Value=f"{abs(prev_rate_C) * capacity_mAh:f}",
         )
-    elif prev_current_mA is not None:
+    elif prev_current_mA:
         ET.SubElement(main, "Curr", Value=f"{abs(prev_current_mA):f}")
     return step_element
 
@@ -176,9 +175,9 @@ def _neware_safety_params(safety: _core.SafetyParams) -> ET.Element:
     if safety.min_voltage_V is not None:
         ET.SubElement(volt, "Lower", Value=f"{safety.min_voltage_V * 10000:f}")
     curr = ET.SubElement(main_protect, "Curr")
-    if safety.max_current_mA:
+    if safety.max_current_mA is not None:
         ET.SubElement(curr, "Upper", Value=f"{safety.max_current_mA:f}")
-    if safety.min_current_mA:
+    if safety.min_current_mA is not None:
         ET.SubElement(curr, "Lower", Value=f"{safety.min_current_mA:f}")
     if safety.delay_s:
         ET.SubElement(main_protect, "Delay_Time", Value=f"{safety.delay_s * 1000:f}")
