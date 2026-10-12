@@ -5,6 +5,7 @@ import warnings
 from collections.abc import Sequence
 from copy import deepcopy
 from itertools import pairwise
+from math import isclose
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -474,6 +475,30 @@ AnyTechnique = Annotated[
 ]
 
 
+def check_rate_current(protocol: "BaseProtocol") -> None:
+    """Warn if C-rate and current_mA are both set and disagree."""
+    capacity_mAh = protocol.sample.capacity_mAh
+    if not capacity_mAh:
+        return
+    for i, step in enumerate(protocol.method):
+        if isinstance(step, ConstantCurrent):
+            pair = ("rate_C", step.rate_C, "current_mA", step.current_mA)
+        elif isinstance(step, ConstantVoltage):
+            pair = ("until_rate_C", step.until_rate_C, "until_current_mA", step.until_current_mA)
+        else:
+            continue
+        rate_name, rate_C, current_name, current_mA = pair
+        if not rate_C or not current_mA:
+            continue
+        rate_mA = rate_C * capacity_mAh
+        if not isclose(rate_mA, current_mA, rel_tol=1e-3):
+            msg = (
+                f"Step {i + 1}: {rate_name}={rate_C} with capacity {capacity_mAh} mAh "
+                f"is {rate_mA:g} mA, but {current_name}={current_mA}. {rate_name} takes priority."
+            )
+            warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
+
+
 class BaseProtocol(BaseModel):
     """Internal base protocol model. Users should use `CyclingProtocol` instead.
 
@@ -545,6 +570,12 @@ class BaseProtocol(BaseModel):
             if i == tag_i + 1:
                 msg = f"Loop '{loop_tag}' cannot start immediately after its tag."
                 raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_rate_current(self) -> Self:
+        """Warn if a C-rate and current are both set and disagree."""
+        check_rate_current(self)
         return self
 
     @model_validator(mode="after")

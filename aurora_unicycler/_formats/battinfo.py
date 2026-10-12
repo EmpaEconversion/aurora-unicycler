@@ -331,6 +331,7 @@ def to_battinfo_jsonld(
     # Allow overwriting capacity
     if capacity_mAh:
         protocol.sample.capacity_mAh = capacity_mAh
+        _core.check_rate_current(protocol)
 
     # Make sure there are no tags or interecting loops
     _utils.tag_to_indices(protocol)

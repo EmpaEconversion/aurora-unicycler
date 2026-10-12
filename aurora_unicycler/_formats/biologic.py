@@ -34,6 +34,7 @@ def to_biologic_mps(
         protocol.sample.name = sample_name
     if capacity_mAh:
         protocol.sample.capacity_mAh = capacity_mAh
+        _core.check_rate_current(protocol)
 
     capacity_header = []
     if cap := protocol.sample.capacity_mAh:
