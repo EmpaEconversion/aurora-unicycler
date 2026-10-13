@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import logging
 import re
+import warnings
 from pathlib import Path
 
 import pytest
@@ -15,6 +15,7 @@ from aurora_unicycler import (
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
+    ProtocolConversionWarning,
     RecordParams,
     SafetyParams,
     Step,
@@ -156,25 +157,22 @@ def test_voltage_range() -> None:
     protocol.to_biologic_mps(sample_name="test", range_V=(1.234, 7.654))
 
 
-def test_voltage_range_warnings(caplog: pytest.LogCaptureFixture) -> None:
+def test_voltage_range_warnings() -> None:
     """If V range outside +- 10 V, warn."""
-    caplog.set_level(logging.WARNING)
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         method=[ConstantCurrent(current_mA=1, until_voltage_V=1)],
     )
-    caplog.clear()
-    protocol.to_biologic_mps(sample_name="test", range_V=(0, 11))
-    assert "max voltage" in caplog.text
-    caplog.clear()
-    protocol.to_biologic_mps(sample_name="test", range_V=(-15, 5))
-    assert "max voltage" in caplog.text
-    caplog.clear()
-    protocol.to_biologic_mps(sample_name="test", range_V=(12.345, 0))
-    assert "max voltage" in caplog.text
-    caplog.clear()
-    protocol.to_biologic_mps(sample_name="test", range_V=(-1.23, 1.23))
-    assert not caplog.text
+    with pytest.warns(ProtocolConversionWarning, match="max voltage") as record:
+        protocol.to_biologic_mps(sample_name="test", range_V=(0, 11))
+    assert record[0].filename == __file__
+    with pytest.warns(ProtocolConversionWarning, match="max voltage"):
+        protocol.to_biologic_mps(sample_name="test", range_V=(-15, 5))
+    with pytest.warns(ProtocolConversionWarning, match="max voltage"):
+        protocol.to_biologic_mps(sample_name="test", range_V=(12.345, 0))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolConversionWarning)
+        protocol.to_biologic_mps(sample_name="test", range_V=(-1.23, 1.23))
 
 
 def test_current_and_c_rate() -> None:
@@ -417,7 +415,7 @@ def test_unknown_step() -> None:
     assert "to_biologic_mps() does not support step type: wait, what" in str(excinfo.value)
 
 
-def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
+def test_safety_limits() -> None:
     """Check that safety limits are applied."""
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
@@ -449,7 +447,6 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
     assert "\tfor t > 123.0 ms" in res
 
     # Adding currents - should not warn if symmetric
-    caplog.clear()
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
@@ -461,16 +458,16 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
         ),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    res = protocol.to_biologic_mps(sample_name="test")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolConversionWarning)
+        res = protocol.to_biologic_mps(sample_name="test")
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
     assert "\t|I| = 3.00000 mA" in res
     assert "\tfor t > 123.0 ms" in res
-    assert not caplog.text
 
     # Assymetric currents - should warn and use biggest
-    caplog.clear()
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
@@ -482,16 +479,18 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
         ),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    res = protocol.to_biologic_mps(sample_name="test")
+    with pytest.warns(
+        ProtocolConversionWarning,
+        match=r"min -1\.0, max 3\.0 mA\. Biologic will limit current to -3\.0 to 3\.0 mA",
+    ):
+        res = protocol.to_biologic_mps(sample_name="test")
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
     assert "\t|I| = 3.00000 mA" in res
     assert "\tfor t > 123.0 ms" in res
-    assert "Using 3.0 mA as the absolute limit." in caplog.text
 
     # Assymetric currents - should warn and use biggest
-    caplog.clear()
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(
@@ -502,13 +501,16 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
         ),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    res = protocol.to_biologic_mps(sample_name="test")
+    with pytest.warns(
+        ProtocolConversionWarning,
+        match=r"min None, max 2\.5 mA\. Biologic will limit current to -2\.5 to 2\.5 mA",
+    ):
+        res = protocol.to_biologic_mps(sample_name="test")
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
     assert "\t|I| = 2.50000 mA" in res
     assert "\tfor t > 123.0 ms" in res
-    assert "Using 2.5 mA as the absolute limit." in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -526,42 +528,43 @@ def test_safety_limits(caplog: pytest.LogCaptureFixture) -> None:
     ],
 )
 def test_safety_capacity(
-    caplog: pytest.LogCaptureFixture,
     capacity_mAh: float,
     expected: str,
     *,
     warns: bool,
 ) -> None:
     """Capacity limit rounds up to 2 d.p., warning if it increases by over 5%."""
-    caplog.set_level(logging.WARNING)
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(max_capacity_mAh=capacity_mAh),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    res = protocol.to_biologic_mps(sample_name="test")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        res = protocol.to_biologic_mps(sample_name="test")
     assert f"\t|Q-Qo| = {expected} mA.h\n" in res
-    assert ("rounded up" in caplog.text) == warns
+    assert any("rounded up" in str(w.message) for w in caught) == warns
 
 
-def test_zero_safety_current_warns(caplog: pytest.LogCaptureFixture) -> None:
+def test_zero_safety_current_warns() -> None:
     """Current safety limits at zero warns and ignores."""
-    caplog.set_level(logging.WARNING)
     protocol = CyclingProtocol(
         record=RecordParams(time_s=1),
         safety=SafetyParams(max_current_mA=1),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
     # Normal current safety setting works
-    res = protocol.to_biologic_mps(sample_name="test")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        res = protocol.to_biologic_mps(sample_name="test")
     assert "\t|I| = 1.00000 mA" in res
-    assert "Ignoring current limits in this protocol" not in caplog.text
+    assert not any("Ignoring current limits" in str(w.message) for w in caught)
 
     # Safety setting at 0 ignored and warns
     protocol.safety = SafetyParams(max_current_mA=0)
-    res = protocol.to_biologic_mps(sample_name="test")
+    with pytest.warns(ProtocolConversionWarning, match="Ignoring current limits in this protocol"):
+        res = protocol.to_biologic_mps(sample_name="test")
     assert "\t|I| =" not in res
-    assert "Ignoring current limits in this protocol" in caplog.text
 
 
 def test_lsv() -> None:

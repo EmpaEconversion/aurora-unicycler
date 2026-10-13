@@ -26,6 +26,10 @@ class ProtocolMethodWarning(UserWarning):
     """Possible issues with a CyclingProtocol.method."""
 
 
+class ProtocolConversionWarning(ProtocolMethodWarning):
+    """A protocol setting cannot be represented exactly in the target format."""
+
+
 def _coerce_c_rate(v: float | str | None) -> float | None:
     """Allow C rates to be defined as fraction strings.
 

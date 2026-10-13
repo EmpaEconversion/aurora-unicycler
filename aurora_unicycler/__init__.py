@@ -6,12 +6,15 @@ Convert to different formats e.g. `.to_neware_xml()` or `to_biologic_mps()`.
 
 """
 
+import warnings
+
 from ._core import (
     ConstantCurrent,
     ConstantVoltage,
     ImpedanceSpectroscopy,
     Loop,
     OpenCircuitVoltage,
+    ProtocolConversionWarning,
     ProtocolMethodWarning,
     RecordParams,
     SafetyParams,
@@ -26,6 +29,9 @@ from .protocol import (
 )
 from .version import __version__
 
+# Warn on every occurrence rather than once per call
+warnings.simplefilter("always", ProtocolMethodWarning, append=True)
+
 __all__ = [
     "ConstantCurrent",
     "ConstantVoltage",
@@ -34,6 +40,7 @@ __all__ = [
     "Loop",
     "OpenCircuitVoltage",
     "Protocol",
+    "ProtocolConversionWarning",
     "ProtocolMethodWarning",
     "RecordParams",
     "SafetyParams",

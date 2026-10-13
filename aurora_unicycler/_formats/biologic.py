@@ -1,13 +1,10 @@
 """Extension for Biologic mps settings."""
 
-import logging
+import warnings
 from decimal import ROUND_CEILING, Decimal
 from pathlib import Path
 
 from aurora_unicycler import _core, _utils
-
-logger = logging.getLogger(__name__)
-
 
 I_RANGES_mA = {
     0.01: "10 µA",
@@ -220,20 +217,24 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
         curr_lim1 = abs(protocol.safety.min_current_mA or 0)
         curr_lim2 = abs(protocol.safety.max_current_mA or 0)
         if curr_lim1 == 0 and curr_lim2 == 0:
-            logger.warning(
+            warnings.warn(
                 "Biologic only sets one absolute current limit. You set a limit to 0 mA. "
                 "Ignoring current limits in this protocol.",
+                _core.ProtocolConversionWarning,
+                stacklevel=4,
             )
         else:
-            if curr_lim1 != curr_lim2:
-                logger.warning(
-                    "Biologic only sets one absolute current limit. You set limits to %s - %s mA. "
-                    "Using %s mA as the absolute limit.",
-                    protocol.safety.min_current_mA,
-                    protocol.safety.max_current_mA,
-                    max(curr_lim1, curr_lim2),
-                )
             max_abs_current_mA = max(curr_lim1, curr_lim2)
+            if curr_lim1 != curr_lim2:
+                warnings.warn(
+                    "Biologic only sets one absolute current limit. "
+                    f"You set min {protocol.safety.min_current_mA}, "
+                    f"max {protocol.safety.max_current_mA} mA. "
+                    f"Biologic will limit current to {-max_abs_current_mA} "
+                    f"to {max_abs_current_mA} mA.",
+                    _core.ProtocolConversionWarning,
+                    stacklevel=4,
+                )
             safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
     if (orig_max_cap_mAh := protocol.safety.max_capacity_mAh) is not None:
         # Biologic stores 2 d.p., round up so the limit is never tighter than requested
@@ -242,26 +243,30 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
             Decimal("0.01"), rounding=ROUND_CEILING
         )
         if float(max_cap_mAh) / orig_max_cap_mAh > 1.05:
-            logger.warning(
+            warnings.warn(
                 "Biologic stores max capacity in mAh to 2 decimal places. "
-                "Your value %s mAh was rounded up to %s mAh.",
-                orig_max_cap_mAh,
-                max_cap_mAh,
+                f"Your value {orig_max_cap_mAh} mAh was rounded up to {max_cap_mAh} mAh.",
+                _core.ProtocolConversionWarning,
+                stacklevel=4,
             )
         safety += [f"\t|Q-Qo| = {max_cap_mAh} mA.h"]
     delay_ms = (protocol.safety.delay_s or 0) * 1000
     if delay_ms > 1000:
-        logger.warning(
-            "Biologic max safety delay is 1000 ms, your value of %d ms will be capped",
-            int(delay_ms),
+        warnings.warn(
+            "Biologic max safety delay is 1000 ms, "
+            f"your value of {int(delay_ms)} ms will be capped",
+            _core.ProtocolConversionWarning,
+            stacklevel=4,
         )
     safety += [f"\tfor t > {delay_ms} ms", "\tDo not start on E overload"]
 
     low_range_V, high_range_V = sorted(range_V)
     if any(abs(V) > 10 for V in range_V):
-        logger.warning(
-            "Biologic max voltage range is usually +-10 V, your range %s-%s V may be capped",
-            *range_V,
+        warnings.warn(
+            "Biologic max voltage range is usually +-10 V, "
+            f"your range {range_V[0]}-{range_V[1]} V may be capped",
+            _core.ProtocolConversionWarning,
+            stacklevel=4,
         )
     for step in protocol.method:
         if (
