@@ -224,15 +224,17 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
                 stacklevel=4,
             )
         else:
+            max_abs_current_mA = max(curr_lim1, curr_lim2)
             if curr_lim1 != curr_lim2:
                 warnings.warn(
-                    "Biologic only sets one absolute current limit. You set limits to "
-                    f"{protocol.safety.min_current_mA} - {protocol.safety.max_current_mA} mA. "
-                    f"Using {max(curr_lim1, curr_lim2)} mA as the absolute limit.",
+                    "Biologic only sets one absolute current limit. "
+                    f"You set min {protocol.safety.min_current_mA}, "
+                    f"max {protocol.safety.max_current_mA} mA. "
+                    f"Biologic will limit current to {-max_abs_current_mA} "
+                    f"to {max_abs_current_mA} mA.",
                     _core.ProtocolConversionWarning,
                     stacklevel=4,
                 )
-            max_abs_current_mA = max(curr_lim1, curr_lim2)
             safety += [f"\t|I| = {max_abs_current_mA:.5f} mA"]
     if (orig_max_cap_mAh := protocol.safety.max_capacity_mAh) is not None:
         # Biologic stores 2 d.p., round up so the limit is never tighter than requested

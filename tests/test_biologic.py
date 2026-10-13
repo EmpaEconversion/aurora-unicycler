@@ -479,7 +479,10 @@ def test_safety_limits() -> None:
         ),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    with pytest.warns(ProtocolConversionWarning, match=r"Using 3\.0 mA as the absolute limit"):
+    with pytest.warns(
+        ProtocolConversionWarning,
+        match=r"min -1\.0, max 3\.0 mA\. Biologic will limit current to -3\.0 to 3\.0 mA",
+    ):
         res = protocol.to_biologic_mps(sample_name="test")
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
@@ -498,7 +501,10 @@ def test_safety_limits() -> None:
         ),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    with pytest.warns(ProtocolConversionWarning, match=r"Using 2\.5 mA as the absolute limit"):
+    with pytest.warns(
+        ProtocolConversionWarning,
+        match=r"min None, max 2\.5 mA\. Biologic will limit current to -2\.5 to 2\.5 mA",
+    ):
         res = protocol.to_biologic_mps(sample_name="test")
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
