@@ -16,6 +16,7 @@ from aurora_unicycler import (
     Loop,
     OpenCircuitVoltage,
     Protocol,
+    ProtocolConversionWarning,
     RecordParams,
     SafetyParams,
     SampleParams,
@@ -159,7 +160,8 @@ def test_create_protocol(test_data: dict) -> None:
     protocol.to_neware_xml()
     protocol.to_tomato_mpg2()
     protocol.to_pybamm_experiment()
-    protocol.to_biologic_mps()
+    with pytest.warns(ProtocolConversionWarning, match="max safety delay"):
+        protocol.to_biologic_mps()
 
 
 def test_tags() -> None:
