@@ -28,3 +28,4 @@ voltage step.
 
 - Change the global voltage range with `range_V = (x,y)`, by default this is
 0-5 V.
+If the protocol contains voltages outside this range, it will raise an error.

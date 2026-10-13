@@ -118,7 +118,7 @@ def test_create_protocol(test_data: dict) -> None:
             max_current_mA=10,
             min_current_mA=-10,
             max_voltage_V=5,
-            min_voltage_V=-0.1,
+            min_voltage_V=0,
             delay_s=10,
         ),
         method=[
