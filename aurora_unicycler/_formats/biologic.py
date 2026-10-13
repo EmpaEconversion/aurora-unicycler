@@ -54,6 +54,9 @@ def to_biologic_mps(
     # Make sure capacity is set if using C-rate steps
     _utils.validate_capacity_c_rates(protocol)
 
+    # Make sure voltage is inside limits
+    _check_voltage_range(protocol, range_V)
+
     # Remove tags and convert to indices
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
@@ -63,7 +66,7 @@ def to_biologic_mps(
         "",
         "Number of linked techniques : 1",
         f"Ewe ctrl range : min = {min(range_V):.2f} V, max = {max(range_V):.2f} V",
-        *_generate_safety(protocol, range_V),
+        *_generate_safety(protocol),
         f"Comments : {protocol.sample.name}",
         *capacity_header,
         "Cycle Definition : Charge/Discharge alternance",
@@ -206,7 +209,7 @@ def to_biologic_mps(
     return settings_string
 
 
-def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float]) -> list[str]:
+def _generate_safety(protocol: _core.BaseProtocol) -> list[str]:
     """Generate safety settings as list of strings."""
     safety = ["Safety Limits :"]
     if protocol.safety.min_voltage_V is not None:
@@ -259,7 +262,11 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
             stacklevel=4,
         )
     safety += [f"\tfor t > {delay_ms} ms", "\tDo not start on E overload"]
+    return safety
 
+
+def _check_voltage_range(protocol: _core.BaseProtocol, range_V: tuple[float, float]) -> None:
+    """Raise if any step voltage is outside range_V, warn on safety limits outside range_V."""
     low_range_V, high_range_V = sorted(range_V)
     if any(abs(V) > 10 for V in range_V):
         warnings.warn(
@@ -268,19 +275,36 @@ def _generate_safety(protocol: _core.BaseProtocol, range_V: tuple[float, float])
             _core.ProtocolConversionWarning,
             stacklevel=4,
         )
-    for step in protocol.method:
-        if (
-            isinstance(step, _core.ConstantCurrent)
-            and step.until_voltage_V is not None
-            and (step.until_voltage_V > high_range_V or step.until_voltage_V < low_range_V)
-        ) or (
-            isinstance(step, _core.ConstantVoltage)
-            and step.voltage_V is not None
-            and (step.voltage_V > high_range_V or step.voltage_V < low_range_V)
-        ):
-            msg = f"Method contains step with voltage outside of range ({range_V} V)"
+
+    for i, step in enumerate(protocol.method):
+        match step:
+            case _core.ConstantCurrent():
+                voltages = [step.until_voltage_V]
+            case _core.ConstantVoltage():
+                voltages = [step.voltage_V]
+            case _core.VoltageScan():
+                voltages = [step.start_voltage_V, step.end_voltage_V]
+            case _:
+                continue
+        bad = [V for V in voltages if V is not None and not low_range_V <= V <= high_range_V]
+        if bad:
+            msg = (
+                f"Method step {i + 1} ({step.step}) has voltage outside of range "
+                f"({low_range_V}-{high_range_V} V): {', '.join(f'{V} V' for V in bad)}"
+            )
             raise ValueError(msg)
-    return safety
+
+    for name, V in (
+        ("min", protocol.safety.min_voltage_V),
+        ("max", protocol.safety.max_voltage_V),
+    ):
+        if V is not None and not low_range_V <= V <= high_range_V:
+            warnings.warn(
+                f"Safety {name} voltage {V} V is outside of range "
+                f"({low_range_V}-{high_range_V} V) so will not trigger.",
+                _core.ProtocolConversionWarning,
+                stacklevel=4,
+            )
 
 
 def _generate_rec(protocol: _core.BaseProtocol, rec_modes: set) -> dict[str, str]:

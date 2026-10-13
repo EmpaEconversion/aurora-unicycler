@@ -156,6 +156,49 @@ def test_voltage_range() -> None:
     # Increases range fixes
     protocol.to_biologic_mps(sample_name="test", range_V=(1.234, 7.654))
 
+    # Voltage scan, start or end can be out of range
+    for start, end in ((-0.5, 4), (1, 5.5)):
+        protocol = CyclingProtocol(
+            record=RecordParams(time_s=1),
+            method=[VoltageScan(start_voltage_V=start, end_voltage_V=end, scan_rate_mV_per_s=1)],
+        )
+        with pytest.raises(ValueError) as excinfo:
+            protocol.to_biologic_mps(sample_name="test")
+        assert "voltage outside of range" in str(excinfo.value)
+        assert "step 1" in str(excinfo.value)
+        protocol.to_biologic_mps(sample_name="test", range_V=(-1, 6))
+
+    # Step number counts tags
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        method=[
+            OpenCircuitVoltage(until_time_s=1),
+            Tag(tag="a"),
+            ConstantCurrent(current_mA=1, until_voltage_V=6),
+        ],
+    )
+    with pytest.raises(ValueError, match=r"step 3 \(constant_current\)"):
+        protocol.to_biologic_mps(sample_name="test")
+
+
+def test_safety_voltage_outside_range() -> None:
+    """Warn if safety voltage limits are outside the voltage range."""
+    method = [ConstantCurrent(current_mA=1, until_voltage_V=4)]
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=1),
+        safety=SafetyParams(min_voltage_V=-1, max_voltage_V=6),
+        method=method,
+    )
+    with pytest.warns(ProtocolConversionWarning, match="Safety") as record:
+        protocol.to_biologic_mps(sample_name="test")
+    messages = [str(w.message) for w in record]
+    assert any("Safety min voltage -1" in m for m in messages)
+    assert any("Safety max voltage 6" in m for m in messages)
+    assert all(w.filename == __file__ for w in record)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ProtocolConversionWarning)
+        protocol.to_biologic_mps(sample_name="test", range_V=(-1, 6))
+
 
 def test_voltage_range_warnings() -> None:
     """If V range outside +- 10 V, warn."""
@@ -440,7 +483,7 @@ def test_safety_limits() -> None:
         ),
         method=[OpenCircuitVoltage(until_time_s=1000)],
     )
-    res = protocol.to_biologic_mps(sample_name="test")
+    res = protocol.to_biologic_mps(sample_name="test", range_V=(-5, 5))
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
@@ -460,7 +503,7 @@ def test_safety_limits() -> None:
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error", ProtocolConversionWarning)
-        res = protocol.to_biologic_mps(sample_name="test")
+        res = protocol.to_biologic_mps(sample_name="test", range_V=(-5, 5))
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
@@ -483,7 +526,7 @@ def test_safety_limits() -> None:
         ProtocolConversionWarning,
         match=r"min -1\.0, max 3\.0 mA\. Biologic will limit current to -3\.0 to 3\.0 mA",
     ):
-        res = protocol.to_biologic_mps(sample_name="test")
+        res = protocol.to_biologic_mps(sample_name="test", range_V=(-5, 5))
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
@@ -505,7 +548,7 @@ def test_safety_limits() -> None:
         ProtocolConversionWarning,
         match=r"min None, max 2\.5 mA\. Biologic will limit current to -2\.5 to 2\.5 mA",
     ):
-        res = protocol.to_biologic_mps(sample_name="test")
+        res = protocol.to_biologic_mps(sample_name="test", range_V=(-5, 5))
     assert "Safety Limits :" in res
     assert "\tEwe min = -3.00000 V" in res
     assert "\tEwe max = 4.00000 V" in res
