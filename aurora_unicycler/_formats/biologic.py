@@ -164,7 +164,7 @@ def to_biologic_mps(
                 "lim3_seq": str(i + 1),
             },
         )
-        record = _utils.step_record(protocol, step)
+        record = protocol.record.merge(getattr(step, "record", None))
         match step:
             case _core.OpenCircuitVoltage():
                 step_dict.update(_generate_ocv(step))

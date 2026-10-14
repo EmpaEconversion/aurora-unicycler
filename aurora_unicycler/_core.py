@@ -134,6 +134,12 @@ class RecordParams(BaseModel):
         """Check whether any recording condition is set."""
         return any(value is not None for value in self.model_dump().values())
 
+    def merge(self, override: "RecordParams | None") -> "RecordParams":
+        """Return a copy with any values set in `override` taking priority."""
+        if override is None:
+            return self
+        return self.model_copy(update=override.model_dump(exclude_none=True))
+
 
 class SafetyParams(BaseModel):
     """Safety parameters, i.e. limits before cancelling the entire experiment.
@@ -519,32 +525,42 @@ def check_rate_current(protocol: "BaseProtocol") -> None:
             warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
 
 
+# Recording conditions each data-recording step type can trigger on
+RECORD_MODES: dict[type, set[str]] = {
+    OpenCircuitVoltage: {"time_s", "voltage_V"},
+    ConstantCurrent: {"time_s", "voltage_V"},
+    ConstantVoltage: {"time_s", "current_mA"},
+    VoltageScan: {"time_s", "voltage_V", "current_mA"},
+}
+
+
 def check_record_params(protocol: "BaseProtocol", *, strict: bool = False) -> None:
-    """Warn on data-recording steps with no recording parameters.
+    """Warn on data-recording steps with no usable recording parameters.
 
     Args:
         protocol: The protocol to check.
-        strict: Raise instead of warning when no recording parameters are set at
-            all. Used by formats which need a recording condition to run.
+        strict: Raise instead of warning when no step has usable recording
+            parameters. Used by formats which need a recording condition to run.
 
     Raises:
-        ValueError: If `strict` and no recording parameters are set anywhere.
+        ValueError: If `strict` and no step has usable recording parameters.
 
     """
-    if protocol.record.is_set():
-        return
-    # Steps without a record attribute, e.g. loops and tags, do not record data
-    recording = [i + 1 for i, step in enumerate(protocol.method) if hasattr(step, "record")]
-    missing = [
-        i + 1
-        for i, step in enumerate(protocol.method)
-        if hasattr(step, "record") and (step.record is None or not step.record.is_set())
-    ]
+    recording = []
+    missing = []
+    for i, step in enumerate(protocol.method, start=1):
+        modes = RECORD_MODES.get(type(step))
+        if modes is None:
+            continue  # Loops, tags and EIS do not record data
+        recording.append(i)
+        record = protocol.record.merge(getattr(step, "record", None))
+        if all(getattr(record, mode) is None for mode in modes):
+            missing.append(i)
     if not missing:
         return
     if missing == recording:
         msg = (
-            "No recording parameters set, set 'record' on the protocol or on its steps. "
+            "No usable recording parameters set, set 'record' on the protocol or on its steps. "
             "You must set at least one recording condition to export to cycler formats. "
             "BattINFO and PyBaMM do not need any recording parameters."
         )
@@ -556,7 +572,7 @@ def check_record_params(protocol: "BaseProtocol", *, strict: bool = False) -> No
     plural = "s" if len(missing) > 1 else ""
     verb = "have" if len(missing) > 1 else "has"
     msg = (
-        f"Step{plural} {steps} {verb} no recording parameters. "
+        f"Step{plural} {steps} {verb} no usable recording parameters. "
         "This can be a problem if you want to convert to real cycler formats, "
         "set 'record' on these steps or on the protocol."
     )

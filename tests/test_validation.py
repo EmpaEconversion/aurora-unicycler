@@ -541,7 +541,9 @@ def test_step_record_params() -> None:
 
 def test_missing_step_record_warns() -> None:
     """Steps with no recording parameters should warn."""
-    with pytest.warns(ProtocolMethodWarning, match=r"Steps 1, 3 have no recording parameters"):
+    with pytest.warns(
+        ProtocolMethodWarning, match=r"Steps 1, 3 have no usable recording parameters"
+    ):
         CyclingProtocol(
             method=[
                 OpenCircuitVoltage(until_time_s=1),
@@ -551,7 +553,7 @@ def test_missing_step_record_warns() -> None:
         )
 
     # A single step is named in the singular
-    with pytest.warns(ProtocolMethodWarning, match=r"Step 2 has no recording parameters"):
+    with pytest.warns(ProtocolMethodWarning, match=r"Step 2 has no usable recording parameters"):
         CyclingProtocol(
             method=[
                 OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=1)),
@@ -586,20 +588,43 @@ def test_record_params_no_warn() -> None:
 
 def test_no_record_params_anywhere() -> None:
     """A protocol with no recording parameters at all should warn, not error."""
-    with pytest.warns(ProtocolMethodWarning, match="No recording parameters set"):
+    with pytest.warns(ProtocolMethodWarning, match="No usable recording parameters set"):
         CyclingProtocol(method=[OpenCircuitVoltage(until_time_s=1)])
 
     # An empty RecordParams does not count as set
-    with pytest.warns(ProtocolMethodWarning, match="No recording parameters set"):
+    with pytest.warns(ProtocolMethodWarning, match="No usable recording parameters set"):
         CyclingProtocol(
             record=RecordParams(),
             method=[OpenCircuitVoltage(until_time_s=1, record=RecordParams())],
         )
 
 
+def test_record_params_not_usable_for_step() -> None:
+    """Record params a step type cannot trigger on do not count as set."""
+    # Current does not change at rest, so open circuit cannot record on it
+    with pytest.warns(ProtocolMethodWarning, match="No usable recording parameters set"):
+        protocol = CyclingProtocol(
+            sample=SampleParams(name="test"),
+            record=RecordParams(current_mA=0.1),
+            method=[OpenCircuitVoltage(until_time_s=1)],
+        )
+    with pytest.raises(ValueError, match="No usable recording parameters set"):
+        protocol.to_tomato_mpg2()
+
+    # Constant voltage can record on current, so only the open circuit step warns
+    with pytest.warns(ProtocolMethodWarning, match="Step 1 has no usable recording parameters"):
+        CyclingProtocol(
+            record=RecordParams(current_mA=0.1),
+            method=[
+                OpenCircuitVoltage(until_time_s=1),
+                ConstantVoltage(voltage_V=4.2, until_time_s=1),
+            ],
+        )
+
+
 def test_no_record_params_export() -> None:
     """Formats which need a recording condition should error, others should not."""
-    with pytest.warns(ProtocolMethodWarning, match="No recording parameters set"):
+    with pytest.warns(ProtocolMethodWarning, match="No usable recording parameters set"):
         protocol = CyclingProtocol(
             sample=SampleParams(name="test", capacity_mAh=1),
             method=[
@@ -617,7 +642,7 @@ def test_no_record_params_export() -> None:
         protocol.to_biologic_mps,
         protocol.to_tomato_mpg2,
     ):
-        with pytest.raises(ValueError, match="No recording parameters set"):
+        with pytest.raises(ValueError, match="No usable recording parameters set"):
             export()
 
 
@@ -641,7 +666,7 @@ def test_missing_record_warns_again_on_export() -> None:
             ],
         )
 
-    match = "Step 1 has no recording parameters"
+    match = "Step 1 has no usable recording parameters"
     with pytest.warns(ProtocolMethodWarning, match=match):
         protocol.to_neware_xml()
     with pytest.warns(ProtocolMethodWarning, match=match):
@@ -666,5 +691,5 @@ def test_no_record_params_on_export() -> None:
             method=[OpenCircuitVoltage(until_time_s=1)],
         )
     protocol.record = RecordParams()
-    with pytest.raises(ValueError, match="No recording parameters set"):
+    with pytest.raises(ValueError, match="No usable recording parameters set"):
         protocol.to_neware_xml()

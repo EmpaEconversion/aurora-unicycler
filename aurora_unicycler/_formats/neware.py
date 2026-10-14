@@ -270,7 +270,7 @@ def to_neware_xml(
         # Only steps which can set a record, i.e. not loops, get a Record element
         record = None
         if per_step_record and hasattr(technique, "record"):
-            record = _utils.step_record(protocol, technique)
+            record = protocol.record.merge(getattr(technique, "record", None))
         step_info.append(
             _step_to_element(
                 technique,

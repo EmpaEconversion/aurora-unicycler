@@ -66,7 +66,7 @@ def to_tomato_mpg2(
         if isinstance(
             step, (_core.ConstantCurrent, _core.ConstantVoltage, _core.OpenCircuitVoltage)
         ):
-            record = _utils.step_record(protocol, step)
+            record = protocol.record.merge(getattr(step, "record", None))
             if record.time_s:
                 tomato_step["measure_every_dt"] = record.time_s
             if record.current_mA:
