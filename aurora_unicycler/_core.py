@@ -550,7 +550,7 @@ def check_record_params(protocol: "BaseProtocol", *, strict: bool = False) -> No
         )
         if strict:
             raise ValueError(msg)
-        warnings.warn(msg, ProtocolMethodWarning, stacklevel=3)
+        warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
         return
     steps = ", ".join(str(i) for i in missing)
     plural = "s" if len(missing) > 1 else ""
@@ -560,7 +560,7 @@ def check_record_params(protocol: "BaseProtocol", *, strict: bool = False) -> No
         "This can be a problem if you want to convert to real cycler formats, "
         "set 'record' on these steps or on the protocol."
     )
-    warnings.warn(msg, ProtocolMethodWarning, stacklevel=3)
+    warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
 
 
 class BaseProtocol(BaseModel):
