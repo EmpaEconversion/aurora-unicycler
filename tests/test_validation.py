@@ -646,14 +646,6 @@ def test_no_record_params_export() -> None:
             export()
 
 
-def test_record_params_is_set() -> None:
-    """Any single recording parameter counts as set."""
-    assert not RecordParams().is_set()
-    assert RecordParams(time_s=1).is_set()
-    assert RecordParams(voltage_V=0.1).is_set()
-    assert RecordParams(current_mA=0.1).is_set()
-
-
 def test_missing_record_warns_again_on_export() -> None:
     """Exporting to a cycler format should warn about missing record params again."""
     with warnings.catch_warnings():

@@ -130,10 +130,6 @@ class RecordParams(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    def is_set(self) -> bool:
-        """Check whether any recording condition is set."""
-        return any(value is not None for value in self.model_dump().values())
-
     def merge(self, override: "RecordParams | None") -> "RecordParams":
         """Return a copy with any values set in `override` taking priority."""
         if override is None:
