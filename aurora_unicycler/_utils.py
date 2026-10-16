@@ -62,3 +62,8 @@ def validate_capacity_c_rates(protocol: BaseProtocol) -> None:
     ):
         msg = "Sample capacity must be set if using C-rate steps."
         raise ValueError(msg)
+
+
+def has_step_records(protocol: BaseProtocol) -> bool:
+    """Check whether any step sets its own recording parameters."""
+    return any(getattr(step, "record", None) is not None for step in protocol.method)

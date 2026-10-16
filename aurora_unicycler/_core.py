@@ -126,9 +126,15 @@ class RecordParams(BaseModel):
 
     current_mA: Annotated[float, Field(gt=0)] | None = None
     voltage_V: Annotated[float, Field(gt=0)] | None = None
-    time_s: Annotated[float, Field(gt=0)]
+    time_s: Annotated[float, Field(gt=0)] | None = None
 
     model_config = ConfigDict(extra="forbid")
+
+    def merge(self, override: "RecordParams | None") -> "RecordParams":
+        """Return a copy with any values set in `override` taking priority."""
+        if override is None:
+            return self
+        return self.model_copy(update=override.model_dump(exclude_none=True))
 
 
 class SafetyParams(BaseModel):
@@ -192,11 +198,14 @@ class OpenCircuitVoltage(Step):
 
     Attributes:
         until_time_s: Duration of step in seconds.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
     step: Literal["open_circuit_voltage"] = Field(default="open_circuit_voltage", frozen=True)
     until_time_s: float = Field(gt=0)
+    record: RecordParams | None = None
 
     @field_validator("until_time_s", mode="before")
     @classmethod
@@ -220,6 +229,8 @@ class ConstantCurrent(Step):
         current_mA: (optional) The current applied in mA.
         until_time_s: Duration of step in seconds.
         until_voltage_V: End step when this voltage in V is reached.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
@@ -228,6 +239,7 @@ class ConstantCurrent(Step):
     current_mA: float | None = None
     until_time_s: float | None = None
     until_voltage_V: float | None = None
+    record: RecordParams | None = None
 
     @field_validator("rate_C", mode="before")
     @classmethod
@@ -279,6 +291,8 @@ class ConstantVoltage(Step):
         until_time_s: Duration of step in seconds.
         until_rate_C: End step when this C-rate (i.e. mA per mAh) is reached.
         until_current_mA: End step when this current in mA is reached.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
@@ -287,6 +301,7 @@ class ConstantVoltage(Step):
     until_time_s: float | None = None
     until_rate_C: float | None = None
     until_current_mA: float | None = None
+    record: RecordParams | None = None
 
     @field_validator("until_rate_C", mode="before")
     @classmethod
@@ -374,6 +389,8 @@ class VoltageScan(Step):
         start_voltage_V: Start voltage in V.
         end_voltage_V: End voltage in V.
         scan_rate_mV_per_s: Voltage scan rate in mV/s, must be positive.
+        record: (optional) Recording parameters for this step, merged onto the
+            protocol-level `record` and taking priority over it.
 
     """
 
@@ -381,6 +398,7 @@ class VoltageScan(Step):
     start_voltage_V: float = Field(description="Start voltage in V")
     end_voltage_V: float = Field(description="End voltage in V")
     scan_rate_mV_per_s: float = Field(description="Voltage scan rate in mV/s", gt=0)
+    record: RecordParams | None = None
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
@@ -503,6 +521,60 @@ def check_rate_current(protocol: "BaseProtocol") -> None:
             warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
 
 
+# Recording conditions each data-recording step type can trigger on
+RECORD_MODES: dict[type, set[str]] = {
+    OpenCircuitVoltage: {"time_s", "voltage_V"},
+    ConstantCurrent: {"time_s", "voltage_V"},
+    ConstantVoltage: {"time_s", "current_mA"},
+    VoltageScan: {"time_s", "voltage_V", "current_mA"},
+}
+
+
+def check_record_params(protocol: "BaseProtocol", *, strict: bool = False) -> None:
+    """Warn on data-recording steps with no usable recording parameters.
+
+    Args:
+        protocol: The protocol to check.
+        strict: Raise instead of warning when no step has usable recording
+            parameters. Used by formats which need a recording condition to run.
+
+    Raises:
+        ValueError: If `strict` and no step has usable recording parameters.
+
+    """
+    recording = []
+    missing = []
+    for i, step in enumerate(protocol.method, start=1):
+        modes = RECORD_MODES.get(type(step))
+        if modes is None:
+            continue  # Loops, tags and EIS do not record data
+        recording.append(i)
+        record = protocol.record.merge(getattr(step, "record", None))
+        if all(getattr(record, mode) is None for mode in modes):
+            missing.append(i)
+    if not missing:
+        return
+    if missing == recording:
+        msg = (
+            "No usable recording parameters set, set 'record' on the protocol or on its steps. "
+            "You must set at least one recording condition to export to cycler formats. "
+            "BattINFO and PyBaMM do not need any recording parameters."
+        )
+        if strict:
+            raise ValueError(msg)
+        warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
+        return
+    steps = ", ".join(str(i) for i in missing)
+    plural = "s" if len(missing) > 1 else ""
+    verb = "have" if len(missing) > 1 else "has"
+    msg = (
+        f"Step{plural} {steps} {verb} no usable recording parameters. "
+        "This can be a problem if you want to convert to real cycler formats, "
+        "set 'record' on these steps or on the protocol."
+    )
+    warnings.warn(msg, ProtocolMethodWarning, stacklevel=4)
+
+
 class BaseProtocol(BaseModel):
     """Internal base protocol model. Users should use `CyclingProtocol` instead.
 
@@ -512,7 +584,7 @@ class BaseProtocol(BaseModel):
 
     unicycler: UnicyclerParams = Field(default_factory=UnicyclerParams)
     sample: SampleParams = Field(default_factory=SampleParams)
-    record: RecordParams
+    record: RecordParams = Field(default_factory=RecordParams)
     safety: SafetyParams = Field(default_factory=SafetyParams)
     method: Sequence[AnyTechnique] = Field(min_length=1)  # Ensure at least one step
 
@@ -580,6 +652,12 @@ class BaseProtocol(BaseModel):
     def _validate_rate_current(self) -> Self:
         """Warn if a C-rate and current are both set and disagree."""
         check_rate_current(self)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_record(self) -> Self:
+        """Warn on steps with no recording parameters, error if none are set at all."""
+        check_record_params(self)
         return self
 
     @model_validator(mode="after")

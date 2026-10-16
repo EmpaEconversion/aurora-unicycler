@@ -687,3 +687,29 @@ def test_limit_and_record_rows() -> None:
     # Unused limit slots still point at the next sequence
     for n in (1, 2, 3):
         assert f"lim{n}_seq".ljust(20) + "1".ljust(20) in "\n".join(lines)
+
+
+def test_step_record_biologic() -> None:
+    """Steps with their own record params get their own rec columns."""
+    protocol = CyclingProtocol(
+        record=RecordParams(time_s=10),
+        method=[
+            OpenCircuitVoltage(until_time_s=1),
+            OpenCircuitVoltage(until_time_s=1, record=RecordParams(time_s=0.5, voltage_V=0.01)),
+            ConstantCurrent(
+                current_mA=1,
+                until_time_s=1,
+                record=RecordParams(time_s=2, current_mA=0.1),
+            ),
+        ],
+    )
+    lines = protocol.to_biologic_mps(sample_name="test").splitlines()
+    rows = {line[:20].strip(): line[20:] for line in lines if line.startswith(("rec", "rec_nb"))}
+    steps = {k: [v[i : i + 20].strip() for i in range(0, len(v), 20)] for k, v in rows.items()}
+
+    assert steps["rec_nb"] == ["1", "2", "1"]
+    assert steps["rec1_type"] == ["Time", "Time", "Time"]
+    assert steps["rec1_value"] == ["10.000", "0.500", "2.000"]
+    # Only step 2 records on voltage, and current is not a rec mode for OCV/CC
+    assert steps["rec2_type"] == ["", "Ewe", ""]
+    assert steps["rec2_value"] == ["", "0.010", ""]

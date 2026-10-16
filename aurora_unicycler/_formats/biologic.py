@@ -57,6 +57,9 @@ def to_biologic_mps(
     # Make sure voltage is inside limits
     _check_voltage_range(protocol, range_V)
 
+    # Warn again for missing record params on export
+    _core.check_record_params(protocol, strict=True)
+
     # Remove tags and convert to indices
     _utils.tag_to_indices(protocol)
     _utils.check_for_intersecting_loops(protocol)
@@ -164,22 +167,22 @@ def to_biologic_mps(
         match step:
             case _core.OpenCircuitVoltage():
                 step_dict.update(_generate_ocv(step))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "voltage"}))
+                step_dict.update(_generate_rec(protocol, step))
 
             case _core.ConstantCurrent():
                 step_dict.update(_generate_cc(step, protocol))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "voltage"}))
+                step_dict.update(_generate_rec(protocol, step))
 
             case _core.ConstantVoltage():
                 step_dict.update(_generate_cv(step, protocol, step_number=i))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "current"}))
+                step_dict.update(_generate_rec(protocol, step))
 
             case _core.ImpedanceSpectroscopy():
                 step_dict.update(_generate_eis(step))
 
             case _core.VoltageScan():
                 step_dict.update(_generate_vs(step))
-                step_dict.update(_generate_rec(protocol, rec_modes={"time", "voltage", "current"}))
+                step_dict.update(_generate_rec(protocol, step))
 
             case _core.Loop():
                 step_dict.update(_generate_loop(step))
@@ -307,34 +310,36 @@ def _check_voltage_range(protocol: _core.BaseProtocol, range_V: tuple[float, flo
             )
 
 
-def _generate_rec(protocol: _core.BaseProtocol, rec_modes: set) -> dict[str, str]:
+def _generate_rec(protocol: _core.BaseProtocol, step: _core.Step) -> dict[str, str]:
     """Generate recording dictionary."""
     rec_num = 0
     rec_dict = {}
-    if "time" in rec_modes and protocol.record.time_s:
+    record = protocol.record.merge(getattr(step, "record", None))
+    rec_modes = _core.RECORD_MODES.get(type(step), set())
+    if "time_s" in rec_modes and record.time_s:
         rec_num += 1
         rec_dict.update(
             {
                 f"rec{rec_num}_type": "Time",
-                f"rec{rec_num}_value": f"{protocol.record.time_s:.3f}",
+                f"rec{rec_num}_value": f"{record.time_s:.3f}",
                 f"rec{rec_num}_value_unit": "s",
             },
         )
-    if "voltage" in rec_modes and protocol.record.voltage_V:
+    if "voltage_V" in rec_modes and record.voltage_V:
         rec_num += 1
         rec_dict.update(
             {
                 f"rec{rec_num}_type": "Ewe",
-                f"rec{rec_num}_value": f"{protocol.record.voltage_V:.3f}",
+                f"rec{rec_num}_value": f"{record.voltage_V:.3f}",
                 f"rec{rec_num}_value_unit": "V",
             },
         )
-    if "current" in rec_modes and protocol.record.current_mA:
+    if "current_mA" in rec_modes and record.current_mA:
         rec_num += 1
         rec_dict.update(
             {
                 f"rec{rec_num}_type": "I",
-                f"rec{rec_num}_value": f"{protocol.record.current_mA:.3f}",
+                f"rec{rec_num}_value": f"{record.current_mA:.3f}",
                 f"rec{rec_num}_value_unit": "mA",
             },
         )
