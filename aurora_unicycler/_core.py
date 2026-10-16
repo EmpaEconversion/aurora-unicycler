@@ -131,7 +131,7 @@ class RecordParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     def merge(self, override: "RecordParams | None") -> "RecordParams":
-        """Return a copy with any values set in `override` taking priority."""
+        """If `override` given, return a copy with any values set in `override` taking priority."""
         if override is None:
             return self
         return self.model_copy(update=override.model_dump(exclude_none=True))
@@ -656,7 +656,7 @@ class BaseProtocol(BaseModel):
 
     @model_validator(mode="after")
     def _validate_record(self) -> Self:
-        """Warn on steps with no recording parameters, error if none are set at all."""
+        """Warn on steps with no recording parameters."""
         check_record_params(self)
         return self
 

@@ -38,6 +38,7 @@ nav:
   - Overview: index.md
   - Installation: installation.md
   - Creating a protocol: protocol.md
+  - Customizing a protocol: customize.md
   - Exporting a protocol:
     - To Biologic mps: biologic.md
     - To Neware xml: neware.md
