@@ -1,3 +1,5 @@
 """Version information for the aurora-unicycler package."""
 
-__version__ = "0.4.6"
+from importlib.metadata import version
+
+__version__ = version("aurora-unicycler")
