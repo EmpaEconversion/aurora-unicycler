@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 
 [[package]]
@@ -13,15 +13,15 @@ wheels = [
 
 [[package]]
 name = "aurora-unicycler"
-source = { virtual = "." }
+version = "0.4.6"
+source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },
     { name = "pydantic" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
-    { name = "bumpver" },
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
@@ -34,19 +34,21 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bumpver", marker = "extra == 'dev'", specifier = ">=2025.1131" },
     { name = "defusedxml", specifier = ">=0.7.1" },
-    { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6.1" },
-    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.7.0" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'", specifier = ">=0.30.1" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.2.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pyld", extras = ["requests"], marker = "extra == 'dev'", specifier = ">=3.2.0" },
-    { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=10.17.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.3" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", specifier = ">=9.7.0" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.30.1" },
+    { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pyld", extras = ["requests"], specifier = ">=3.2.0" },
+    { name = "pymdown-extensions", specifier = ">=10.17.1" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "ruff", specifier = ">=0.12.3" },
+]
 
 [[package]]
 name = "babel"
@@ -69,21 +71,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/45/84853f5ce1182cc283beebd0a7f05e4210aac06b4f39192cefd60e5901b1/backrefs-6.0.1-py313-none-any.whl", hash = "sha256:62ea7e9b286808576f35b2d28a0daa09b85ae2fc71b82a951d35729b0138e66b", size = 400784, upload-time = "2025-07-30T02:51:26.577Z" },
     { url = "https://files.pythonhosted.org/packages/cb/07/2e43935cbaa0ec12d7e225e942a3c1e39fc8233f7b18100bcbffd25e6192/backrefs-6.0.1-py314-none-any.whl", hash = "sha256:3ba0d943178d24a3721c5d915734767fa93f3bde1d317c4ef9e0f33b21b9c302", size = 412645, upload-time = "2025-07-30T02:51:28.521Z" },
     { url = "https://files.pythonhosted.org/packages/e2/9b/14e312dbbc994093caa942a3462dc9f5f54bd0770c8171c6f6aec06e8600/backrefs-6.0.1-py39-none-any.whl", hash = "sha256:b1a61b29c35cc72cfb54886164b626fbe64cab74e9d8dcac125155bd3acdb023", size = 381118, upload-time = "2025-07-30T02:51:30.749Z" },
-]
-
-[[package]]
-name = "bumpver"
-version = "2025.1131"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "click" },
-    { name = "colorama" },
-    { name = "lexid" },
-    { name = "toml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/8a/cc13e816e9f0849dce423b904b06fd91b5444cba6df3200d512a702f2e95/bumpver-2025.1131.tar.gz", hash = "sha256:a35fd2d43a5f65f014035c094866bd3bd6c739606f29fd41246d6ec6e839d3f9", size = 115372, upload-time = "2025-07-02T20:36:11.982Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/5b/2d5ea6802495ee4506721977be522804314aa66ad629d9356e3c7e5af4a6/bumpver-2025.1131-py2.py3-none-any.whl", hash = "sha256:c02527f6ed7887afbc06c07630047b24a9f9d02d544a65639e99bf8b92aaa674", size = 65361, upload-time = "2025-07-02T20:36:10.103Z" },
 ]
 
 [[package]]
@@ -246,7 +233,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -352,15 +339,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
-]
-
-[[package]]
-name = "lexid"
-version = "2021.1006"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/60/0b/28a3f9abc75abbf1fa996eb2dd77e1e33a5d1aac62566e3f60a8ec8b8a22/lexid-2021.1006.tar.gz", hash = "sha256:509a3a4cc926d3dbf22b203b18a4c66c25e6473fb7c0e0d30374533ac28bafe5", size = 11525, upload-time = "2021-04-02T20:18:34.668Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/e3/35764404a4b7e2021be1f88f42264c2e92e0c4720273559a62461ce64a47/lexid-2021.1006-py2.py3-none-any.whl", hash = "sha256:5526bb5606fd74c7add23320da5f02805bddd7c77916f2dc1943e6bada8605ed", size = 7587, upload-time = "2021-04-02T20:18:33.129Z" },
 ]
 
 [[package]]
@@ -1108,15 +1086,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
-]
-
-[[package]]
-name = "toml"
-version = "0.10.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
 ]
 
 [[package]]
